@@ -1509,6 +1509,45 @@
       color: #0F172A;
       background: #FFFFFF;
     }
+
+    /* 3D呼吸器シミュレーター連携モーダル */
+    .sim-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10050;
+      background: rgba(2, 6, 23, 0.86);
+      backdrop-filter: blur(6px);
+      display: none;
+      flex-direction: column;
+      padding: 14px 18px;
+      gap: 10px;
+    }
+    .sim-modal.open {
+      display: flex;
+    }
+    .sim-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #F8FAFC;
+      font-family: var(--font-sans);
+    }
+    .sim-modal-frame {
+      flex: 1;
+      width: 100%;
+      border: 2px solid #38BDF8;
+      border-radius: 12px;
+      background: #0b1120;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    @media print {
+      .sim-modal {
+        display: none !important;
+      }
+    }
+    .print-pdf .sim-modal {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -1535,6 +1574,9 @@
       </button>
       <button class="floating-btn" id="speakerViewBtn" onclick="openSpeakerView()" title="PC手元にスピーカーノート・現在・次のスライドを表示（ショートカット: Sキー）">
         <i class="fa-solid fa-desktop"></i> 発表者ビュー (S)
+      </button>
+      <button class="floating-btn" id="simOpenBtn" onclick="openSimModal()" style="background:#0369A1; border-color:#38BDF8;" title="3D胸部解剖＆波形シミュレーターを開く（ショートカット: Vキー）">
+        <i class="fa-solid fa-lungs"></i> 3Dシミュレーター (V)
       </button>
       <button class="floating-btn" id="exportPdfBtn" onclick="openPrintPdfMode()" title="全42スライドを配布用PDFとして保存する画面を開く">
         <i class="fa-solid fa-file-pdf"></i> 配布PDF
@@ -1574,6 +1616,23 @@
       <i class="fa-solid fa-print"></i> 印刷 / PDFに保存
     </button>
     <button type="button" onclick="window.close()" style="background:#334155; color:#FFF; border:none; border-radius:8px; padding:6px 10px; font-weight:700; cursor:pointer;">閉じる</button>
+  </div>
+  <div id="simModal" class="sim-modal" aria-hidden="true">
+    <div class="sim-modal-header">
+      <div style="display:flex; align-items:center; gap:10px; font-weight:800; font-size:15px;">
+        <i class="fa-solid fa-lungs" style="color:#38BDF8;"></i>
+        <span>人工呼吸器 波形・3D解剖動態シミュレーター</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="sim/index.html" target="_blank" style="background:#1E293B; color:#E2E8F0; border:1px solid #475569; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; text-decoration:none;">
+          <i class="fa-solid fa-up-right-from-square"></i> 別タブで開く
+        </a>
+        <button type="button" onclick="closeSimModal()" style="background:#DC2626; color:#FFF; border:none; border-radius:8px; padding:6px 14px; font-size:13px; font-weight:800; cursor:pointer;">
+          <i class="fa-solid fa-xmark"></i> スライドに戻る (ESC / V)
+        </button>
+      </div>
+    </div>
+    <iframe id="simIframe" class="sim-modal-frame" title="人工呼吸器 波形・3D解剖動態シミュレーター"></iframe>
   </div>
   <canvas id="drawCanvas"></canvas>
   <div id="laserDot"></div>
@@ -7667,6 +7726,34 @@
       }
     }
 
+    function openSimModal() {
+      if (window.location.protocol === 'file:') {
+        alert('3Dシミュレーター（ES Modules）を動かすには、フォルダ内の「発表モード起動.bat」をダブルクリックして開くか、GitHub Pages から開いてください。');
+        return;
+      }
+      const modal = document.getElementById('simModal');
+      const iframe = document.getElementById('simIframe');
+      if (!modal || !iframe) return;
+      if (!iframe.getAttribute('src')) {
+        iframe.setAttribute('src', 'sim/index.html');
+      }
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      toggleFloatingToolbar(false);
+    }
+
+    function closeSimModal() {
+      const modal = document.getElementById('simModal');
+      const iframe = document.getElementById('simIframe');
+      if (modal) {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+      if (iframe) {
+        iframe.removeAttribute('src');
+      }
+    }
+
     function toggleFloatingToolbar(forceState) {
       const bar = document.getElementById('floatingToolbar');
       const btn = document.getElementById('toolbarToggleBtn');
@@ -7691,12 +7778,29 @@
         }
       }
       if (e.key === 'Escape') {
+        const simModal = document.getElementById('simModal');
+        if (simModal && simModal.classList.contains('open')) {
+          e.preventDefault();
+          e.stopPropagation();
+          closeSimModal();
+          return;
+        }
         const modal = document.getElementById('monitorZoomModal');
         if (modal && modal.classList.contains('open')) {
           e.preventDefault();
           e.stopPropagation();
           closeMonitorZoom();
           return;
+        }
+      }
+      if (e.key === 'v' || e.key === 'V') {
+        const isContentEditable = document.activeElement ? document.activeElement.isContentEditable : false;
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (!isContentEditable && activeTag !== 'input' && activeTag !== 'textarea') {
+          e.preventDefault();
+          const simModal = document.getElementById('simModal');
+          if (simModal && simModal.classList.contains('open')) closeSimModal();
+          else openSimModal();
         }
       }
       if (e.key === 'd' || e.key === 'D') {
