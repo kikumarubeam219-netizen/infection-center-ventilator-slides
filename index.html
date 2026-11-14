@@ -628,20 +628,59 @@
 
     .floating-toolbar {
       position: fixed;
-      bottom: 14px;
-      left: 18px;
+      bottom: 12px;
+      left: 14px;
       z-index: 9999;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 8px;
+    }
+    .floating-toolbar-items {
+      display: none;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      max-width: min(560px, 92vw);
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.42);
+    }
+    .floating-toolbar.open .floating-toolbar-items {
+      display: flex;
+    }
+    .floating-toolbar-toggle {
+      background: rgba(15, 23, 42, 0.68);
+      color: #F8FAFC;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      padding: 6px 13px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.72;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+    }
+    .floating-toolbar-toggle:hover,
+    .floating-toolbar.open .floating-toolbar-toggle {
+      opacity: 1;
+      background: rgba(30, 41, 59, 0.96);
+      border-color: #38BDF8;
     }
     .floating-btn {
       background: rgba(30, 41, 59, 0.88);
       color: #F8FAFC;
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 13px;
+      padding: 6px 12px;
+      font-size: 12.5px;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -1349,32 +1388,166 @@
       background: #0D9488;
     }
     @media print {
-      .chapter-jump-bar {
+      .chapter-jump-bar,
+      #drawCanvas,
+      #laserDot,
+      #printPdfGuideBar {
         display: none !important;
       }
     }
-    .print-pdf .chapter-jump-bar {
+    .print-pdf .chapter-jump-bar,
+    .print-pdf #drawCanvas,
+    .print-pdf #laserDot {
       display: none !important;
+    }
+    .print-pdf-guide-bar {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: #0F172A;
+      color: #F8FAFC;
+      border: 2px solid #38BDF8;
+      border-radius: 12px;
+      padding: 10px 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    @media print {
+      .print-pdf-guide-bar {
+        display: none !important;
+      }
+    }
+
+    /* ==========================================================================
+       11. 画面直接お絵描き（蛍光赤ペン）＆ レーザーポインター ＆ 実用計算機UI
+       ========================================================================== */
+    #drawCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 880;
+      pointer-events: none;
+    }
+    #drawCanvas.active {
+      pointer-events: auto;
+      cursor: crosshair;
+    }
+    #laserDot {
+      position: fixed;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #FFFFFF 0%, #FF1E42 42%, rgba(255, 30, 66, 0.35) 75%, transparent 100%);
+      box-shadow: 0 0 14px 5px rgba(255, 30, 66, 0.85), 0 0 28px 10px rgba(255, 30, 66, 0.45);
+      pointer-events: none;
+      z-index: 890;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+    .floating-btn.draw-active {
+      background: #DC2626 !important;
+      border-color: #FCA5A5 !important;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.65);
+    }
+    .floating-btn.laser-active {
+      background: #B91C1C !important;
+      border-color: #FDA4AF !important;
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.65);
+    }
+    .bedside-calc-box {
+      margin-top: 6px;
+      background: #F0FDF4;
+      border: 1.5px solid #86EFAC;
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .calc-mini-btn {
+      min-width: 28px;
+      height: 26px;
+      padding: 0 8px;
+      border-radius: 6px;
+      border: 1.5px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #0F172A;
+      font-size: 0.68em;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .calc-mini-btn:hover {
+      border-color: #2563EB;
+      background: #EFF6FF;
+    }
+    .calc-mini-btn.active {
+      background: #0D9488;
+      border-color: #0F766E;
+      color: #FFFFFF;
+    }
+    .calc-num-input {
+      width: 56px;
+      height: 26px;
+      border: 1.5px solid #94A3B8;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 0.72em;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      color: #0F172A;
+      background: #FFFFFF;
     }
   </style>
 </head>
 <body>
-  <div class="floating-toolbar">
-    <button class="floating-btn" id="editToggleBtn" onclick="toggleInlineEdit()" title="画面上の文字を直接クリックして編集（ショートカット: Eキー）">
-      <i class="fa-solid fa-pen-to-square"></i> 編集モード (E)
-    </button>
-    <button class="floating-btn" id="saveHtmlBtn" onclick="saveEditedHtml()" style="display:none; background:#10B981; border-color:#34D399;" title="編集した内容を保存">
-      <i class="fa-solid fa-floppy-disk"></i> 変更を保存
-    </button>
-    <span class="edit-mode-indicator"><i class="fa-solid fa-pen-nib"></i> 編集中</span>
-    <button class="floating-btn" onclick="toggleNoteDrawer()" title="ショートカット: Nキー">
-      <i class="fa-solid fa-book-open-reader"></i> 講義台本 (N)
-    </button>
-    <button class="floating-btn" onclick="toggleChapterJumpBar()" title="先頭や各章の先頭スライドへ移動（ショートカット: Mキー）">
-      <i class="fa-solid fa-compass"></i> 章ジャンプ (M)
-    </button>
-    <button class="floating-btn" onclick="Reveal.toggleOverview()" title="ショートカット: ESC / Oキー">
-      <i class="fa-solid fa-table-cells"></i> スライド一覧 (ESC)
+  <div id="floatingToolbar" class="floating-toolbar">
+    <div id="floatingToolbarItems" class="floating-toolbar-items">
+      <button class="floating-btn" id="editToggleBtn" onclick="toggleInlineEdit()" title="画面上の文字を直接クリックして編集（ショートカット: Eキー）">
+        <i class="fa-solid fa-pen-to-square"></i> 編集モード (E)
+      </button>
+      <button class="floating-btn" id="saveHtmlBtn" onclick="saveEditedHtml()" style="display:none; background:#10B981; border-color:#34D399;" title="編集した内容を保存">
+        <i class="fa-solid fa-floppy-disk"></i> 変更を保存
+      </button>
+      <span class="edit-mode-indicator"><i class="fa-solid fa-pen-nib"></i> 編集中</span>
+      <button class="floating-btn" id="drawToggleBtn" onclick="toggleDrawMode()" title="画面上に蛍光赤ペンで直接描き込み（ショートカット: Dキー）">
+        <i class="fa-solid fa-highlighter"></i> ペン描画 (D)
+      </button>
+      <button class="floating-btn" id="laserToggleBtn" onclick="toggleLaserMode()" title="赤いレーザーポインターを表示（ショートカット: Lキー）">
+        <i class="fa-solid fa-bullseye"></i> レーザー (L)
+      </button>
+      <button class="floating-btn" id="drawClearBtn" onclick="clearDrawCanvas()" title="描いた線をすべて消去">
+        <i class="fa-solid fa-trash-can"></i> 消去
+      </button>
+      <button class="floating-btn" onclick="toggleNoteDrawer()" title="ショートカット: Nキー">
+        <i class="fa-solid fa-book-open-reader"></i> 講義台本 (N)
+      </button>
+      <button class="floating-btn" id="speakerViewBtn" onclick="openSpeakerView()" title="PC手元にスピーカーノート・現在・次のスライドを表示（ショートカット: Sキー）">
+        <i class="fa-solid fa-desktop"></i> 発表者ビュー (S)
+      </button>
+      <button class="floating-btn" id="exportPdfBtn" onclick="openPrintPdfMode()" title="全42スライドを配布用PDFとして保存する画面を開く">
+        <i class="fa-solid fa-file-pdf"></i> 配布PDF
+      </button>
+      <button class="floating-btn" onclick="toggleChapterJumpBar()" title="先頭や各章の先頭スライドへ移動（ショートカット: Mキー）">
+        <i class="fa-solid fa-compass"></i> 章ジャンプ (M)
+      </button>
+      <button class="floating-btn" onclick="Reveal.toggleOverview()" title="ショートカット: ESC / Oキー">
+        <i class="fa-solid fa-table-cells"></i> スライド一覧 (ESC)
+      </button>
+    </div>
+    <button type="button" id="toolbarToggleBtn" class="floating-toolbar-toggle" onclick="toggleFloatingToolbar()" title="操作メニューを開閉（ショートカット: Tキー）">
+      <i class="fa-solid fa-sliders"></i> <span>メニュー (T)</span>
     </button>
   </div>
   <div id="chapterJumpBar" class="chapter-jump-bar" aria-label="章ジャンプナビゲーション">
@@ -1394,6 +1567,16 @@
     </div>
     <div id="noteDrawerContent"></div>
   </div>
+
+  <div id="printPdfGuideBar" class="print-pdf-guide-bar">
+    <span><i class="fa-solid fa-file-pdf" style="color:#38BDF8;"></i> 配布用PDF出力モード：「余白：なし」「背景のグラフィック：ON」でPDF保存してください</span>
+    <button type="button" onclick="window.print()" style="background:#2563EB; color:#FFF; border:none; border-radius:8px; padding:6px 14px; font-weight:800; cursor:pointer;">
+      <i class="fa-solid fa-print"></i> 印刷 / PDFに保存
+    </button>
+    <button type="button" onclick="window.close()" style="background:#334155; color:#FFF; border:none; border-radius:8px; padding:6px 10px; font-weight:700; cursor:pointer;">閉じる</button>
+  </div>
+  <canvas id="drawCanvas"></canvas>
+  <div id="laserDot"></div>
 
   <div class="reveal">
     <div class="slides">
@@ -6067,41 +6250,60 @@
             </div>
 
             <!-- 右列：換気量・リーク・その他パラメータ -->
-            <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
               <h3 style="font-size: 0.88em; font-weight: 900; color: var(--header-navy);">
                 <i class="fa-solid fa-lungs" style="color:var(--mute-green);"></i> 換気量・リーク・その他パラメータ
               </h3>
 
-              <div class="info-panel green" style="padding: 9px 14px;">
+              <div class="info-panel green" style="padding: 8px 12px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">一回換気量 (VT)</strong>
                   <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-green);">6〜8 mL/kg <small style="font-size:0.65em; color:var(--text-main);">（理想体重あたり）</small></span>
                 </div>
-                <p style="font-size:0.62em; color:var(--text-muted); margin-top:2px;">1回の呼吸ガス量。容量肺傷害（ボリュートラウマ）を防ぐため、予測体重（PBW）を基準とした厳格な管理が推奨されます。</p>
+                <p style="font-size:0.60em; color:var(--text-muted); margin-top:2px;">容量肺傷害（ボリュートラウマ）を防ぐため、実体重ではなく予測体重（PBW）を基準に管理します。</p>
+                <!-- ベッドサイド実用計算機①：PBW・推奨VT計算機 -->
+                <div class="bedside-calc-box">
+                  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                    <span style="font-size:0.62em; font-weight:900; color:#15803D;"><i class="fa-solid fa-calculator"></i> PBW・推奨VT計算</span>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <button type="button" id="pbwSexMale" class="calc-mini-btn active" onclick="setPbwSex('male')">男性</button>
+                      <button type="button" id="pbwSexFemale" class="calc-mini-btn" onclick="setPbwSex('female')">女性</button>
+                      <span style="font-size:0.62em; font-weight:800; color:#334155; margin-left:4px;">身長</span>
+                      <button type="button" class="calc-mini-btn" onclick="adjustPbwHeight(-5)" title="-5cm">−5</button>
+                      <input type="number" id="pbwHeightInput" class="calc-num-input" value="170" min="120" max="220" oninput="updatePbwCalc()">
+                      <span style="font-size:0.62em; font-weight:800; color:#334155;">cm</span>
+                      <button type="button" class="calc-mini-btn" onclick="adjustPbwHeight(5)" title="+5cm">+5</button>
+                    </div>
+                  </div>
+                  <div id="pbwResultBar" style="background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:4px 8px; display:flex; justify-content:space-between; align-items:center; font-size:0.66em; font-weight:800; color:#0F172A;">
+                    <span>予測体重 (PBW): <strong id="pbwValText" class="tabular-nums" style="color:#0D9488; font-size:1.08em;">66.0 kg</strong></span>
+                    <span>推奨VT (6〜8mL/kg): <strong id="pbwVtRangeText" class="tabular-nums" style="color:#15803D; font-size:1.12em;">396 〜 528 mL</strong></span>
+                  </div>
+                </div>
               </div>
 
-              <div class="info-panel green" style="padding: 9px 14px;">
+              <div class="info-panel green" style="padding: 7px 12px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">分時換気量 (MV / 呼気MV)</strong>
-                  <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-green);">5.0〜8.0 L/min</span>
+                  <span class="tabular-nums" style="font-size:1.02em; font-weight:900; color:var(--mute-green);">5.0〜8.0 L/min</span>
                 </div>
-                <p style="font-size:0.62em; color:var(--text-muted); margin-top:2px;">1分間に肺を出入りするガス量（VT × 呼吸回数）。体内の二酸化炭素排出量を決定する主要因子です。</p>
+                <p style="font-size:0.60em; color:var(--text-muted); margin-top:2px;">1分間に肺を出入りするガス量（VT × 呼吸回数）。体内の二酸化炭素排出量を決定する主要因子です。</p>
               </div>
 
-              <div class="info-panel green" style="padding: 9px 14px;">
+              <div class="info-panel green" style="padding: 7px 12px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">呼吸回数 (f) / 酸素濃度 (FiO₂)</strong>
-                  <span class="tabular-nums" style="font-size:0.95em; font-weight:900; color:var(--mute-green);">[f] 10〜20 回/min / [FiO₂] 21〜100 %</span>
+                  <span class="tabular-nums" style="font-size:0.92em; font-weight:900; color:var(--mute-green);">[f] 10〜20 回/min / [FiO₂] 21〜100 %</span>
                 </div>
-                <p style="font-size:0.62em; color:var(--text-muted); margin-top:2px;">fは目標とするPaCO₂に合わせて調整。FiO₂は吸収性無気肺や酸素毒性を防ぐため、SpO₂/PaO₂を維持できる最小限を目指します。</p>
+                <p style="font-size:0.60em; color:var(--text-muted); margin-top:2px;">fは目標とするPaCO₂に合わせて調整。FiO₂は吸収性無気肺や酸素毒性を防ぐため、SpO₂/PaO₂を維持できる最小限を目指します。</p>
               </div>
 
-              <div class="info-panel green" style="padding: 9px 14px;">
+              <div class="info-panel green" style="padding: 7px 12px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">% リーク</strong>
-                  <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-green);">10% 未満 <small style="font-size:0.65em; color:var(--text-main);">（挿管管理時における許容目安）</small></span>
+                  <span class="tabular-nums" style="font-size:1.02em; font-weight:900; color:var(--mute-green);">10% 未満 <small style="font-size:0.65em; color:var(--text-main);">（挿管管理時における許容目安）</small></span>
                 </div>
-                <p style="font-size:0.62em; color:var(--text-muted); margin-top:2px;">送気量に対する漏れ空気の割合。基準超過時はカフ圧不足、回路の緩み、NPPVマスクの密着不良を疑います。</p>
+                <p style="font-size:0.60em; color:var(--text-muted); margin-top:2px;">送気量に対する漏れ空気の割合。基準超過時はカフ圧不足、回路の緩み、NPPVマスクの密着不良を疑います。</p>
               </div>
             </div>
           </div>
@@ -6182,13 +6384,38 @@
                 </p>
               </div>
 
-              <div class="info-panel green">
+              <div class="info-panel green" style="padding: 10px 14px;">
                 <div style="font-size:0.65em; font-weight:800; color:var(--text-muted);">ウィーニングの評価</div>
-                <div style="font-size:0.9em; font-weight:900; color:var(--text-main);">RSB (浅速呼吸指数)</div>
-                <div class="tabular-nums" style="font-size:1.35em; font-weight:900; color:var(--mute-orange); margin:4px 0;">105 <small style="font-size:0.65em;">回/L 未満</small></div>
-                <p style="font-size:0.66em; line-height:1.55; color:var(--text-main); font-weight:700;">
-                  <strong>自発呼吸時の呼吸回数を一回換気量 (L) で除した値 (f / VT)。</strong>人工呼吸器からの離脱（ウィーニング）が可能かどうかを判断する重要なスクリーニング指標です。
+                <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                  <div style="font-size:0.9em; font-weight:900; color:var(--text-main);">RSB (浅速呼吸指数)</div>
+                  <div class="tabular-nums" style="font-size:1.15em; font-weight:900; color:var(--mute-orange);">105 <small style="font-size:0.65em;">回/L 未満</small></div>
+                </div>
+                <p style="font-size:0.62em; line-height:1.45; color:var(--text-main); font-weight:700; margin-top:2px;">
+                  <strong>自発呼吸時の呼吸回数 f ÷ 一回換気量 VT(L)。</strong>人工呼吸器から離脱可能か判断するスクリーニング指標です。
                 </p>
+                <!-- ベッドサイド実用計算機②：RSB ライブ計算機 -->
+                <div class="bedside-calc-box" style="margin-top:6px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <span style="font-size:0.62em; font-weight:800; color:#334155;">f:</span>
+                      <button type="button" class="calc-mini-btn" onclick="adjustRsb(-2, 0)">−</button>
+                      <input type="number" id="rsbFInput" class="calc-num-input" style="width:46px;" value="20" min="6" max="50" oninput="updateRsbCalc()">
+                      <button type="button" class="calc-mini-btn" onclick="adjustRsb(2, 0)">＋</button>
+                      <span style="font-size:0.58em; color:#64748B; font-weight:700;">回</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <span style="font-size:0.62em; font-weight:800; color:#334155;">VT:</span>
+                      <button type="button" class="calc-mini-btn" onclick="adjustRsb(0, -50)">−</button>
+                      <input type="number" id="rsbVtInput" class="calc-num-input" style="width:54px;" value="400" min="100" max="1000" step="10" oninput="updateRsbCalc()">
+                      <button type="button" class="calc-mini-btn" onclick="adjustRsb(0, 50)">＋</button>
+                      <span style="font-size:0.58em; color:#64748B; font-weight:700;">mL</span>
+                    </div>
+                  </div>
+                  <div id="rsbResultBadge" style="background:#DCFCE7; border:1.5px solid #22C55E; color:#15803D; border-radius:6px; padding:4px 8px; display:flex; justify-content:space-between; align-items:center; font-size:0.66em; font-weight:900;">
+                    <span class="tabular-nums">RSB: <strong id="rsbValText" style="font-size:1.15em;">50</strong> 回/L</span>
+                    <span id="rsbStatusText">✅ 105未満（ウィーニング良好）</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -6218,6 +6445,7 @@
 
   <!-- Reveal.js 5.x Script (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
   <script>
     Reveal.initialize({
       hash: true,
@@ -6229,7 +6457,8 @@
       width: 1280,
       height: 720,
       margin: 0.03,
-      pdfSeparateFragments: false
+      pdfSeparateFragments: false,
+      plugins: (typeof RevealNotes !== 'undefined' ? [ RevealNotes ] : [])
     });
 
     /* ==========================================================================
@@ -7135,6 +7364,10 @@
       if (saveBtn) {
         saveBtn.style.display = isEditing ? 'inline-flex' : 'none';
       }
+      if (isEditing) {
+        if (isDrawMode) toggleDrawMode(false);
+        if (isLaserMode) toggleLaserMode(false);
+      }
     }
 
     function saveEditedHtml() {
@@ -7171,6 +7404,41 @@
       }
     }
 
+    function openSpeakerView() {
+      if (window.location.protocol === 'file:') {
+        alert('発表者ビュー（PC画面にノート＋現在＋次のスライドを表示）を使うには、フォルダ内の「発表モード起動.bat」をダブルクリックして開いてください。\n（※ブラウザのセキュリティ制限により、ファイルを直接開いた状態では別画面との同期が動作しません）');
+        return;
+      }
+      if (typeof Reveal !== 'undefined' && Reveal.getPlugin) {
+        const notesPlugin = Reveal.getPlugin('notes');
+        if (notesPlugin && typeof notesPlugin.open === 'function') {
+          notesPlugin.open();
+          return;
+        }
+      }
+      alert('発表者ビュープラグインが読み込まれていません。インターネット接続がある状態で開くか、キーボードの「S」キーをお試しください。');
+    }
+
+    function openPrintPdfMode() {
+      if (window.location.search.indexOf('print-pdf') !== -1) {
+        window.print();
+        return;
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.set('print-pdf', '');
+      window.open(url.toString(), '_blank');
+    }
+
+    if (window.location.search.indexOf('print-pdf') !== -1) {
+      window.addEventListener('load', function() {
+        const guide = document.getElementById('printPdfGuideBar');
+        if (guide) guide.style.display = 'flex';
+        setTimeout(function() {
+          window.print();
+        }, 900);
+      });
+    }
+
     function jumpToSlide(idx) {
       if (document.body.classList.contains('is-editing')) return;
       if (typeof Reveal !== 'undefined') {
@@ -7189,9 +7457,239 @@
       Reveal.on('overviewhidden', function() {
         toggleChapterJumpBar(false);
       });
+      Reveal.on('slidechanged', function() {
+        clearDrawCanvas();
+      });
+    }
+
+    /* ==========================================================================
+       9. 全スライド共通：画面直接お絵描き（蛍光赤ペン）＆ レーザーポインター
+       ========================================================================== */
+    let isDrawMode = false;
+    let isLaserMode = false;
+    let isDrawingStroke = false;
+    let drawPoints = [];
+    let drawSnapshot = null;
+
+    function resizeDrawCanvas() {
+      const canvas = document.getElementById('drawCanvas');
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+    }
+
+    function clearDrawCanvas() {
+      const canvas = document.getElementById('drawCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+      drawSnapshot = null;
+      drawPoints = [];
+    }
+
+    function toggleDrawMode(forceState) {
+      isDrawMode = (typeof forceState === 'boolean') ? forceState : !isDrawMode;
+      if (isDrawMode && isEditing) {
+        toggleInlineEdit();
+      }
+      const canvas = document.getElementById('drawCanvas');
+      const btn = document.getElementById('drawToggleBtn');
+      const dot = document.getElementById('laserDot');
+      if (canvas) {
+        canvas.classList.toggle('active', isDrawMode);
+      }
+      if (btn) {
+        btn.classList.toggle('draw-active', isDrawMode);
+        btn.innerHTML = isDrawMode
+          ? '<i class="fa-solid fa-highlighter"></i> 描画中 (D)'
+          : '<i class="fa-solid fa-highlighter"></i> ペン描画 (D)';
+      }
+      if (!isDrawMode && !isLaserMode && dot) {
+        dot.style.display = 'none';
+      }
+    }
+
+    function toggleLaserMode(forceState) {
+      isLaserMode = (typeof forceState === 'boolean') ? forceState : !isLaserMode;
+      const btn = document.getElementById('laserToggleBtn');
+      const dot = document.getElementById('laserDot');
+      if (btn) {
+        btn.classList.toggle('laser-active', isLaserMode);
+      }
+      if (!isLaserMode && !isDrawMode && dot) {
+        dot.style.display = 'none';
+      }
+    }
+
+    (function initDrawAndLaser() {
+      const canvas = document.getElementById('drawCanvas');
+      const dot = document.getElementById('laserDot');
+      resizeDrawCanvas();
+      window.addEventListener('resize', resizeDrawCanvas);
+
+      document.addEventListener('mousemove', function(e) {
+        if (dot && (isLaserMode || isDrawMode)) {
+          dot.style.display = 'block';
+          dot.style.left = e.clientX + 'px';
+          dot.style.top = e.clientY + 'px';
+        }
+      });
+
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function renderSmoothHighlight() {
+        if (!ctx || !drawSnapshot || drawPoints.length === 0) return;
+        ctx.putImageData(drawSnapshot, 0, 0);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.42)';
+        ctx.lineWidth = 12;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(drawPoints[0].x, drawPoints[0].y);
+        for (let i = 1; i < drawPoints.length; i++) {
+          const prev = drawPoints[i - 1];
+          const curr = drawPoints[i];
+          const midX = (prev.x + curr.x) / 2;
+          const midY = (prev.y + curr.y) / 2;
+          ctx.quadraticCurveTo(prev.x, prev.y, midX, midY);
+        }
+        const last = drawPoints[drawPoints.length - 1];
+        ctx.lineTo(last.x, last.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      canvas.addEventListener('mousedown', function(e) {
+        if (!isDrawMode || e.button !== 0 || !ctx) return;
+        isDrawingStroke = true;
+        drawSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        drawPoints = [{ x: e.clientX, y: e.clientY }, { x: e.clientX + 0.1, y: e.clientY + 0.1 }];
+        renderSmoothHighlight();
+      });
+
+      window.addEventListener('mousemove', function(e) {
+        if (!isDrawingStroke) return;
+        drawPoints.push({ x: e.clientX, y: e.clientY });
+        renderSmoothHighlight();
+      });
+
+      window.addEventListener('mouseup', function() {
+        if (!isDrawingStroke) return;
+        isDrawingStroke = false;
+        drawSnapshot = null;
+        drawPoints = [];
+      });
+    })();
+
+    /* ==========================================================================
+       10. Slide 41 & 42: ベッドサイド実用計算機（PBW・推奨VT ＆ RSB）
+       ========================================================================== */
+    let currentPbwSex = 'male';
+
+    function setPbwSex(sex) {
+      currentPbwSex = sex;
+      const maleBtn = document.getElementById('pbwSexMale');
+      const femaleBtn = document.getElementById('pbwSexFemale');
+      if (maleBtn) maleBtn.classList.toggle('active', sex === 'male');
+      if (femaleBtn) femaleBtn.classList.toggle('active', sex === 'female');
+      updatePbwCalc();
+    }
+
+    function adjustPbwHeight(delta) {
+      const inp = document.getElementById('pbwHeightInput');
+      if (!inp) return;
+      const val = Math.max(120, Math.min(220, (parseFloat(inp.value) || 170) + delta));
+      inp.value = val;
+      updatePbwCalc();
+    }
+
+    function updatePbwCalc() {
+      const inp = document.getElementById('pbwHeightInput');
+      const pbwText = document.getElementById('pbwValText');
+      const vtText = document.getElementById('pbwVtRangeText');
+      if (!inp || !pbwText || !vtText) return;
+      const h = Math.max(120, Math.min(220, parseFloat(inp.value) || 170));
+      const base = (currentPbwSex === 'male') ? 50 : 45.5;
+      const pbw = Math.max(25, base + 0.91 * (h - 152.4));
+      const vtMin = Math.round(pbw * 6);
+      const vtMax = Math.round(pbw * 8);
+      pbwText.textContent = pbw.toFixed(1) + ' kg';
+      vtText.textContent = vtMin + ' 〜 ' + vtMax + ' mL';
+    }
+
+    function adjustRsb(dF, dVt) {
+      const fInp = document.getElementById('rsbFInput');
+      const vtInp = document.getElementById('rsbVtInput');
+      if (fInp && dF !== 0) {
+        fInp.value = Math.max(6, Math.min(50, (parseFloat(fInp.value) || 20) + dF));
+      }
+      if (vtInp && dVt !== 0) {
+        vtInp.value = Math.max(100, Math.min(1000, (parseFloat(vtInp.value) || 400) + dVt));
+      }
+      updateRsbCalc();
+    }
+
+    function updateRsbCalc() {
+      const fInp = document.getElementById('rsbFInput');
+      const vtInp = document.getElementById('rsbVtInput');
+      const valEl = document.getElementById('rsbValText');
+      const badgeEl = document.getElementById('rsbResultBadge');
+      const statusEl = document.getElementById('rsbStatusText');
+      if (!fInp || !vtInp || !valEl || !badgeEl || !statusEl) return;
+
+      const f = Math.max(1, parseFloat(fInp.value) || 20);
+      const vtMl = Math.max(50, parseFloat(vtInp.value) || 400);
+      const rsb = Math.round(f / (vtMl / 1000));
+      valEl.textContent = rsb;
+
+      if (rsb < 105) {
+        badgeEl.style.background = '#DCFCE7';
+        badgeEl.style.borderColor = '#22C55E';
+        badgeEl.style.color = '#15803D';
+        statusEl.textContent = '✅ 105未満（ウィーニング良好）';
+      } else {
+        badgeEl.style.background = '#FFE4E6';
+        badgeEl.style.borderColor = '#F43F5E';
+        badgeEl.style.color = '#BE123C';
+        statusEl.textContent = '⚠️ 105以上（離脱注意）';
+      }
+    }
+
+    function toggleFloatingToolbar(forceState) {
+      const bar = document.getElementById('floatingToolbar');
+      const btn = document.getElementById('toolbarToggleBtn');
+      if (!bar) return;
+      const isOpen = (typeof forceState === 'boolean')
+        ? bar.classList.toggle('open', forceState)
+        : bar.classList.toggle('open');
+      if (btn) {
+        btn.innerHTML = isOpen
+          ? '<i class="fa-solid fa-xmark"></i> <span>閉じる (T)</span>'
+          : '<i class="fa-solid fa-sliders"></i> <span>メニュー (T)</span>';
+      }
     }
 
     document.addEventListener('keydown', function(e) {
+      if (e.key === 't' || e.key === 'T') {
+        const isContentEditable = document.activeElement ? document.activeElement.isContentEditable : false;
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (!isContentEditable && activeTag !== 'input' && activeTag !== 'textarea') {
+          e.preventDefault();
+          toggleFloatingToolbar();
+        }
+      }
       if (e.key === 'Escape') {
         const modal = document.getElementById('monitorZoomModal');
         if (modal && modal.classList.contains('open')) {
@@ -7199,6 +7697,22 @@
           e.stopPropagation();
           closeMonitorZoom();
           return;
+        }
+      }
+      if (e.key === 'd' || e.key === 'D') {
+        const isContentEditable = document.activeElement ? document.activeElement.isContentEditable : false;
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (!isContentEditable && activeTag !== 'input' && activeTag !== 'textarea') {
+          e.preventDefault();
+          toggleDrawMode();
+        }
+      }
+      if (e.key === 'l' || e.key === 'L') {
+        const isContentEditable = document.activeElement ? document.activeElement.isContentEditable : false;
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (!isContentEditable && activeTag !== 'input' && activeTag !== 'textarea') {
+          e.preventDefault();
+          toggleLaserMode();
         }
       }
       if (e.key === 'm' || e.key === 'M') {

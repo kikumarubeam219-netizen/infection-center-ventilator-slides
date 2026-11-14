@@ -1,0 +1,14 @@
+{
+  "name": "infection-center-ventilator-slides",
+  "version": "1.0.0",
+  "private": true,
+  "description": "感染症センター 人工呼吸器勉強会 HTMLスライド ＆ PPTX書き出しツール",
+  "scripts": {
+    "start": "node server.js",
+    "export-pptx": "node export_pptx.mjs"
+  },
+  "dependencies": {
+    "pptxgenjs": "^3.12.0",
+    "puppeteer-core": "^24.0.0"
+  }
+}
