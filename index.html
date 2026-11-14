@@ -1263,6 +1263,81 @@
     }
 
     /* ==========================================================================
+       9.7 Slide 19 / 22 / 25 / 27 臨床モーショングラフィックス用アニメーション
+       ========================================================================== */
+    @keyframes ac-trigger-pulse {
+      0%, 100% { r: 7px; opacity: 0.9; stroke-width: 2.5px; }
+      50% { r: 14px; opacity: 0.25; stroke-width: 1.5px; }
+    }
+    .ac-trigger-ripple {
+      animation: ac-trigger-pulse 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    }
+
+    /* Slide 22: ZEEP(虚脱) vs CPAP(開存維持) の肺胞動態 */
+    @keyframes alveoli-zeep-cycle {
+      0%, 100% { transform: scale(0.72); opacity: 0.78; }
+      40% { transform: scale(1.04); opacity: 1; }
+      82% { transform: scale(0.68); opacity: 0.72; }
+    }
+    @keyframes alveoli-cpap-cycle {
+      0%, 100% { transform: scale(0.96); }
+      45% { transform: scale(1.12); }
+    }
+    .cpap-alveoli-zeep {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: alveoli-zeep-cycle 3.6s ease-in-out infinite;
+    }
+    .cpap-alveoli-keep {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: alveoli-cpap-cycle 3.6s ease-in-out infinite;
+    }
+
+    /* Slide 25: アプニアタイマープログレス＆バックアップ起動 */
+    @keyframes apnea-progress-bar {
+      0%, 28% { width: 0px; fill: #F59E0B; }
+      58% { width: 176px; fill: #EF4444; }
+      62%, 100% { width: 176px; fill: #EF4444; }
+    }
+    @keyframes apnea-backup-glow {
+      0%, 56% { opacity: 0.28; transform: scale(0.97); }
+      60%, 92% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.28; transform: scale(0.97); }
+    }
+    .apnea-progress-anim {
+      animation: apnea-progress-bar 6s linear infinite;
+    }
+    .apnea-backup-active {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: apnea-backup-glow 6s ease-in-out infinite;
+    }
+
+    /* Slide 27: デュアル・アセスメント交互スキャン＆ストリーム */
+    @keyframes dual-stream-dash {
+      from { stroke-dashoffset: 36; }
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes dual-card-patient-glow {
+      0%, 100% { box-shadow: 0 6px 22px rgba(16, 185, 129, 0.26), 0 0 0 3px rgba(16, 185, 129, 0.35); }
+      50% { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 0 0 0px rgba(16, 185, 129, 0); }
+    }
+    @keyframes dual-card-circuit-glow {
+      0%, 100% { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 0 0 0px rgba(245, 158, 11, 0); }
+      50% { box-shadow: 0 6px 22px rgba(245, 158, 11, 0.28), 0 0 0 3px rgba(245, 158, 11, 0.38); }
+    }
+    .dual-stream-line {
+      animation: dual-stream-dash 1.2s linear infinite;
+    }
+    .dual-patient-card {
+      animation: dual-card-patient-glow 3.6s ease-in-out infinite;
+    }
+    .dual-circuit-card {
+      animation: dual-card-circuit-glow 3.6s ease-in-out infinite;
+    }
+
+    /* ==========================================================================
        10. 印刷・PDF出力対応（?print-pdf & @media print）完全崩れ防止
        ========================================================================== */
     @media print {
@@ -1290,7 +1365,9 @@
       .scanning-wave, .flow-line, .pulse-attention,
       .venous-stream-fast, .venous-stream-slow, .lung-anim-neg, .lung-anim-pos, .heart-anim-squeeze, .warning-pulse-red,
       .vcv-piston-anim, .pcv-fan-anim, .vcv-lung-anim-normal, .vcv-lung-anim-stiff, .pcv-lung-anim-normal, .pcv-lung-anim-stiff,
-      .high-press-flash, .psv-term-marker-anim, .psv-term-badge-anim {
+      .high-press-flash, .psv-term-marker-anim, .psv-term-badge-anim,
+      .ac-trigger-ripple, .cpap-alveoli-zeep, .cpap-alveoli-keep, .apnea-progress-anim, .apnea-backup-active,
+      .dual-stream-line, .dual-patient-card, .dual-circuit-card {
         animation: none !important;
       }
       /* Slide 31 印刷時は3つのタブ内容をすべて縦並びで出力 */
@@ -3936,13 +4013,66 @@
               <h3 style="font-size: 0.88em; font-weight: 900; text-align: center; margin-bottom: 10px; color: var(--header-navy);">
                 調節換気 (CMV: Control Mandatory Ventilation)
               </h3>
-              <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 10px; padding: 12px; margin-bottom: 10px;">
-                <svg viewBox="0 0 360 120" width="100%" height="115">
-                  <line x1="25" y1="15" x2="25" y2="105" stroke="#64748B" stroke-width="1.5"/>
-                  <line x1="15" y1="90" x2="345" y2="90" stroke="#334155" stroke-width="2"/>
+              <div style="background: #0F172A; border: 2px solid #334155; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.45);">
+                <svg viewBox="0 0 380 142" width="100%" height="132">
+                  <defs>
+                    <linearGradient id="cmvWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.42"/>
+                      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.02"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- 背景モニターグリッド -->
+                  <g stroke="#1E293B" stroke-width="1">
+                    <line x1="28" y1="30" x2="365" y2="30"/>
+                    <line x1="28" y1="62" x2="365" y2="62"/>
+                    <line x1="100" y1="15" x2="100" y2="102"/>
+                    <line x1="180" y1="15" x2="180" y2="102"/>
+                    <line x1="260" y1="15" x2="260" y2="102"/>
+                    <line x1="340" y1="15" x2="340" y2="102"/>
+                  </g>
+                  <!-- 座標軸＆PEEPベースライン -->
+                  <line x1="28" y1="14" x2="28" y2="112" stroke="#64748B" stroke-width="1.8"/>
+                  <line x1="22" y1="96" x2="368" y2="96" stroke="#475569" stroke-width="2"/>
+                  <text x="14" y="26" font-size="9.5" font-weight="800" fill="#94A3B8" text-anchor="middle">Paw</text>
+                  <text x="16" y="99" font-size="9" font-weight="700" fill="#64748B" text-anchor="middle">PEEP</text>
+
+                  <!-- 等間隔タイマーブラケット (T_cycle = 一定) -->
+                  <g stroke="#38BDF8" stroke-width="1.3" opacity="0.85">
+                    <line x1="45" y1="18" x2="125" y2="18" stroke-dasharray="3 2"/>
+                    <line x1="45" y1="14" x2="45" y2="23"/>
+                    <line x1="125" y1="14" x2="125" y2="23"/>
+                    <line x1="125" y1="18" x2="205" y2="18" stroke-dasharray="3 2"/>
+                    <line x1="205" y1="14" x2="205" y2="23"/>
+                    <line x1="205" y1="18" x2="285" y2="18" stroke-dasharray="3 2"/>
+                    <line x1="285" y1="14" x2="285" y2="23"/>
+                  </g>
+                  <text x="85" y="13" font-size="9.5" font-weight="800" fill="#7DD3FC" text-anchor="middle">⏱ 一定周期 (5.0s)</text>
+                  <text x="165" y="13" font-size="9.5" font-weight="800" fill="#7DD3FC" text-anchor="middle">⏱ 一定周期 (5.0s)</text>
+                  <text x="245" y="13" font-size="9.5" font-weight="800" fill="#7DD3FC" text-anchor="middle">⏱ 一定周期 (5.0s)</text>
+
+                  <!-- 波形塗りつぶし -->
+                  <path d="M 45 96 L 52 34 L 78 34 Q 86 96 96 96 L 125 96 L 132 34 L 158 34 Q 166 96 176 96 L 205 96 L 212 34 L 238 34 Q 246 96 256 96 L 285 96 L 292 34 L 318 34 Q 326 96 336 96 Z"
+                        fill="url(#cmvWaveGrad)"/>
                   <!-- 等間隔の規則的な強制換気波形 -->
-                  <path d="M 25 90 L 40 90 Q 48 25 56 25 Q 64 25 72 90 L 95 90 Q 103 25 111 25 Q 119 25 127 90 L 150 90 Q 158 25 166 25 Q 174 25 182 90 L 205 90 Q 213 25 221 25 Q 229 25 237 90 L 260 90 Q 268 25 276 25 Q 284 25 292 90 L 315 90 Q 323 25 331 25 Q 339 25 345 90"
-                        fill="none" stroke="#1E3A8A" stroke-width="3" stroke-linecap="round"/>
+                  <path id="cmvMotionPath" d="M 28 96 L 45 96 L 52 34 L 78 34 Q 86 96 96 96 L 125 96 L 132 34 L 158 34 Q 166 96 176 96 L 205 96 L 212 34 L 238 34 Q 246 96 256 96 L 285 96 L 292 34 L 318 34 Q 326 96 336 96 L 362 96"
+                        fill="none" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+                  <!-- 時間トリガー開始ポイントのクロックマーカー -->
+                  <g fill="#0284C7" stroke="#E0F2FE" stroke-width="1.5">
+                    <circle cx="45" cy="96" r="4"/>
+                    <circle cx="125" cy="96" r="4"/>
+                    <circle cx="205" cy="96" r="4"/>
+                    <circle cx="285" cy="96" r="4"/>
+                  </g>
+
+                  <!-- リアルタイム走査発光ドット -->
+                  <circle r="5.5" fill="#38BDF8" stroke="#FFFFFF" stroke-width="2" style="filter: drop-shadow(0 0 6px #38BDF8);">
+                    <animateMotion dur="4.8s" repeatCount="indefinite" path="M 28 96 L 45 96 L 52 34 L 78 34 Q 86 96 96 96 L 125 96 L 132 34 L 158 34 Q 166 96 176 96 L 205 96 L 212 34 L 238 34 Q 246 96 256 96 L 285 96 L 292 34 L 318 34 Q 326 96 336 96 L 362 96"/>
+                  </circle>
+
+                  <!-- 下部ステータスバー -->
+                  <rect x="28" y="114" width="336" height="22" rx="5" fill="#1E293B" stroke="#334155" stroke-width="1"/>
+                  <text x="196" y="129" font-size="10.5" font-weight="800" fill="#BAE6FD" text-anchor="middle">TIME-TRIGGERED：陰圧ディップなし・機械タイマー主導で送気</text>
                 </svg>
               </div>
               <p style="font-size: 0.72em; font-weight: 700; line-height: 1.55; color: var(--text-main);">
@@ -3955,23 +4085,68 @@
               <h3 style="font-size: 0.88em; font-weight: 900; text-align: center; margin-bottom: 10px; color: var(--header-navy);">
                 補助換気 (AV: Assist Ventilation)
               </h3>
-              <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 10px; padding: 12px; margin-bottom: 10px;">
-                <svg viewBox="0 0 360 120" width="100%" height="115">
-                  <line x1="25" y1="15" x2="25" y2="105" stroke="#64748B" stroke-width="1.5"/>
-                  <line x1="15" y1="82" x2="345" y2="82" stroke="#334155" stroke-width="2"/>
+              <div style="background: #0F172A; border: 2px solid #334155; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.45);">
+                <svg viewBox="0 0 380 142" width="100%" height="132">
+                  <defs>
+                    <linearGradient id="avWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#34D399" stop-opacity="0.42"/>
+                      <stop offset="100%" stop-color="#34D399" stop-opacity="0.02"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- 背景モニターグリッド -->
+                  <g stroke="#1E293B" stroke-width="1">
+                    <line x1="28" y1="30" x2="365" y2="30"/>
+                    <line x1="28" y1="62" x2="365" y2="62"/>
+                    <line x1="100" y1="15" x2="100" y2="102"/>
+                    <line x1="180" y1="15" x2="180" y2="102"/>
+                    <line x1="260" y1="15" x2="260" y2="102"/>
+                    <line x1="340" y1="15" x2="340" y2="102"/>
+                  </g>
+                  <!-- 座標軸＆PEEPベースライン -->
+                  <line x1="28" y1="14" x2="28" y2="112" stroke="#64748B" stroke-width="1.8"/>
+                  <line x1="22" y1="88" x2="368" y2="88" stroke="#475569" stroke-width="2"/>
+                  <text x="14" y="26" font-size="9.5" font-weight="800" fill="#94A3B8" text-anchor="middle">Paw</text>
+                  <text x="16" y="91" font-size="9" font-weight="700" fill="#64748B" text-anchor="middle">PEEP</text>
+
+                  <!-- トリガー閾値ライン（アンバー破線） -->
+                  <line x1="28" y1="99" x2="365" y2="99" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85"/>
+                  <text x="362" y="109" font-size="8.5" font-weight="800" fill="#FBBF24" text-anchor="end">Trigger感度閾値</text>
+
+                  <!-- 波形塗りつぶし -->
+                  <path d="M 55 88 L 62 28 L 88 28 Q 96 88 106 88 L 132 88 L 139 28 L 165 28 Q 173 88 183 88 L 198 88 L 205 28 L 231 28 Q 239 88 249 88 L 296 88 L 303 28 L 329 28 Q 337 88 347 88 Z"
+                        fill="url(#avWaveGrad)"/>
+
                   <!-- トリガー陰圧ディップ付きの補助換気波形 -->
-                  <path d="M 25 82 L 42 82 L 48 95 L 53 82 Q 62 20 70 20 Q 78 20 88 82 L 118 82 L 124 95 L 129 82 Q 138 20 146 20 Q 154 20 164 82 L 185 82 L 191 95 L 196 82 Q 205 20 213 20 Q 221 20 231 82 L 285 82 L 291 95 L 296 82 Q 305 20 313 20 Q 321 20 331 82 L 345 82"
-                        fill="none" stroke="#1E3A8A" stroke-width="3" stroke-linecap="round"/>
-                  <!-- 吸気努力トリガーの点線丸ハイライト -->
-                  <circle cx="48" cy="88" r="14" fill="none" stroke="#D97706" stroke-width="2.2" stroke-dasharray="3 2"/>
-                  <circle cx="124" cy="88" r="14" fill="none" stroke="#D97706" stroke-width="2.2" stroke-dasharray="3 2"/>
-                  <circle cx="191" cy="88" r="14" fill="none" stroke="#D97706" stroke-width="2.2" stroke-dasharray="3 2"/>
-                  <circle cx="291" cy="88" r="14" fill="none" stroke="#D97706" stroke-width="2.2" stroke-dasharray="3 2"/>
-                  <text x="235" y="114" font-size="11.5" font-weight="800" fill="#B45309">← 患者の吸気努力（トリガー）</text>
+                  <path d="M 28 88 L 44 88 L 50 103 L 55 88 L 62 28 L 88 28 Q 96 88 106 88 L 121 88 L 127 103 L 132 88 L 139 28 L 165 28 Q 173 88 183 88 L 187 88 L 193 103 L 198 88 L 205 28 L 231 28 Q 239 88 249 88 L 285 88 L 291 103 L 296 88 L 303 28 L 329 28 Q 337 88 347 88 L 362 88"
+                        fill="none" stroke="#34D399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+                  <!-- 吸気努力トリガーの波紋パルス＆センサーマーカー -->
+                  <g fill="none" stroke="#F59E0B">
+                    <circle cx="50" cy="101" r="9" class="ac-trigger-ripple"/>
+                    <circle cx="127" cy="101" r="9" class="ac-trigger-ripple" style="animation-delay: 0.4s;"/>
+                    <circle cx="193" cy="101" r="9" class="ac-trigger-ripple" style="animation-delay: 0.8s;"/>
+                    <circle cx="291" cy="101" r="9" class="ac-trigger-ripple" style="animation-delay: 1.2s;"/>
+                  </g>
+                  <g fill="#F59E0B" stroke="#FEF3C7" stroke-width="1.2">
+                    <circle cx="50" cy="101" r="3.5"/>
+                    <circle cx="127" cy="101" r="3.5"/>
+                    <circle cx="193" cy="101" r="3.5"/>
+                    <circle cx="291" cy="101" r="3.5"/>
+                  </g>
+                  <text x="196" y="14" font-size="9.5" font-weight="800" fill="#FDE68A" text-anchor="middle">⚡ 患者の吸気陰圧（黄点）を感知した瞬間にアシスト送気</text>
+
+                  <!-- リアルタイム走査発光ドット -->
+                  <circle r="5.5" fill="#34D399" stroke="#FFFFFF" stroke-width="2" style="filter: drop-shadow(0 0 6px #34D399);">
+                    <animateMotion dur="4.8s" repeatCount="indefinite" path="M 28 88 L 44 88 L 50 103 L 55 88 L 62 28 L 88 28 Q 96 88 106 88 L 121 88 L 127 103 L 132 88 L 139 28 L 165 28 Q 173 88 183 88 L 187 88 L 193 103 L 198 88 L 205 28 L 231 28 Q 239 88 249 88 L 285 88 L 291 103 L 296 88 L 303 28 L 329 28 Q 337 88 347 88 L 362 88"/>
+                  </circle>
+
+                  <!-- 下部ステータスバー -->
+                  <rect x="28" y="114" width="336" height="22" rx="5" fill="#1E293B" stroke="#334155" stroke-width="1"/>
+                  <text x="196" y="129" font-size="10.5" font-weight="800" fill="#A7F3D0" text-anchor="middle">PATIENT-TRIGGERED：自発吸気努力に完全同期して送気</text>
                 </svg>
               </div>
               <p style="font-size: 0.72em; font-weight: 700; line-height: 1.55; color: var(--text-main);">
-                <strong>患者の吸気努力（トリガー）を感知して</strong>、設定されたガスを送気する（換気タイミングは不規則）。
+                <strong>患者の吸気努力（トリガー）を感知して</strong>、設定されたガスを送気する（換気タイミングは患者主導）。
               </p>
             </div>
           </div>
@@ -4205,27 +4380,101 @@
         </div>
 
         <div class="slide-content-layer">
-          <!-- 上段：CPAP波形グラフ -->
-          <div class="info-panel" style="padding: 14px 22px;">
-            <svg viewBox="0 0 800 185" width="100%" height="180">
-              <!-- グリッド線 -->
-              <line x1="50" y1="20" x2="50" y2="165" stroke="#475569" stroke-width="2"/>
-              <line x1="40" y1="155" x2="770" y2="155" stroke="#475569" stroke-width="2"/>
-              <text x="30" y="160" font-size="14" font-weight="800" fill="#475569">0</text>
+          <!-- 上段：CPAP波形モニター ＆ 呼気終末の肺胞開存動態比較 -->
+          <div class="info-panel" style="padding: 12px 18px; background: #F8FAFC; border: 2px solid #CBD5E1;">
+            <svg viewBox="0 0 880 198" width="100%" height="188">
+              <defs>
+                <linearGradient id="cpapCushionGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#F97316" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#F97316" stop-opacity="0.06"/>
+                </linearGradient>
+                <radialGradient id="alvOpenGrad" cx="35%" cy="35%" r="65%">
+                  <stop offset="0%" stop-color="#BAE6FD"/>
+                  <stop offset="55%" stop-color="#38BDF8"/>
+                  <stop offset="100%" stop-color="#0284C7"/>
+                </radialGradient>
+                <radialGradient id="alvCollapseGrad" cx="40%" cy="40%" r="65%">
+                  <stop offset="0%" stop-color="#CBD5E1"/>
+                  <stop offset="65%" stop-color="#94A3B8"/>
+                  <stop offset="100%" stop-color="#475569"/>
+                </radialGradient>
+              </defs>
 
-              <!-- 一定のベースライン（PEEP：オレンジ） -->
-              <line x1="50" y1="112" x2="770" y2="112" stroke="#F97316" stroke-width="3.5"/>
-              <line x1="125" y1="115" x2="125" y2="152" stroke="#F97316" stroke-width="2.5"/>
-              <polygon points="120,122 125,112 130,122" fill="#F97316"/>
-              <polygon points="120,145 125,155 130,145" fill="#F97316"/>
-              <text x="140" y="140" font-size="16" font-weight="800" fill="#EA580C">一定のベースライン (PEEP)</text>
+              <!-- 左エリア (0〜495px)：CPAP 持続陽圧波形モニター -->
+              <rect x="10" y="8" width="475" height="182" rx="10" fill="#0F172A" stroke="#334155" stroke-width="2"/>
+              <g stroke="#1E293B" stroke-width="1">
+                <line x1="48" y1="42" x2="468" y2="42"/>
+                <line x1="48" y1="80" x2="468" y2="80"/>
+                <line x1="48" y1="118" x2="468" y2="118"/>
+                <line x1="150" y1="22" x2="150" y2="158"/>
+                <line x1="260" y1="22" x2="260" y2="158"/>
+                <line x1="370" y1="22" x2="370" y2="158"/>
+              </g>
+              <line x1="48" y1="20" x2="48" y2="162" stroke="#64748B" stroke-width="2"/>
+              <line x1="42" y1="156" x2="470" y2="156" stroke="#64748B" stroke-width="2"/>
+              <text x="30" y="160" font-size="12" font-weight="800" fill="#94A3B8" text-anchor="middle">0</text>
+              <text x="28" y="34" font-size="10.5" font-weight="800" fill="#94A3B8" text-anchor="middle">Paw</text>
 
-              <!-- 自然な自発呼吸（サインカーブ） -->
-              <path d="M 50 105 C 75 105, 90 35, 115 35 C 140 35, 155 105, 180 105 C 205 105, 220 35, 245 35 C 270 35, 285 105, 310 105 C 335 105, 350 35, 375 35 C 400 35, 415 105, 440 105 C 465 105, 480 35, 505 35 C 530 35, 545 105, 570 105 C 595 105, 610 35, 635 35 C 660 35, 675 105, 700 105 C 725 105, 740 35, 760 70"
-                    fill="none" stroke="#475569" stroke-width="3"/>
-              <path d="M 50 110 C 75 110, 90 42, 115 42 C 140 42, 155 110, 180 110 C 205 110, 220 42, 245 42 C 270 42, 285 110, 310 110 C 335 110, 350 42, 375 42 C 400 42, 415 110, 440 110 C 465 110, 480 42, 505 42 C 530 42, 545 110, 570 110 C 595 110, 610 42, 635 42 C 660 42, 675 110, 700 110 C 725 110, 740 42, 760 76"
-                    fill="none" stroke="#FDBA74" stroke-width="2.5"/>
-              <text x="540" y="32" font-size="16" font-weight="800" fill="#334155">自然な自発呼吸</text>
+              <!-- 持続陽圧クッション帯（0 → PEEPベースライン） -->
+              <rect x="49" y="108" width="419" height="47" fill="url(#cpapCushionGrad)"/>
+              <line x1="48" y1="108" x2="470" y2="108" stroke="#F97316" stroke-width="3" stroke-dasharray="6 3"/>
+              <text x="26" y="112" font-size="10" font-weight="900" fill="#FB923C" text-anchor="middle">+8</text>
+
+              <!-- 陽圧サポート矢印 -->
+              <g stroke="#FB923C" stroke-width="2" fill="#FB923C">
+                <line x1="92" y1="152" x2="92" y2="114"/>
+                <polygon points="88,118 92,110 96,118"/>
+                <line x1="255" y1="152" x2="255" y2="114"/>
+                <polygon points="251,118 255,110 259,118"/>
+                <line x1="415" y1="152" x2="415" y2="114"/>
+                <polygon points="411,118 415,110 419,118"/>
+              </g>
+              <rect x="115" y="122" width="248" height="22" rx="5" fill="rgba(15,23,42,0.85)" stroke="#F97316" stroke-width="1.2"/>
+              <text x="239" y="137" font-size="11.5" font-weight="900" fill="#FDBA74" text-anchor="middle">持続的気道陽圧 (CPAP / PEEP ベースライン)</text>
+
+              <!-- CPAP上の自然な自発呼吸曲線 -->
+              <path d="M 48 108 C 68 108, 80 122, 94 108 C 110 88, 122 44, 142 44 C 162 44, 174 108, 194 108 C 214 108, 226 122, 240 108 C 256 88, 268 44, 288 44 C 308 44, 320 108, 340 108 C 360 108, 372 122, 386 108 C 402 88, 414 44, 434 44 C 448 44, 458 95, 468 108"
+                    fill="none" stroke="#38BDF8" stroke-width="3.2" stroke-linecap="round"/>
+              <circle r="5.5" fill="#38BDF8" stroke="#FFFFFF" stroke-width="2" style="filter: drop-shadow(0 0 6px #38BDF8);">
+                <animateMotion dur="4.5s" repeatCount="indefinite" path="M 48 108 C 68 108, 80 122, 94 108 C 110 88, 122 44, 142 44 C 162 44, 174 108, 194 108 C 214 108, 226 122, 240 108 C 256 88, 268 44, 288 44 C 308 44, 320 108, 340 108 C 360 108, 372 122, 386 108 C 402 88, 414 44, 434 44 C 448 44, 458 95, 468 108"/>
+              </circle>
+              <text x="260" y="28" font-size="12" font-weight="900" fill="#E0F2FE" text-anchor="middle">陽圧ベースライン上での自由な自発呼吸</text>
+
+              <!-- 右エリア (500〜870px)：呼気終末の肺胞動態比較（ZEEP vs CPAP） -->
+              <!-- 1. ZEEP (CPAPなし：呼気終末虚脱) -->
+              <rect x="500" y="8" width="180" height="182" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+              <rect x="508" y="14" width="164" height="22" rx="5" fill="#F1F5F9"/>
+              <text x="590" y="29" font-size="11" font-weight="900" fill="#475569" text-anchor="middle">CPAPなし (0 cmH₂O)</text>
+              <!-- 細気管支 -->
+              <path d="M 584 42 L 584 74 M 596 42 L 596 74" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>
+              <!-- 虚脱しやすい肺胞クラスター -->
+              <g class="cpap-alveoli-zeep">
+                <circle cx="572" cy="96" r="18" fill="url(#alvCollapseGrad)" stroke="#475569" stroke-width="1.8"/>
+                <circle cx="608" cy="96" r="18" fill="url(#alvCollapseGrad)" stroke="#475569" stroke-width="1.8"/>
+                <circle cx="590" cy="116" r="20" fill="url(#alvCollapseGrad)" stroke="#475569" stroke-width="1.8"/>
+              </g>
+              <text x="590" y="160" font-size="10.5" font-weight="900" fill="#DC2626" text-anchor="middle">⚠ 呼気終末に肺胞が虚脱</text>
+              <text x="590" y="176" font-size="9.5" font-weight="700" fill="#64748B" text-anchor="middle">再膨張に大きな呼吸仕事量</text>
+
+              <!-- 2. CPAPあり (持続陽圧による肺胞開存維持) -->
+              <rect x="690" y="8" width="180" height="182" rx="10" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2.2"/>
+              <rect x="698" y="14" width="164" height="22" rx="5" fill="#FEF3C7"/>
+              <text x="780" y="29" font-size="11" font-weight="900" fill="#B45309" text-anchor="middle">CPAPあり (+陽圧維持)</text>
+              <!-- 細気管支＋陽圧流入ベクトル -->
+              <path d="M 774 42 L 774 72 M 786 42 L 786 72" stroke="#D97706" stroke-width="3.2" stroke-linecap="round"/>
+              <path d="M 780 44 L 780 68" stroke="#F97316" stroke-width="2.5" stroke-dasharray="3 2"/>
+              <!-- 開存が保たれる肺胞クラスター＆毛細血管網 -->
+              <g class="cpap-alveoli-keep">
+                <circle cx="760" cy="94" r="21" fill="url(#alvOpenGrad)" stroke="#0284C7" stroke-width="2"/>
+                <circle cx="800" cy="94" r="21" fill="url(#alvOpenGrad)" stroke="#0284C7" stroke-width="2"/>
+                <circle cx="780" cy="116" r="23" fill="url(#alvOpenGrad)" stroke="#0284C7" stroke-width="2"/>
+                <path d="M 742 118 Q 780 144 818 118" fill="none" stroke="#EF4444" stroke-width="2.8" stroke-linecap="round" opacity="0.85"/>
+                <!-- 内部で外向きに支える陽圧矢印 -->
+                <line x1="780" y1="106" x2="780" y2="128" stroke="#FFF" stroke-width="1.8"/>
+                <line x1="768" y1="116" x2="792" y2="116" stroke="#FFF" stroke-width="1.8"/>
+              </g>
+              <text x="780" y="160" font-size="10.5" font-weight="900" fill="#047857" text-anchor="middle">✅ 呼気終末も丸く開存 (FRC↑)</text>
+              <text x="780" y="176" font-size="9.5" font-weight="800" fill="#B45309" text-anchor="middle">酸素化改善 ＆ 吸気負担軽減</text>
             </svg>
           </div>
 
@@ -4475,42 +4724,83 @@
         </div>
 
         <div class="slide-content-layer">
-          <!-- 上段：3フェーズ時系列波形 -->
-          <div class="info-panel" style="padding: 14px 20px;">
-            <svg viewBox="0 0 860 190" width="100%" height="185">
-              <!-- 上部ステップバー 1 -> 2 -> 3 -->
-              <rect x="60" y="10" width="240" height="26" fill="#DBEAFE"/>
-              <text x="180" y="28" font-size="15" font-weight="900" fill="#1E3A8A" text-anchor="middle">1</text>
-              <rect x="305" y="10" width="250" height="26" fill="#3B82F6"/>
-              <text x="430" y="28" font-size="15" font-weight="900" fill="#FFFFFF" text-anchor="middle">2</text>
-              <rect x="560" y="10" width="260" height="26" fill="#1E293B"/>
-              <text x="690" y="28" font-size="15" font-weight="900" fill="#FFFFFF" text-anchor="middle">3</text>
+          <!-- 上段：3フェーズ時系列ライブモニター（自発呼吸 → 無呼吸タイマー計測 → 自動バックアップ強制換気） -->
+          <div class="info-panel" style="padding: 12px 18px; background: #0F172A; border: 2px solid #334155; box-shadow: var(--shadow-md);">
+            <svg viewBox="0 0 860 198" width="100%" height="188">
+              <defs>
+                <linearGradient id="apneaSpontGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.38"/>
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.03"/>
+                </linearGradient>
+                <linearGradient id="apneaBackupGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.48"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="0.05"/>
+                </linearGradient>
+              </defs>
+
+              <!-- 上部フェーズヘッダー (1 -> 2 -> 3) -->
+              <rect x="55" y="8" width="245" height="26" rx="5" fill="#1E293B" stroke="#38BDF8" stroke-width="1.5"/>
+              <text x="177" y="25" font-size="12.5" font-weight="900" fill="#7DD3FC" text-anchor="middle">PHASE 1｜自発呼吸 (SPN-CPAP/PS)</text>
+
+              <rect x="306" y="8" width="258" height="26" rx="5" fill="#1E293B" stroke="#F43F5E" stroke-width="1.5"/>
+              <text x="435" y="25" font-size="12.5" font-weight="900" fill="#FDA4AF" text-anchor="middle">PHASE 2｜無呼吸検知 ＆ タイマー計測</text>
+
+              <rect x="570" y="8" width="265" height="26" rx="5" fill="#1E293B" stroke="#10B981" stroke-width="1.5"/>
+              <text x="702" y="25" font-size="12.5" font-weight="900" fill="#6EE7B7" text-anchor="middle">PHASE 3｜アプニア強制換気 自動起動</text>
+
+              <!-- 背景グリッド＆フェーズ境界線 -->
+              <g stroke="#1E293B" stroke-width="1">
+                <line x1="55" y1="62" x2="835" y2="62"/>
+                <line x1="55" y1="98" x2="835" y2="98"/>
+              </g>
+              <line x1="303" y1="38" x2="303" y2="152" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <line x1="567" y1="38" x2="567" y2="152" stroke="#F43F5E" stroke-width="2" stroke-dasharray="5 3"/>
 
               <!-- 波形軸 -->
-              <line x1="60" y1="45" x2="60" y2="140" stroke="#334155" stroke-width="2"/>
-              <line x1="60" y1="135" x2="825" y2="135" stroke="#334155" stroke-width="2"/>
-              <text x="28" y="95" font-size="14" font-weight="800" fill="#334155" text-anchor="middle">圧力</text>
+              <line x1="55" y1="40" x2="55" y2="150" stroke="#64748B" stroke-width="2"/>
+              <line x1="50" y1="138" x2="838" y2="138" stroke="#64748B" stroke-width="2"/>
+              <text x="26" y="92" font-size="12" font-weight="800" fill="#94A3B8" text-anchor="middle">Paw</text>
+              <text x="26" y="141" font-size="10" font-weight="700" fill="#64748B" text-anchor="middle">PEEP</text>
 
-              <!-- 1: 自発呼吸波形 -->
-              <path d="M 60 112 Q 80 112 95 75 Q 110 48 120 75 Q 135 120 160 132 L 180 112 Q 200 112 215 75 Q 230 48 240 75 Q 255 120 280 132 L 295 112 L 315 112 L 320 134"
-                    fill="rgba(147,197,253,0.35)" stroke="#475569" stroke-width="3"/>
+              <!-- Phase 1: 自発呼吸波形塗りつぶし -->
+              <path d="M 65 138 Q 82 138 95 72 Q 108 46 122 72 Q 136 125 155 138 L 182 138 Q 198 138 212 72 Q 225 46 238 72 Q 252 125 272 138 Z"
+                    fill="url(#apneaSpontGrad)"/>
 
-              <!-- 2: 無呼吸フラットライン＋砂時計 -->
-              <line x1="320" y1="134" x2="575" y2="134" stroke="#E11D48" stroke-width="4"/>
-              <rect x="380" y="65" width="160" height="34" rx="17" fill="#FFF1F2" stroke="#E11D48" stroke-width="2.5" class="pulse-attention"/>
-              <text x="460" y="87" font-size="14" font-weight="900" fill="#BE123C" text-anchor="middle">⏳ 無呼吸（設定時間超過）</text>
+              <!-- Phase 2: 無呼吸タイムアウト・プログレスバー＆警告パネル -->
+              <rect x="332" y="50" width="206" height="58" rx="8" fill="rgba(15,23,42,0.92)" stroke="#F43F5E" stroke-width="1.8"/>
+              <text x="435" y="69" font-size="11.5" font-weight="900" fill="#FECDD3" text-anchor="middle">⏳ APNEA TIMER (設定: 20秒)</text>
+              <!-- プログレスバー外枠と動的塗りつぶし -->
+              <rect x="347" y="77" width="176" height="12" rx="6" fill="#1E293B" stroke="#475569" stroke-width="1"/>
+              <rect x="347" y="77" width="176" height="12" rx="6" fill="#EF4444" class="apnea-progress-anim"/>
+              <text x="435" y="102" font-size="9.5" font-weight="800" fill="#FDA4AF" text-anchor="middle">無呼吸が設定時間を超過 → バックアップ発動</text>
 
-              <!-- 3: 自動的な強制換気の開始（方形波） -->
-              <path d="M 575 134 L 585 50 L 635 50 L 645 134 L 685 134 L 695 50 L 745 50 L 755 134 L 810 134"
-                    fill="rgba(30,58,138,0.65)" stroke="#1E293B" stroke-width="3"/>
+              <!-- Phase 3: 自動強制換気（矩形波）塗りつぶし＆作動バッジ -->
+              <path d="M 575 138 L 584 52 L 636 52 L 645 138 M 682 138 L 691 52 L 743 52 L 752 138 M 785 138 L 794 52 L 828 52 L 834 138 Z"
+                    fill="url(#apneaBackupGrad)"/>
+              <g class="apnea-backup-active">
+                <rect x="582" y="156" width="242" height="28" rx="6" fill="#065F46" stroke="#34D399" stroke-width="2"/>
+                <text x="703" y="175" font-size="12" font-weight="900" fill="#ECFDF5" text-anchor="middle">🚨 BACKUP ON：設定VT・RRで強制換気</text>
+              </g>
 
-              <!-- 下部ステップバー -->
-              <rect x="60" y="152" width="240" height="28" fill="#DBEAFE"/>
-              <text x="180" y="171" font-size="14" font-weight="900" fill="#1E293B" text-anchor="middle">自発呼吸 (SPN-CPAP)</text>
-              <rect x="305" y="152" width="250" height="28" fill="#3B82F6"/>
-              <text x="430" y="171" font-size="14" font-weight="900" fill="#FFFFFF" text-anchor="middle">無呼吸</text>
-              <rect x="560" y="152" width="260" height="28" fill="#1E293B"/>
-              <text x="690" y="171" font-size="14" font-weight="900" fill="#FFFFFF" text-anchor="middle">自動的な強制換気の開始</text>
+              <!-- 1〜3を通しでつなぐメイン圧力波形パス -->
+              <path d="M 55 138 L 65 138 Q 82 138 95 72 Q 108 46 122 72 Q 136 125 155 138 L 182 138 Q 198 138 212 72 Q 225 46 238 72 Q 252 125 272 138 L 303 138 L 567 138 L 575 138 L 584 52 L 636 52 L 645 138 L 682 138 L 691 52 L 743 52 L 752 138 L 785 138 L 794 52 L 828 52 L 834 138"
+                    fill="none" stroke="#E2E8F0" stroke-width="2.2" opacity="0.35"/>
+              <path d="M 55 138 L 65 138 Q 82 138 95 72 Q 108 46 122 72 Q 136 125 155 138 L 182 138 Q 198 138 212 72 Q 225 46 238 72 Q 252 125 272 138 L 303 138"
+                    fill="none" stroke="#38BDF8" stroke-width="3.2" stroke-linecap="round"/>
+              <line x1="303" y1="138" x2="567" y2="138" stroke="#F43F5E" stroke-width="3.8"/>
+              <path d="M 567 138 L 575 138 L 584 52 L 636 52 L 645 138 L 682 138 L 691 52 L 743 52 L 752 138 L 785 138 L 794 52 L 828 52 L 834 138"
+                    fill="none" stroke="#10B981" stroke-width="3.4" stroke-linejoin="round"/>
+
+              <!-- 6秒周期でPhase 1→2→3を走査するライブスキャンドット -->
+              <circle r="6.5" fill="#FACC15" stroke="#FFFFFF" stroke-width="2" style="filter: drop-shadow(0 0 8px #FACC15);">
+                <animateMotion dur="6s" repeatCount="indefinite" path="M 55 138 L 65 138 Q 82 138 95 72 Q 108 46 122 72 Q 136 125 155 138 L 182 138 Q 198 138 212 72 Q 225 46 238 72 Q 252 125 272 138 L 303 138 L 567 138 L 575 138 L 584 52 L 636 52 L 645 138 L 682 138 L 691 52 L 743 52 L 752 138 L 785 138 L 794 52 L 828 52 L 834 138"/>
+              </circle>
+
+              <!-- 下部フェーズ説明ラベル (Phase 1 & 2) -->
+              <rect x="65" y="156" width="228" height="26" rx="5" fill="#1E293B" stroke="#334155"/>
+              <text x="179" y="173" font-size="11.5" font-weight="800" fill="#BAE6FD" text-anchor="middle">通常：患者の自発吸気で換気維持</text>
+              <rect x="316" y="156" width="238" height="26" rx="5" fill="#1E293B" stroke="#881337"/>
+              <text x="435" y="173" font-size="11.5" font-weight="800" fill="#FECDD3" text-anchor="middle">鎮静・疲労等で自発トリガー消失</text>
             </svg>
           </div>
 
@@ -4676,55 +4966,96 @@
             </div>
           </div>
 
-          <!-- 中段：左（患者のアセスメント）← 中央モニター → 右（回路・デバイスの点検） -->
-          <div style="display: grid; grid-template-columns: 1fr 220px 1fr; gap: 16px; align-items: center;">
+          <!-- 中段：左（患者のアセスメント）← 中央デュアルスキャンモニター → 右（回路・デバイスの点検） -->
+          <div style="display: grid; grid-template-columns: 1fr 250px 1fr; gap: 14px; align-items: center;">
             <!-- 左：患者のアセスメント -->
-            <div class="info-panel green fragment fade-up" style="border: 3px solid #689F80; padding: 16px 20px;">
-              <h3 style="font-size: 0.95em; font-weight: 900; text-align: center; margin-bottom: 12px; color: #1E293B;">
-                <i class="fa-solid fa-stethoscope" style="color:var(--mute-green);"></i> 患者のアセスメント
+            <div class="info-panel green dual-patient-card fragment fade-up" style="border: 3px solid #10B981; padding: 16px 20px; background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1.5px solid #A7F3D0; padding-bottom:6px;">
+                <span style="background:#059669; color:#FFF; font-size:0.62em; font-weight:900; padding:2px 8px; border-radius:999px;">STEP 01｜FIRST</span>
+                <span style="font-size:0.65em; font-weight:800; color:#047857;">生体・フィジカル確認</span>
+              </div>
+              <h3 style="font-size: 0.95em; font-weight: 900; text-align: center; margin-bottom: 12px; color: #064E3B;">
+                <i class="fa-solid fa-stethoscope" style="color:#059669;"></i> 患者のアセスメント
               </h3>
               <div style="display: flex; align-items: center; justify-content: space-around;">
-                <div class="char-avatar" style="width: 78px; height: 78px; border-width: 3px; border-color: #EC4899;">
+                <div class="char-avatar" style="width: 78px; height: 78px; border-width: 3px; border-color: #10B981;">
                   <img src="assets/icon ns.png" alt="看護師">
                 </div>
-                <ul style="font-size: 0.85em; font-weight: 800; line-height: 1.85; margin: 0; padding-left: 1.2em;">
+                <ul style="font-size: 0.85em; font-weight: 800; line-height: 1.85; margin: 0; padding-left: 1.2em; color:#1E293B;">
                   <li>自発呼吸の有無</li>
                   <li>呼吸音（左右差・副雑音）</li>
-                  <li>努力呼吸・表情</li>
-                  <li>鎮静レベル</li>
+                  <li>努力呼吸・苦悶表情</li>
+                  <li>鎮静レベル・バッキング</li>
                 </ul>
               </div>
             </div>
 
-            <!-- 中央：モニターアイコン＆左右矢印 -->
+            <!-- 中央：デュアル・スキャン生体/呼吸器統合モニター＆光ストリームベクトル -->
             <div style="text-align: center;">
-              <div style="background: #1E293B; border: 4px solid #64748B; border-radius: 10px; padding: 12px; color: #FFF; box-shadow: var(--shadow-md);">
-                <div style="font-size: 0.65em; color: #FCA5A5; font-weight: 800; margin-bottom: 4px;">🔔 ALARM ACTIVE</div>
-                <svg viewBox="0 0 140 70" width="100%" height="65">
-                  <path d="M 0 20 L 30 20 L 38 8 L 46 32 L 54 20 L 90 20 L 98 8 L 106 32 L 114 20 L 140 20" fill="none" stroke="#4ADE80" stroke-width="2"/>
-                  <path d="M 0 45 Q 20 25 40 45 Q 60 65 80 45 Q 100 25 120 45 L 140 45" fill="none" stroke="#F59E0B" stroke-width="2"/>
-                </svg>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-top: 8px; font-weight: 900; font-size: 0.75em;">
-                <span style="color: var(--mute-green);">◀ 患者を診る</span>
-                <span style="color: var(--mute-orange);">回路を診る ▶</span>
-              </div>
+              <svg viewBox="0 0 250 190" width="100%" height="185" style="overflow: visible;">
+                <!-- 左（患者側）への双方向スキャンライン＆光粒子 -->
+                <path d="M 48 92 L 2 92" stroke="#10B981" stroke-width="3.5" stroke-dasharray="6 4" class="dual-stream-line"/>
+                <polygon points="10,85 0,92 10,99" fill="#10B981"/>
+                <circle r="4.5" fill="#34D399" stroke="#FFFFFF" stroke-width="1.5" style="filter: drop-shadow(0 0 5px #10B981);">
+                  <animateMotion dur="1.6s" repeatCount="indefinite" path="M 52 92 L 2 92"/>
+                </circle>
+
+                <!-- 右（回路側）への双方向スキャンライン＆光粒子 -->
+                <path d="M 202 92 L 248 92" stroke="#F59E0B" stroke-width="3.5" stroke-dasharray="6 4" class="dual-stream-line"/>
+                <polygon points="240,85 250,92 240,99" fill="#F59E0B"/>
+                <circle r="4.5" fill="#FBBF24" stroke="#FFFFFF" stroke-width="1.5" style="filter: drop-shadow(0 0 5px #F59E0B);">
+                  <animateMotion dur="1.6s" repeatCount="indefinite" path="M 198 92 L 248 92"/>
+                </circle>
+
+                <!-- 中央モニター筐体 -->
+                <rect x="46" y="18" width="158" height="122" rx="12" fill="#0F172A" stroke="#475569" stroke-width="3.5" style="filter: drop-shadow(0 8px 18px rgba(15,23,42,0.28));"/>
+                <!-- 上部赤色アラームステータスバー -->
+                <rect x="54" y="26" width="142" height="22" rx="5" fill="#991B1B" class="high-press-flash"/>
+                <text x="125" y="41" font-size="10.5" font-weight="900" fill="#FEF2F2" text-anchor="middle">🔔 ALARM DETECTED</text>
+
+                <!-- モニター内リアルタイム波形（上段：生体ECG/SpO2、下段：気道内圧/Flow） -->
+                <line x1="56" y1="80" x2="194" y2="80" stroke="#1E293B" stroke-width="1"/>
+                <line x1="56" y1="115" x2="194" y2="115" stroke="#1E293B" stroke-width="1"/>
+
+                <path id="dualEcgPath" d="M 58 74 L 82 74 L 88 58 L 94 86 L 100 74 L 134 74 L 140 58 L 146 86 L 152 74 L 192 74"
+                      fill="none" stroke="#34D399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle r="3.5" fill="#6EE7B7">
+                  <animateMotion dur="2.2s" repeatCount="indefinite" path="M 58 74 L 82 74 L 88 58 L 94 86 L 100 74 L 134 74 L 140 58 L 146 86 L 152 74 L 192 74"/>
+                </circle>
+
+                <path id="dualPawPath" d="M 58 122 Q 74 92 90 122 L 112 122 Q 128 92 144 122 L 166 122 Q 178 96 192 122"
+                      fill="none" stroke="#FBBF24" stroke-width="2.2" stroke-linecap="round"/>
+                <circle r="3.5" fill="#FDE68A">
+                  <animateMotion dur="2.2s" repeatCount="indefinite" path="M 58 122 Q 74 92 90 122 L 112 122 Q 128 92 144 122 L 166 122 Q 178 96 192 122"/>
+                </circle>
+
+                <!-- 下部デュアル・ラベル -->
+                <rect x="8" y="152" width="108" height="26" rx="6" fill="#DCFCE7" stroke="#10B981" stroke-width="1.5"/>
+                <text x="62" y="169" font-size="11" font-weight="900" fill="#065F46" text-anchor="middle">◀ ① 患者を診る</text>
+
+                <rect x="134" y="152" width="108" height="26" rx="6" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+                <text x="188" y="169" font-size="11" font-weight="900" fill="#92400E" text-anchor="middle">② 回路を診る ▶</text>
+              </svg>
             </div>
 
             <!-- 右：回路・デバイスの点検 -->
-            <div class="info-panel orange fragment fade-up" style="border: 3px solid #F6AD55; padding: 16px 20px;">
-              <h3 style="font-size: 0.95em; font-weight: 900; text-align: center; margin-bottom: 12px; color: #1E293B;">
-                <i class="fa-solid fa-screwdriver-wrench" style="color:var(--mute-orange);"></i> 回路・デバイスの点検
+            <div class="info-panel orange dual-circuit-card fragment fade-up" style="border: 3px solid #F59E0B; padding: 16px 20px; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1.5px solid #FDE68A; padding-bottom:6px;">
+                <span style="background:#D97706; color:#FFF; font-size:0.62em; font-weight:900; padding:2px 8px; border-radius:999px;">STEP 02｜SECOND</span>
+                <span style="font-size:0.65em; font-weight:800; color:#B45309;">機械・ルート確認</span>
+              </div>
+              <h3 style="font-size: 0.95em; font-weight: 900; text-align: center; margin-bottom: 12px; color: #78350F;">
+                <i class="fa-solid fa-screwdriver-wrench" style="color:#D97706;"></i> 回路・デバイスの点検
               </h3>
               <div style="display: flex; align-items: center; justify-content: space-around;">
-                <div class="char-avatar" style="width: 78px; height: 78px; border-width: 3px;">
+                <div class="char-avatar" style="width: 78px; height: 78px; border-width: 3px; border-color: #F59E0B;">
                   <img src="assets/icon ce.png" alt="CE">
                 </div>
-                <ul style="font-size: 0.85em; font-weight: 800; line-height: 1.85; margin: 0; padding-left: 1.2em;">
-                  <li>接続外れ</li>
+                <ul style="font-size: 0.85em; font-weight: 800; line-height: 1.85; margin: 0; padding-left: 1.2em; color:#1E293B;">
+                  <li>接続外れ・緩み</li>
                   <li>リーク（カフ・回路）</li>
-                  <li>閉塞（痰・人工鼻）</li>
-                  <li>屈曲・噛み込み</li>
+                  <li>閉塞（痰・人工鼻結露）</li>
+                  <li>チューブ屈曲・噛み込み</li>
                 </ul>
               </div>
             </div>
