@@ -1022,7 +1022,7 @@
     /* Slide 17: VCV ピストン往復アニメーション & PCV タービンファン回転 */
     @keyframes vcv-piston-push {
       0%, 100% { transform: translateX(0px); }
-      40%, 55% { transform: translateX(52px); }
+      40%, 55% { transform: translateX(46px); }
     }
     .vcv-piston-anim {
       animation: vcv-piston-push 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -1033,36 +1033,37 @@
       to { transform: rotate(360deg); }
     }
     .pcv-fan-anim {
-      transform-origin: 68px 72px;
-      animation: pcv-fan-spin 0.9s linear infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pcv-fan-spin 1.1s linear infinite;
     }
 
     @keyframes vcv-lung-inflate-normal {
-      0%, 100% { transform: scale(0.92); }
-      40%, 55% { transform: scale(1.07); }
+      0%, 100% { transform: scale(0.94, 0.93); }
+      40%, 55% { transform: scale(1.06, 1.07); }
     }
     @keyframes vcv-lung-inflate-stiff {
-      0%, 100% { transform: scale(0.90); }
-      40%, 55% { transform: scale(1.05); }
+      0%, 100% { transform: scale(0.92, 0.92); }
+      40%, 55% { transform: scale(1.04, 1.04); }
     }
     @keyframes pcv-lung-inflate-stiff {
-      0%, 100% { transform: scale(0.90); }
-      40%, 55% { transform: scale(0.96); }
+      0%, 100% { transform: scale(0.91, 0.91); }
+      40%, 55% { transform: scale(0.95, 0.95); }
     }
     .vcv-lung-anim-normal {
-      transform-origin: 280px 82px;
+      transform-origin: 292px 68px;
       animation: vcv-lung-inflate-normal 3.2s ease-in-out infinite;
     }
     .vcv-lung-anim-stiff {
-      transform-origin: 280px 82px;
+      transform-origin: 292px 68px;
       animation: vcv-lung-inflate-stiff 3.2s ease-in-out infinite;
     }
     .pcv-lung-anim-normal {
-      transform-origin: 280px 82px;
+      transform-origin: 292px 68px;
       animation: vcv-lung-inflate-normal 3.2s ease-in-out infinite;
     }
     .pcv-lung-anim-stiff {
-      transform-origin: 280px 82px;
+      transform-origin: 292px 68px;
       animation: pcv-lung-inflate-stiff 3.2s ease-in-out infinite;
     }
 
@@ -3575,97 +3576,163 @@
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <!-- ==================== 左：従量式 VCV（定容量ピストン＋圧力計＋解剖学的肺） ==================== -->
+            <!-- ==================== 左：従量式 VCV（定容量ピストンシリンダー＋気道内圧計＋解剖学的胸郭・肺葉モデル） ==================== -->
             <div id="vcvPanelCard" class="info-panel blue fragment fade-up" style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 8px 14px; transition: all 0.3s;">
-              <div style="background: #F8FAFC; border: 1.5px solid #BFDBFE; border-radius: 10px; padding: 4px; position: relative;">
-                <svg viewBox="0 0 380 175" width="100%" height="145" style="overflow: visible;">
+              <div style="background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%); border: 1.5px solid #93C5FD; border-radius: 12px; padding: 6px; position: relative; box-shadow: inset 0 2px 6px rgba(15,23,42,0.04);">
+                <svg viewBox="0 0 400 182" width="100%" height="150" style="overflow: visible;">
                   <defs>
                     <linearGradient id="syringeCylinderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stop-color="#E0F2FE"/>
-                      <stop offset="45%" stop-color="#FFFFFF"/>
-                      <stop offset="100%" stop-color="#BAE6FD"/>
+                      <stop offset="0%" stop-color="#DBEAFE"/>
+                      <stop offset="28%" stop-color="#FFFFFF"/>
+                      <stop offset="72%" stop-color="#F0F9FF"/>
+                      <stop offset="100%" stop-color="#93C5FD"/>
                     </linearGradient>
                     <linearGradient id="pistonMetalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stop-color="#94A3B8"/>
-                      <stop offset="50%" stop-color="#E2E8F0"/>
+                      <stop offset="0%" stop-color="#CBD5E1"/>
+                      <stop offset="45%" stop-color="#F8FAFC"/>
                       <stop offset="100%" stop-color="#475569"/>
                     </linearGradient>
-                    <linearGradient id="vcvLungNormalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#FDA4AF"/>
-                      <stop offset="55%" stop-color="#FB7185"/>
-                      <stop offset="100%" stop-color="#E11D48"/>
+                    <!-- 解剖学的右肺（3葉）・左肺（2葉）の立体陰影グラデーション -->
+                    <radialGradient id="anatLungParenchymaGrad" cx="38%" cy="35%" r="68%">
+                      <stop offset="0%" stop-color="#FECDD3"/>
+                      <stop offset="45%" stop-color="#FDA4AF"/>
+                      <stop offset="82%" stop-color="#E11D48"/>
+                      <stop offset="100%" stop-color="#9F1239"/>
+                    </radialGradient>
+                    <linearGradient id="tracheaCartilageGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#FDE68A"/>
+                      <stop offset="50%" stop-color="#FEF3C7"/>
+                      <stop offset="100%" stop-color="#F59E0B"/>
+                    </linearGradient>
+                    <linearGradient id="ardsConsolidationGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#881337" stop-opacity="0.25"/>
+                      <stop offset="55%" stop-color="#4C0519" stop-opacity="0.72"/>
+                      <stop offset="100%" stop-color="#1E1B4B" stop-opacity="0.88"/>
                     </linearGradient>
                   </defs>
 
-                  <!-- 1. 定容量シリンジ外筒（500mL目盛付き） -->
-                  <rect x="26" y="64" width="108" height="48" rx="6" fill="url(#syringeCylinderGrad)" stroke="#0284C7" stroke-width="2.5"/>
-                  <!-- シリンジ目盛線 -->
-                  <g stroke="#0369A1" stroke-width="1.5">
-                    <line x1="48" y1="64" x2="48" y2="74"/><line x1="66" y1="64" x2="66" y2="72"/><line x1="84" y1="64" x2="84" y2="74"/><line x1="102" y1="64" x2="102" y2="72"/><line x1="120" y1="64" x2="120" y2="74"/>
+                  <!-- 1. 定容量ピストンシリンダー（精密目盛・フランジ・金属シャフト付） -->
+                  <rect x="20" y="60" width="106" height="50" rx="6" fill="url(#syringeCylinderGrad)" stroke="#0284C7" stroke-width="2.2"/>
+                  <!-- シリンダー先端ノズル＆フランジ -->
+                  <rect x="18" y="55" width="5" height="60" rx="2" fill="#334155"/>
+                  <path d="M 126 74 L 136 80 L 136 90 L 126 96 Z" fill="#93C5FD" stroke="#0284C7" stroke-width="1.8"/>
+                  <!-- 容量目盛（100〜500 mL） -->
+                  <g stroke="#0369A1" stroke-width="1.3">
+                    <line x1="38" y1="60" x2="38" y2="70"/><line x1="56" y1="60" x2="56" y2="73"/><line x1="74" y1="60" x2="74" y2="70"/><line x1="92" y1="60" x2="92" y2="73"/><line x1="110" y1="60" x2="110" y2="70"/>
                   </g>
-                  <text x="80" y="126" font-size="11" font-weight="900" fill="#0369A1" text-anchor="middle">設定換気量: 500 mL 固定</text>
+                  <text x="56" y="81" font-size="7.5" font-weight="800" fill="#0369A1" text-anchor="middle">250</text>
+                  <text x="108" y="81" font-size="7.5" font-weight="800" fill="#0369A1" text-anchor="middle">500mL</text>
 
-                  <!-- 往復アニメーションするピストン＆プランジャー（一定ストローク） -->
+                  <!-- 往復アニメーションするピストン＆Oリングシール -->
                   <g class="vcv-piston-anim">
-                    <rect x="6" y="83" width="44" height="10" rx="3" fill="url(#pistonMetalGrad)" stroke="#334155" stroke-width="1.5"/>
-                    <rect x="2" y="72" width="8" height="32" rx="3" fill="#1E293B"/>
-                    <rect x="46" y="67" width="14" height="42" rx="3" fill="#0284C7" stroke="#0F172A" stroke-width="1.8"/>
+                    <rect x="2" y="81" width="44" height="8" rx="2" fill="url(#pistonMetalGrad)" stroke="#334155" stroke-width="1.4"/>
+                    <rect x="0" y="70" width="6" height="30" rx="2" fill="#0F172A"/>
+                    <rect x="44" y="63" width="12" height="44" rx="2.5" fill="#1E293B"/>
+                    <line x1="48" y1="63" x2="48" y2="107" stroke="#38BDF8" stroke-width="2"/>
                   </g>
 
-                  <!-- 2. 送気回路チューブ ＆ アネロイド圧力計 -->
-                  <path d="M 134 84 L 228 84 L 228 92 L 134 92 Z" fill="#BAE6FD" stroke="#0284C7" stroke-width="2"/>
-                  <!-- 回路内ガスフロー破線 -->
-                  <line x1="138" y1="88" x2="225" y2="88" stroke="#0284C7" stroke-width="3.5" class="flow-line"/>
+                  <!-- VCV ミニ波形モニター（矩形フロー ＆ 直線的圧上昇） -->
+                  <rect x="16" y="116" width="114" height="32" rx="6" fill="#0F172A" stroke="#334155" stroke-width="1.4"/>
+                  <text x="22" y="127" font-size="7.5" font-weight="800" fill="#38BDF8">Flow: 一定 (矩形波)</text>
+                  <path d="M 22 142 L 32 142 L 32 132 L 58 132 L 58 142 L 68 142" fill="none" stroke="#38BDF8" stroke-width="1.8"/>
+                  <path d="M 78 142 L 86 142 L 114 128 L 114 142 L 122 142" fill="none" stroke="#F43F5E" stroke-width="1.8"/>
+                  <text x="73" y="162" font-size="10.5" font-weight="900" fill="#0369A1" text-anchor="middle">設定換気量: 500 mL 固定</text>
 
-                  <!-- 圧力計ステム＆メーター -->
-                  <rect x="174" y="58" width="8" height="26" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
-                  <circle cx="178" cy="36" r="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="2.5"/>
-                  <!-- 緑ゾーン（左〜上）＆赤レッドゾーン（右上〜右） -->
-                  <path d="M 178 36 L 154 44 A 24 24 0 0 1 184 13 Z" fill="#86EFAC" opacity="0.8"/>
-                  <path d="M 178 36 L 184 13 A 24 24 0 0 1 202 44 Z" fill="#FCA5A5" opacity="0.9"/>
-                  <circle cx="178" cy="36" r="15" fill="#FFFFFF"/>
-                  <!-- 圧力計の針（正常時: -20deg / 硬い肺時: +52deg レッドゾーン振り切れ） -->
-                  <g id="vcvGaugeNeedle" style="transform-origin: 178px 36px; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); transform: rotate(-20deg);">
-                    <line x1="178" y1="40" x2="178" y2="14" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
-                    <polygon points="175,18 178,10 181,18" fill="#E11D48"/>
+                  <!-- 2. 呼吸回路・Yピース ＆ 医療用アネロイド気道内圧計 -->
+                  <path d="M 136 81 L 234 81 C 254 81, 272 68, 286 44 L 292 44 C 280 72, 260 89, 234 89 L 136 89 Z" fill="#DBEAFE" stroke="#0284C7" stroke-width="1.8"/>
+                  <path d="M 140 85 L 234 85 C 254 85, 272 72, 288 46" fill="none" stroke="#0284C7" stroke-width="3" class="flow-line"/>
+
+                  <!-- 気道内圧計 (Paw Manometer) -->
+                  <rect x="176" y="58" width="8" height="23" fill="#64748B" stroke="#1E293B" stroke-width="1.4"/>
+                  <circle cx="180" cy="35" r="27" fill="#0F172A" stroke="#334155" stroke-width="2.2"/>
+                  <circle cx="180" cy="35" r="23.5" fill="#FFFFFF"/>
+                  <!-- 安全域（緑：0〜25）＆ 危険高圧域（赤：30〜45 cmH2O） -->
+                  <path d="M 180 35 L 158 43 A 23 23 0 0 1 186 13 Z" fill="#86EFAC" opacity="0.85"/>
+                  <path d="M 180 35 L 186 13 A 23 23 0 0 1 202 43 Z" fill="#FCA5A5" opacity="0.95"/>
+                  <circle cx="180" cy="35" r="14" fill="#FFFFFF"/>
+                  <text x="163" y="47" font-size="6.5" font-weight="800" fill="#15803D">15</text>
+                  <text x="178" y="19" font-size="6.5" font-weight="800" fill="#475569">25</text>
+                  <text x="191" y="47" font-size="6.5" font-weight="900" fill="#DC2626">40</text>
+                  <g id="vcvGaugeNeedle" style="transform-origin: 180px 35px; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); transform: rotate(-20deg);">
+                    <line x1="180" y1="39" x2="180" y2="14" stroke="#0F172A" stroke-width="2.8" stroke-linecap="round"/>
+                    <polygon points="177,18 180,10 183,18" fill="#E11D48"/>
                   </g>
-                  <circle cx="178" cy="36" r="4" fill="#1E293B"/>
-                  <text id="vcvPeakPressText" x="178" y="76" font-size="10.5" font-weight="900" fill="#0369A1" text-anchor="middle">最高圧: 18 cmH₂O</text>
+                  <circle cx="180" cy="35" r="3.5" fill="#1E293B"/>
+                  <text id="vcvPeakPressText" x="180" y="75" font-size="10" font-weight="900" fill="#0369A1" text-anchor="middle">最高圧: 18 cmH₂O</text>
 
                   <!-- ★硬い肺選択時に点滅する高圧アラートバッジ -->
                   <g id="vcvHighPressAlert" class="high-press-flash" style="display: none;">
-                    <rect x="108" y="0" width="142" height="20" rx="10" fill="#EF4444" stroke="#991B1B" stroke-width="1.5"/>
-                    <text x="179" y="14" font-size="10" font-weight="900" fill="#FFFFFF" text-anchor="middle">🚨 気道内圧上昇 (38 cmH₂O)!</text>
+                    <rect x="108" y="-2" width="146" height="20" rx="10" fill="#EF4444" stroke="#991B1B" stroke-width="1.5"/>
+                    <text x="181" y="12" font-size="9.5" font-weight="900" fill="#FFFFFF" text-anchor="middle">🚨 気道内圧上昇 (38 cmH₂O)!</text>
                   </g>
 
-                  <!-- 3. 解剖学的気管・気管支・左右肺モデル -->
+                  <!-- 3. 解剖学的胸郭・気管軟骨輪・気管分岐部・右3葉/左2葉モデル -->
+                  <!-- 背景：胸郭・胸膜腔シルエット＆肋骨アーク＆横隔膜ドーム -->
+                  <path d="M 280 28 C 246 28, 224 58, 222 108 C 221 132, 232 145, 256 142 C 274 139, 286 130, 292 126 C 298 130, 310 139, 328 142 C 352 145, 363 132, 362 108 C 360 58, 338 28, 304 28 Z"
+                        fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4 3"/>
+                  <!-- 肋骨陰影ライン -->
+                  <g stroke="#CBD5E1" stroke-width="2" fill="none" opacity="0.65">
+                    <path d="M 234 62 Q 258 56 278 64"/><path d="M 228 84 Q 256 78 278 86"/><path d="M 226 106 Q 254 100 276 108"/>
+                    <path d="M 350 62 Q 326 56 306 64"/><path d="M 356 84 Q 328 78 306 86"/><path d="M 358 106 Q 330 100 308 108"/>
+                  </g>
+
                   <g id="vcvLungGroup" class="vcv-lung-anim-normal">
-                    <!-- 気管＆左右主気管支 -->
-                    <path d="M 274 26 L 286 26 L 286 62 L 304 78 L 298 84 L 280 68 L 262 84 L 256 78 L 274 62 Z" fill="#FDE68A" stroke="#B45309" stroke-width="1.5"/>
-                    <!-- 右肺・左肺（解剖学シルエット） -->
-                    <path id="vcvRightLungPath" d="M 272 52 C 254 46, 232 62, 230 92 C 228 116, 234 134, 248 136 C 262 138, 272 128, 274 114 Z" fill="url(#vcvLungNormalGrad)" stroke="#9F1239" stroke-width="2"/>
-                    <path id="vcvLeftLungPath" d="M 288 52 C 306 46, 328 62, 330 92 C 332 116, 326 134, 312 136 C 298 138, 288 128, 286 114 Z" fill="url(#vcvLungNormalGrad)" stroke="#9F1239" stroke-width="2"/>
-                    <!-- 気管支樹ディテール -->
-                    <path d="M 264 80 L 248 92 M 256 86 L 252 110 M 296 80 L 312 92 M 304 86 L 308 110" stroke="#FFE4E6" stroke-width="1.8" fill="none" opacity="0.8"/>
-                    <!-- 硬い肺（ARDS/痰詰まり）時の圧損傷ストレスリング＆痰栓（初期非表示） -->
+                    <!-- 解剖学的気管（C字気管軟骨輪）＆気管分岐部（Carina）＆左右主気管支 -->
+                    <path d="M 286 12 L 298 12 L 298 54 L 316 70 L 311 76 L 292 60 L 273 76 L 268 70 L 286 54 Z"
+                          fill="url(#tracheaCartilageGrad)" stroke="#92400E" stroke-width="1.4" stroke-linejoin="round"/>
+                    <!-- 気管軟骨輪の横縞 -->
+                    <g stroke="#B45309" stroke-width="1.3">
+                      <line x1="287" y1="20" x2="297" y2="20"/><line x1="287" y1="27" x2="297" y2="27"/><line x1="287" y1="34" x2="297" y2="34"/><line x1="287" y1="41" x2="297" y2="41"/><line x1="287" y1="48" x2="297" y2="48"/>
+                    </g>
+
+                    <!-- 右肺（解剖学的3葉：上葉・中葉・下葉） -->
+                    <path id="vcvRightLungPath" d="M 282 36 C 266 32, 240 50, 232 82 C 225 110, 228 134, 244 136 C 264 138, 280 128, 284 114 C 286 92, 285 56, 282 36 Z"
+                          fill="url(#anatLungParenchymaGrad)" stroke="#881337" stroke-width="1.8"/>
+                    <!-- 右肺 水平裂 (Horizontal fissure) & 斜裂 (Oblique fissure) -->
+                    <path d="M 284 78 C 268 78, 250 82, 233 86" fill="none" stroke="#881337" stroke-width="1.2" opacity="0.75"/>
+                    <path d="M 283 66 C 268 84, 252 108, 238 134" fill="none" stroke="#881337" stroke-width="1.3" opacity="0.8"/>
+
+                    <!-- 左肺（解剖学的2葉：上葉・下葉 ＋ 心切痕 Cardiac Notch） -->
+                    <path id="vcvLeftLungPath" d="M 302 36 C 318 32, 344 50, 352 82 C 359 110, 356 134, 340 136 C 324 138, 314 130, 312 118 C 316 108, 314 96, 302 92 C 299 72, 299 52, 302 36 Z"
+                          fill="url(#anatLungParenchymaGrad)" stroke="#881337" stroke-width="1.8"/>
+                    <!-- 左肺 斜裂 (Oblique fissure) -->
+                    <path d="M 301 64 C 318 82, 334 108, 346 134" fill="none" stroke="#881337" stroke-width="1.3" opacity="0.8"/>
+
+                    <!-- 肺実質内の区域・亜区域気管支分岐樹（リアルな気管支樹透かし） -->
+                    <g stroke="#FFE4E6" stroke-linecap="round" fill="none" opacity="0.85">
+                      <!-- 右気管支樹（上・中・下葉枝） -->
+                      <path d="M 274 68 C 264 60, 256 52, 250 46 M 260 56 L 246 58" stroke-width="1.8"/>
+                      <path d="M 271 73 C 260 78, 250 84, 242 92 M 256 81 L 244 82" stroke-width="1.7"/>
+                      <path d="M 270 75 C 264 92, 256 108, 248 124 M 260 98 L 246 110 M 256 108 L 264 124" stroke-width="1.8"/>
+                      <!-- 左気管支樹（上・下葉枝） -->
+                      <path d="M 310 68 C 320 60, 328 52, 334 46 M 324 56 L 338 58" stroke-width="1.8"/>
+                      <path d="M 313 74 C 322 90, 330 108, 338 124 M 326 96 L 342 106 M 330 108 L 324 124" stroke-width="1.8"/>
+                    </g>
+
+                    <!-- ★硬い肺（ARDS浸潤影・気管支粘稠痰狭窄・上葉過伸展バロトラウマ）オーバーレイ -->
                     <g id="vcvStiffOverlay" style="display: none;">
-                      <ellipse cx="280" cy="95" rx="58" ry="48" fill="none" stroke="#EF4444" stroke-width="3.5" stroke-dasharray="6 4" class="high-press-flash"/>
-                      <!-- 気管支内の黄色い痰栓 -->
-                      <circle cx="266" cy="76" r="5" fill="#FACC15" stroke="#854D0E" stroke-width="1.2"/>
-                      <circle cx="294" cy="78" r="5" fill="#FACC15" stroke="#854D0E" stroke-width="1.2"/>
-                      <text x="280" y="152" font-size="10.5" font-weight="900" fill="#DC2626" text-anchor="middle">⚡ 無理やり500mL送気 ⇒ 圧損傷リスク!</text>
+                      <!-- 下葉背側のARDS浸潤影・無気肺コンソリデーション -->
+                      <path d="M 268 88 C 254 96, 240 112, 232 128 C 236 135, 248 137, 266 134 C 278 130, 283 122, 284 112 Z" fill="url(#ardsConsolidationGrad)"/>
+                      <path d="M 316 88 C 330 96, 344 112, 352 128 C 348 135, 336 137, 320 134 C 314 130, 312 122, 312 114 Z" fill="url(#ardsConsolidationGrad)"/>
+                      <!-- 主気管支〜葉気管支内の粘稠痰プラグ（狭窄病変） -->
+                      <path d="M 278 62 C 272 67, 266 72, 262 78" stroke="#FACC15" stroke-width="4.5" stroke-linecap="round"/>
+                      <path d="M 306 62 C 312 67, 318 72, 322 78" stroke="#FACC15" stroke-width="4.5" stroke-linecap="round"/>
+                      <!-- 非依存部（上葉）への強制送気集中による肺胞過伸展・圧損傷（Barotrauma）ホットスポット -->
+                      <ellipse cx="258" cy="58" rx="22" ry="18" fill="rgba(239,68,68,0.35)" stroke="#EF4444" stroke-width="2.2" stroke-dasharray="4 2" class="high-press-flash"/>
+                      <ellipse cx="326" cy="58" rx="22" ry="18" fill="rgba(239,68,68,0.35)" stroke="#EF4444" stroke-width="2.2" stroke-dasharray="4 2" class="high-press-flash"/>
+                      <text x="292" y="150" font-size="9.5" font-weight="900" fill="#DC2626" text-anchor="middle">⚡ 下葉浸潤・痰狭窄へ500mL強制送気 ⇒ 上葉過伸展・圧損傷!</text>
                     </g>
                   </g>
 
                   <!-- 実測換気量バッジ（常に500mL維持） -->
-                  <rect id="vcvVtBadgeRect" x="225" y="152" width="128" height="22" rx="6" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
-                  <text id="vcvVtText" x="289" y="167" font-size="11.5" font-weight="900" fill="#1E3A8A" text-anchor="middle">実測 Vt: 500 mL (維持)</text>
+                  <rect id="vcvVtBadgeRect" x="224" y="155" width="136" height="22" rx="6" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+                  <text id="vcvVtText" x="292" y="170" font-size="11" font-weight="900" fill="#1E3A8A" text-anchor="middle">実測 Vt: 500 mL (維持)</text>
                 </svg>
               </div>
 
               <div style="font-size: 0.7em; line-height: 1.5;">
-                <p style="margin-bottom: 4px;"><strong style="color:var(--mute-blue);">特徴：</strong><strong>1回換気量（Vt）と吸気流量が一定。</strong>気道抵抗や肺の硬さに関わらず設定換気量を押し込む。</p>
-                <p><strong style="color:var(--alert-red);">注意点：</strong>肺が硬くなると<strong>気道内圧が跳ね上がり、肺傷害（圧損傷）のリスク</strong>がある。</p>
+                <p style="margin-bottom: 4px;"><strong style="color:var(--mute-blue);">特徴：</strong><strong>1回換気量（Vt）と吸気流量が一定。</strong>気道抵抗や肺コンプライアンスに関わらず設定換気量を押し込む。</p>
+                <p><strong style="color:var(--alert-red);">注意点：</strong>ARDSや痰閉塞で有効肺容積が減ると<strong>気道内圧が跳ね上がり、健常肺胞の過伸展（圧損傷）</strong>を招く。</p>
               </div>
 
               <div style="background: #EFF6FF; border: 1.5px solid #60A5FA; border-radius: 8px; padding: 6px; text-align: center; font-weight: 900; font-size: 0.78em; color: #1E3A8A;">
@@ -3673,73 +3740,118 @@
               </div>
             </div>
 
-            <!-- ==================== 右：従圧式 PCV（定圧タービン送風ファン＋圧力計固定＋解剖学的肺） ==================== -->
+            <!-- ==================== 右：従圧式 PCV（定圧サーボタービン＋圧力計上限固定＋解剖学的胸郭・肺葉モデル） ==================== -->
             <div id="pcvPanelCard" class="info-panel green fragment fade-up" style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 8px 14px; transition: all 0.3s;">
-              <div style="background: #F8FAFC; border: 1.5px solid #A7F3D0; border-radius: 10px; padding: 4px; position: relative;">
-                <svg viewBox="0 0 380 175" width="100%" height="145" style="overflow: visible;">
-                  <!-- 1. 定圧タービンブロワー（送風機＋20 cmH2O デジタルレギュレーター） -->
-                  <rect x="20" y="42" width="112" height="72" rx="12" fill="#334155" stroke="#0F172A" stroke-width="2.5"/>
-                  <circle cx="58" cy="78" r="26" fill="#0F172A" stroke="#64748B" stroke-width="2"/>
-                  <!-- 回転する送風ファンブレード -->
-                  <g class="pcv-fan-anim" style="transform-origin: 58px 78px;">
-                    <path d="M 58 56 C 66 56, 68 70, 58 78 C 48 70, 50 56, 58 56 Z" fill="#38BDF8"/>
-                    <path d="M 80 78 C 80 86, 66 88, 58 78 C 66 68, 80 70, 80 78 Z" fill="#38BDF8"/>
-                    <path d="M 58 100 C 50 100, 48 86, 58 78 C 68 86, 66 100, 58 100 Z" fill="#38BDF8"/>
-                    <path d="M 36 78 C 36 70, 50 68, 58 78 C 50 88, 36 86, 36 78 Z" fill="#38BDF8"/>
-                    <circle cx="58" cy="78" r="6" fill="#E2E8F0"/>
+              <div style="background: linear-gradient(180deg, #F8FAFC 0%, #ECFDF5 100%); border: 1.5px solid #6EE7B7; border-radius: 12px; padding: 6px; position: relative; box-shadow: inset 0 2px 6px rgba(15,23,42,0.04);">
+                <svg viewBox="0 0 400 182" width="100%" height="150" style="overflow: visible;">
+                  <!-- 1. 定圧サーボタービン・ブロワーユニット（遠心インペラ＋20 cmH2O 圧力制御） -->
+                  <rect x="16" y="44" width="114" height="68" rx="10" fill="#1E293B" stroke="#0F172A" stroke-width="2.2"/>
+                  <!-- 遠心タービンハウジング -->
+                  <circle cx="52" cy="78" r="24" fill="#0F172A" stroke="#475569" stroke-width="2"/>
+                  <!-- 軸ブレゼロで回転する精密タービンインペラ -->
+                  <g class="pcv-fan-anim">
+                    <circle cx="52" cy="78" r="20" fill="none" stroke="#334155" stroke-width="1"/>
+                    <path d="M 52 58 C 60 60, 62 70, 52 78 C 42 70, 44 60, 52 58 Z" fill="#38BDF8"/>
+                    <path d="M 72 78 C 70 86, 60 88, 52 78 C 60 68, 70 70, 72 78 Z" fill="#38BDF8"/>
+                    <path d="M 52 98 C 44 96, 42 86, 52 78 C 62 86, 60 96, 52 98 Z" fill="#38BDF8"/>
+                    <path d="M 32 78 C 34 70, 44 68, 52 78 C 44 88, 34 86, 32 78 Z" fill="#38BDF8"/>
+                    <circle cx="52" cy="78" r="6" fill="#E2E8F0" stroke="#0F172A" stroke-width="1.5"/>
                   </g>
-                  <!-- デジタル設定圧ディスプレイ（常に20固定） -->
-                  <rect x="90" y="54" width="34" height="28" rx="4" fill="#064E3B" stroke="#10B981" stroke-width="1.5"/>
-                  <text x="107" y="74" font-size="14" font-weight="900" font-family="monospace" fill="#4ADE80" text-anchor="middle">20</text>
-                  <text x="107" y="96" font-size="8.5" font-weight="800" fill="#E2E8F0" text-anchor="middle">cmH₂O</text>
-                  <text x="76" y="128" font-size="11" font-weight="900" fill="#065F46" text-anchor="middle">設定吸気圧: 20 cmH₂O 一定</text>
+                  <!-- デジタル定圧レギュレーター表示（20 cmH2O 固定） -->
+                  <rect x="84" y="52" width="38" height="30" rx="5" fill="#064E3B" stroke="#10B981" stroke-width="1.5"/>
+                  <text x="103" y="72" font-size="14" font-weight="900" font-family="monospace" fill="#4ADE80" text-anchor="middle">20</text>
+                  <text x="103" y="94" font-size="8" font-weight="800" fill="#A7F3D0" text-anchor="middle">cmH₂O 制御</text>
 
-                  <!-- 2. 送気回路チューブ ＆ アネロイド圧力計（常に20cmH2Oで安定） -->
-                  <path d="M 132 84 L 228 84 L 228 92 L 132 92 Z" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
-                  <line x1="136" y1="88" x2="225" y2="88" stroke="#059669" stroke-width="3.5" class="flow-line"/>
+                  <!-- PCV ミニ波形モニター（漸減フロー ＆ 矩形圧一定） -->
+                  <rect x="16" y="116" width="114" height="32" rx="6" fill="#0F172A" stroke="#334155" stroke-width="1.4"/>
+                  <text x="22" y="127" font-size="7.5" font-weight="800" fill="#34D399">Paw: 一定 / Flow: 漸減波</text>
+                  <path d="M 22 142 L 30 142 L 30 128 L 58 140 L 58 142 L 68 142" fill="none" stroke="#38BDF8" stroke-width="1.8"/>
+                  <path d="M 78 142 L 86 142 L 86 131 L 114 131 L 114 142 L 122 142" fill="none" stroke="#34D399" stroke-width="1.8"/>
+                  <text x="73" y="162" font-size="10.5" font-weight="900" fill="#065F46" text-anchor="middle">設定吸気圧: 20 cmH₂O 一定</text>
 
-                  <!-- 圧力計ステム＆メーター -->
-                  <rect x="174" y="58" width="8" height="26" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
-                  <circle cx="178" cy="36" r="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="2.5"/>
-                  <path d="M 178 36 L 154 44 A 24 24 0 0 1 184 13 Z" fill="#86EFAC" opacity="0.8"/>
-                  <path d="M 178 36 L 184 13 A 24 24 0 0 1 202 44 Z" fill="#FCA5A5" opacity="0.9"/>
-                  <circle cx="178" cy="36" r="15" fill="#FFFFFF"/>
-                  <!-- 圧力計の針（正常時も硬い肺時も -12deg = 20cmH2O でピタッと固定！） -->
-                  <g id="pcvGaugeNeedle" style="transform-origin: 178px 36px; transition: transform 0.45s ease; transform: rotate(-12deg);">
-                    <line x1="178" y1="40" x2="178" y2="14" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
-                    <polygon points="175,18 178,10 181,18" fill="#16A34A"/>
+                  <!-- 2. 呼吸回路・Yピース ＆ 医療用アネロイド気道内圧計 -->
+                  <path d="M 130 81 L 234 81 C 254 81, 272 68, 286 44 L 292 44 C 280 72, 260 89, 234 89 L 130 89 Z" fill="#D1FAE5" stroke="#059669" stroke-width="1.8"/>
+                  <path d="M 134 85 L 234 85 C 254 85, 272 72, 288 46" fill="none" stroke="#059669" stroke-width="3" class="flow-line"/>
+
+                  <!-- 気道内圧計 (常に20cmH2Oでロック) -->
+                  <rect x="176" y="58" width="8" height="23" fill="#64748B" stroke="#1E293B" stroke-width="1.4"/>
+                  <circle cx="180" cy="35" r="27" fill="#0F172A" stroke="#334155" stroke-width="2.2"/>
+                  <circle cx="180" cy="35" r="23.5" fill="#FFFFFF"/>
+                  <path d="M 180 35 L 158 43 A 23 23 0 0 1 186 13 Z" fill="#86EFAC" opacity="0.85"/>
+                  <path d="M 180 35 L 186 13 A 23 23 0 0 1 202 43 Z" fill="#FCA5A5" opacity="0.95"/>
+                  <circle cx="180" cy="35" r="14" fill="#FFFFFF"/>
+                  <text x="163" y="47" font-size="6.5" font-weight="800" fill="#15803D">15</text>
+                  <text x="178" y="19" font-size="6.5" font-weight="800" fill="#475569">25</text>
+                  <text x="191" y="47" font-size="6.5" font-weight="900" fill="#DC2626">40</text>
+                  <g id="pcvGaugeNeedle" style="transform-origin: 180px 35px; transition: transform 0.45s ease; transform: rotate(-12deg);">
+                    <line x1="180" y1="39" x2="180" y2="14" stroke="#0F172A" stroke-width="2.8" stroke-linecap="round"/>
+                    <polygon points="177,18 180,10 183,18" fill="#16A34A"/>
                   </g>
-                  <circle cx="178" cy="36" r="4" fill="#1E293B"/>
-                  <text id="pcvPeakPressText" x="178" y="76" font-size="10.5" font-weight="900" fill="#15803D" text-anchor="middle">最高圧: 20 cmH₂O (上限保護)</text>
+                  <circle cx="180" cy="35" r="3.5" fill="#1E293B"/>
+                  <text id="pcvPeakPressText" x="180" y="75" font-size="10" font-weight="900" fill="#15803D" text-anchor="middle">最高圧: 20 cmH₂O (上限保護)</text>
 
-                  <!-- 3. 解剖学的気管・気管支・左右肺モデル（硬い肺時は膨らみが小さくなる） -->
+                  <!-- 3. 解剖学的胸郭・気管軟骨輪・気管分岐部・右3葉/左2葉モデル -->
+                  <!-- 背景：正常拡張時の胸郭・胸膜腔リファレンス輪郭 -->
+                  <path d="M 280 28 C 246 28, 224 58, 222 108 C 221 132, 232 145, 256 142 C 274 139, 286 130, 292 126 C 298 130, 310 139, 328 142 C 352 145, 363 132, 362 108 C 360 58, 338 28, 304 28 Z"
+                        fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4 3"/>
+                  <g stroke="#CBD5E1" stroke-width="2" fill="none" opacity="0.65">
+                    <path d="M 234 62 Q 258 56 278 64"/><path d="M 228 84 Q 256 78 278 86"/><path d="M 226 106 Q 254 100 276 108"/>
+                    <path d="M 350 62 Q 326 56 306 64"/><path d="M 356 84 Q 328 78 306 86"/><path d="M 358 106 Q 330 100 308 108"/>
+                  </g>
+
                   <g id="pcvLungGroup" class="pcv-lung-anim-normal">
-                    <path d="M 274 26 L 286 26 L 286 62 L 304 78 L 298 84 L 280 68 L 262 84 L 256 78 L 274 62 Z" fill="#FDE68A" stroke="#B45509" stroke-width="1.5"/>
-                    <path id="pcvRightLungPath" d="M 272 52 C 254 46, 232 62, 230 92 C 228 116, 234 134, 248 136 C 262 138, 272 128, 274 114 Z" fill="url(#vcvLungNormalGrad)" stroke="#9F1239" stroke-width="2"/>
-                    <path id="pcvLeftLungPath" d="M 288 52 C 306 46, 328 62, 330 92 C 332 116, 326 134, 312 136 C 298 138, 288 128, 286 114 Z" fill="url(#vcvLungNormalGrad)" stroke="#9F1239" stroke-width="2"/>
-                    <path d="M 264 80 L 248 92 M 256 86 L 252 110 M 296 80 L 312 92 M 304 86 L 308 110" stroke="#FFE4E6" stroke-width="1.8" fill="none" opacity="0.8"/>
-                    <!-- 硬い肺時の痰栓＆換気量低下オーバーレイ -->
+                    <!-- 気管軟骨輪＆気管分岐部 -->
+                    <path d="M 286 12 L 298 12 L 298 54 L 316 70 L 311 76 L 292 60 L 273 76 L 268 70 L 286 54 Z"
+                          fill="url(#tracheaCartilageGrad)" stroke="#92400E" stroke-width="1.4" stroke-linejoin="round"/>
+                    <g stroke="#B45309" stroke-width="1.3">
+                      <line x1="287" y1="20" x2="297" y2="20"/><line x1="287" y1="27" x2="297" y2="27"/><line x1="287" y1="34" x2="297" y2="34"/><line x1="287" y1="41" x2="297" y2="41"/><line x1="287" y1="48" x2="297" y2="48"/>
+                    </g>
+
+                    <!-- 右肺（3葉：上・中・下葉） -->
+                    <path id="pcvRightLungPath" d="M 282 36 C 266 32, 240 50, 232 82 C 225 110, 228 134, 244 136 C 264 138, 280 128, 284 114 C 286 92, 285 56, 282 36 Z"
+                          fill="url(#anatLungParenchymaGrad)" stroke="#881337" stroke-width="1.8"/>
+                    <path d="M 284 78 C 268 78, 250 82, 233 86" fill="none" stroke="#881337" stroke-width="1.2" opacity="0.75"/>
+                    <path d="M 283 66 C 268 84, 252 108, 238 134" fill="none" stroke="#881337" stroke-width="1.3" opacity="0.8"/>
+
+                    <!-- 左肺（2葉：上・下葉 ＋ 心切痕） -->
+                    <path id="pcvLeftLungPath" d="M 302 36 C 318 32, 344 50, 352 82 C 359 110, 356 134, 340 136 C 324 138, 314 130, 312 118 C 316 108, 314 96, 302 92 C 299 72, 299 52, 302 36 Z"
+                          fill="url(#anatLungParenchymaGrad)" stroke="#881337" stroke-width="1.8"/>
+                    <path d="M 301 64 C 318 82, 334 108, 346 134" fill="none" stroke="#881337" stroke-width="1.3" opacity="0.8"/>
+
+                    <!-- 区域気管支分岐樹 -->
+                    <g stroke="#FFE4E6" stroke-linecap="round" fill="none" opacity="0.85">
+                      <path d="M 274 68 C 264 60, 256 52, 250 46 M 260 56 L 246 58" stroke-width="1.8"/>
+                      <path d="M 271 73 C 260 78, 250 84, 242 92 M 256 81 L 244 82" stroke-width="1.7"/>
+                      <path d="M 270 75 C 264 92, 256 108, 248 124 M 260 98 L 246 110 M 256 108 L 264 124" stroke-width="1.8"/>
+                      <path d="M 310 68 C 320 60, 328 52, 334 46 M 324 56 L 338 58" stroke-width="1.8"/>
+                      <path d="M 313 74 C 322 90, 330 108, 338 124 M 326 96 L 342 106 M 330 108 L 324 124" stroke-width="1.8"/>
+                    </g>
+
+                    <!-- ★硬い肺時のARDS下葉浸潤影・気管支粘稠痰狭窄・換気量低下オーバーレイ -->
                     <g id="pcvStiffOverlay" style="display: none;">
-                      <circle cx="266" cy="76" r="5" fill="#FACC15" stroke="#854D0E" stroke-width="1.2"/>
-                      <circle cx="294" cy="78" r="5" fill="#FACC15" stroke="#854D0E" stroke-width="1.2"/>
+                      <path d="M 268 88 C 254 96, 240 112, 232 128 C 236 135, 248 137, 266 134 C 278 130, 283 122, 284 112 Z" fill="url(#ardsConsolidationGrad)"/>
+                      <path d="M 316 88 C 330 96, 344 112, 352 128 C 348 135, 336 137, 320 134 C 314 130, 312 122, 312 114 Z" fill="url(#ardsConsolidationGrad)"/>
+                      <path d="M 278 62 C 272 67, 266 72, 262 78" stroke="#FACC15" stroke-width="4.5" stroke-linecap="round"/>
+                      <path d="M 306 62 C 312 67, 318 72, 322 78" stroke="#FACC15" stroke-width="4.5" stroke-linecap="round"/>
+                      <text x="292" y="150" font-size="9.5" font-weight="900" fill="#B45309" text-anchor="middle">⚠️ 圧上限20で肺は保護されるが膨らまず低換気!</text>
                     </g>
                   </g>
 
                   <!-- 硬い肺選択時に表示される換気量減少アラート -->
                   <g id="pcvLowVtAlert" class="high-press-flash" style="display: none;">
-                    <rect x="210" y="0" width="162" height="20" rx="10" fill="#F59E0B" stroke="#B45309" stroke-width="1.5"/>
-                    <text x="291" y="14" font-size="10" font-weight="900" fill="#FFFFFF" text-anchor="middle">⚠️ 肺が膨らまず換気量減少!</text>
+                    <rect x="212" y="-2" width="166" height="20" rx="10" fill="#F59E0B" stroke="#B45309" stroke-width="1.5"/>
+                    <text x="295" y="12" font-size="9.5" font-weight="900" fill="#FFFFFF" text-anchor="middle">⚠️ 肺が膨らまず換気量減少!</text>
                   </g>
 
                   <!-- 実測換気量バッジ（正常時 500mL → 硬い肺時 280mL に減少） -->
-                  <rect id="pcvVtBadgeRect" x="220" y="152" width="138" height="22" rx="6" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
-                  <text id="pcvVtText" x="289" y="167" font-size="11.5" font-weight="900" fill="#15803D" text-anchor="middle">実測 Vt: 500 mL</text>
+                  <rect id="pcvVtBadgeRect" x="222" y="155" width="140" height="22" rx="6" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+                  <text id="pcvVtText" x="292" y="170" font-size="11" font-weight="900" fill="#15803D" text-anchor="middle">実測 Vt: 500 mL</text>
                 </svg>
               </div>
 
               <div style="font-size: 0.7em; line-height: 1.5;">
-                <p style="margin-bottom: 4px;"><strong style="color:var(--mute-green);">特徴：</strong><strong>最高気道内圧が一定（20 cmH₂O）。</strong>圧が上がりすぎず肺に優しい。自発呼吸と同調しやすい。</p>
-                <p><strong style="color:var(--mute-orange);">注意点：</strong>肺が硬くなったり痰が詰まると、<strong>1回換気量が減少（500→280mL）し低換気となる。</strong></p>
+                <p style="margin-bottom: 4px;"><strong style="color:var(--mute-green);">特徴：</strong><strong>最高気道内圧が一定（20 cmH₂O）。</strong>圧が上がりすぎず肺胞過伸展を防ぐ。自発呼吸と同調しやすい。</p>
+                <p><strong style="color:var(--mute-orange);">注意点：</strong>ARDSや痰閉塞でコンプライアンスが低下すると、<strong>1回換気量が減少（500→280mL）し低換気（CO₂貯留）となる。</strong></p>
               </div>
 
               <div style="background: #ECFDF5; border: 1.5px solid #34D399; border-radius: 8px; padding: 6px; text-align: center; font-weight: 900; font-size: 0.78em; color: #065F46;">
@@ -3805,149 +3917,265 @@
             </div>
           </div>
 
-          <!-- 中段：解剖学的SVGシミュレーター（左：肺胞開存とO2拡散 ／ 中央：左右肺・胸腔断面 ／ 右：心臓・上下大静脈圧迫） -->
-          <div style="background: linear-gradient(90deg, #E0F2FE 0%, #EFF6FF 48%, #FFE4E6 52%, #FCE7F3 100%); border: 2px solid #CBD5E1; border-radius: 14px; padding: 6px 12px; height: 220px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
-            <svg viewBox="0 0 880 205" width="100%" height="205" style="overflow: visible;">
+          <!-- 中段：解剖学的3ビューポートSVGシミュレーター（左：ミクロ肺胞毛細血管ガス交換 ／ 中央：胸郭・肺葉・縦隔心臓断面 ／ 右：4腔心臓・上下大静脈還流解剖） -->
+          <div style="background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 14px; padding: 6px 10px; height: 222px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
+            <svg viewBox="0 0 880 208" width="100%" height="208" style="overflow: visible;">
               <defs>
-                <radialGradient id="alveolusSphereGrad" cx="35%" cy="30%" r="65%">
+                <!-- 肺胞腔の立体内腔グラデーション（サーファクタント層〜肺胞上皮） -->
+                <radialGradient id="alveolusSphereGrad" cx="42%" cy="38%" r="62%">
                   <stop offset="0%" stop-color="#FFFFFF"/>
-                  <stop offset="45%" stop-color="#BAE6FD"/>
-                  <stop offset="100%" stop-color="#38BDF8"/>
+                  <stop offset="52%" stop-color="#E0F2FE"/>
+                  <stop offset="82%" stop-color="#7DD3FC"/>
+                  <stop offset="100%" stop-color="#0284C7"/>
                 </radialGradient>
-                <linearGradient id="peepHeartRightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#60A5FA"/>
-                  <stop offset="100%" stop-color="#1E40AF"/>
-                </linearGradient>
-                <linearGradient id="peepHeartLeftGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#FB7185"/>
+                <!-- 肺動脈（静脈血：青）から肺静脈（動脈血：赤）へ酸素化される毛細血管グラデーション -->
+                <linearGradient id="capillaryOxyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#1D4ED8"/>
+                  <stop offset="38%" stop-color="#6366F1"/>
+                  <stop offset="68%" stop-color="#E11D48"/>
                   <stop offset="100%" stop-color="#BE123C"/>
                 </linearGradient>
+                <!-- 解剖学的右心系（RA/RV）グラデーション -->
+                <linearGradient id="peepHeartRightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#60A5FA"/>
+                  <stop offset="55%" stop-color="#2563EB"/>
+                  <stop offset="100%" stop-color="#1E3A8A"/>
+                </linearGradient>
+                <!-- 解剖学的左心系（LA/LV・厚い左室心筋）グラデーション -->
+                <linearGradient id="peepHeartLeftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FDA4AF"/>
+                  <stop offset="48%" stop-color="#E11D48"/>
+                  <stop offset="100%" stop-color="#881337"/>
+                </linearGradient>
+                <!-- 胸郭内解剖学的肺実質グラデーション -->
+                <radialGradient id="thoraxLungRecruitedGrad" cx="40%" cy="38%" r="65%">
+                  <stop offset="0%" stop-color="#CCFBF1"/>
+                  <stop offset="50%" stop-color="#5EEAD4"/>
+                  <stop offset="88%" stop-color="#0D9488"/>
+                  <stop offset="100%" stop-color="#115E59"/>
+                </radialGradient>
               </defs>
 
-              <!-- ==================== 左エリア（＋ 光）：肺胞クラスター開存＆毛細血管O2拡散 ==================== -->
-              <circle cx="34" cy="32" r="20" fill="#0284C7"/>
-              <text x="34" y="41" font-size="26" font-weight="900" fill="#FFFFFF" text-anchor="middle">＋</text>
-              <text x="64" y="28" font-size="13" font-weight="900" fill="#0369A1">【光】肺胞開存 (FRC↑)・O₂拡散促進</text>
-              <text id="peepLightStatusText" x="64" y="45" font-size="11" font-weight="800" fill="#0F766E">開存度: 標準 (PEEP 5 cmH₂O)</text>
+              <!-- 3つの解剖学ビューポート背景パネル -->
+              <rect x="4" y="4" width="286" height="200" rx="12" fill="#F0F9FF" stroke="#7DD3FC" stroke-width="1.6"/>
+              <rect x="298" y="4" width="284" height="200" rx="12" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.6"/>
+              <rect x="590" y="4" width="286" height="200" rx="12" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.6"/>
 
-              <!-- PEEP値に応じて膨張する解剖学的肺胞クラスター＆毛細血管網 -->
-              <g id="peepAlveoliGroup" style="transform-origin: 165px 122px; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); transform: scale(0.88);">
-                <!-- 終末細気管支 -->
-                <path d="M 118 46 L 148 88 M 136 40 L 164 82" stroke="#0284C7" stroke-width="3" fill="none"/>
-                <polygon points="122,42 136,40 162,82 146,88" fill="#BAE6FD" opacity="0.7"/>
+              <!-- ==================== 1. 左ビューポート（＋ 光）：ミクロ解剖（呼吸細気管支・肺胞嚢断面・毛細血管網） ==================== -->
+              <circle cx="28" cy="26" r="14" fill="#0284C7"/>
+              <text x="28" y="32" font-size="18" font-weight="900" fill="#FFFFFF" text-anchor="middle">＋</text>
+              <text x="48" y="23" font-size="11.5" font-weight="900" fill="#0369A1">【光】肺胞嚢開存 (FRC↑)・毛細血管O₂拡散</text>
+              <text id="peepLightStatusText" x="48" y="38" font-size="10" font-weight="800" fill="#0F766E">開存度: 標準 (FRC維持・虚脱防止)</text>
 
-                <!-- 肺胞を取り囲む毛細血管網（青：肺動脈側 → 赤：肺静脈側） -->
-                <path d="M 88 70 C 72 110, 82 162, 128 178 C 168 192, 224 176, 236 130 C 244 96, 218 62, 182 58"
-                      fill="none" stroke="#E11D48" stroke-width="8" stroke-linecap="round" opacity="0.85"/>
-                <path d="M 88 70 C 72 110, 82 162, 135 180"
-                      fill="none" stroke="#2563EB" stroke-width="8" stroke-linecap="round" opacity="0.85"/>
+              <!-- PEEP値に応じてリクルートメント＆膨張する解剖学的肺胞嚢＆肺毛細血管網 -->
+              <g id="peepAlveoliGroup" style="transform-origin: 148px 126px; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); transform: scale(0.88);">
+                <!-- 肺動脈細枝（青：脱酸素血流入）＆ 肺静脈細枝（赤：酸素化血流出） -->
+                <path d="M 54 62 C 62 84, 72 104, 84 120" fill="none" stroke="#1D4ED8" stroke-width="7" stroke-linecap="round"/>
+                <path d="M 54 62 C 62 84, 72 104, 84 120" fill="none" stroke="#93C5FD" stroke-width="2.5" stroke-dasharray="4 4"/>
+                <text x="44" y="56" font-size="8.5" font-weight="900" fill="#1E3A8A" text-anchor="middle">肺動脈細枝</text>
 
-                <!-- ブドウの房状の立体肺胞サック -->
-                <circle cx="132" cy="112" r="22" fill="url(#alveolusSphereGrad)" stroke="#0284C7" stroke-width="2"/>
-                <circle cx="164" cy="102" r="24" fill="url(#alveolusSphereGrad)" stroke="#0284C7" stroke-width="2"/>
-                <circle cx="194" cy="114" r="22" fill="url(#alveolusSphereGrad)" stroke="#0284C7" stroke-width="2"/>
-                <circle cx="126" cy="142" r="21" fill="url(#alveolusSphereGrad)" stroke="#0284C7" stroke-width="2"/>
-                <circle cx="158" cy="148" r="24" fill="url(#alveolusSphereGrad)" stroke="#0284C7" stroke-width="2"/>
-                <circle cx="190" cy="144" r="22" fill="url(#alveolusSphereGrad)" stroke="#0284C7" stroke-width="2"/>
-                <circle cx="160" cy="124" r="25" fill="url(#alveolusSphereGrad)" stroke="#0369A1" stroke-width="2.2"/>
+                <path d="M 214 122 C 228 104, 238 82, 244 60" fill="none" stroke="#E11D48" stroke-width="7" stroke-linecap="round"/>
+                <path d="M 214 122 C 228 104, 238 82, 244 60" fill="none" stroke="#FECDD3" stroke-width="2.5" stroke-dasharray="4 4"/>
+                <text x="246" y="54" font-size="8.5" font-weight="900" fill="#9F1239" text-anchor="middle">肺静脈細枝</text>
 
-                <!-- 肺胞から毛細血管へ拡散するO2矢印＆活発なO2粒子アニメーション -->
-                <g stroke="#0369A1" stroke-width="3" fill="#0284C7">
-                  <line x1="184" y1="104" x2="222" y2="82"/><polygon points="216,78 228,78 222,88"/>
-                  <line x1="192" y1="134" x2="234" y2="146"/><polygon points="232,140 242,148 229,151"/>
-                  <line x1="134" y1="145" x2="98" y2="168"/><polygon points="104,171 92,172 98,162"/>
+                <!-- 終末〜呼吸細気管支（平滑筋リング付き）と肺胞道 -->
+                <path d="M 136 46 L 136 86 L 160 86 L 160 46 Z" fill="#BAE6FD" stroke="#0369A1" stroke-width="2"/>
+                <!-- 気管支平滑筋バンド -->
+                <path d="M 134 54 Q 148 58 162 54 M 134 64 Q 148 68 162 64 M 134 74 Q 148 78 162 74" fill="none" stroke="#0284C7" stroke-width="2"/>
+                <!-- 吸気・PEEP陽圧ガスストリーム矢印 -->
+                <path d="M 148 48 L 148 96" stroke="#0284C7" stroke-width="3" stroke-dasharray="4 3"/>
+                <polygon points="143,93 148,102 153,93" fill="#0284C7"/>
+
+                <!-- 解剖学的肺胞嚢（Alveolar Sac）の多房性ロゼット断面（外벽：I型/II型肺胞上皮） -->
+                <path d="M 136 82
+                         C 110 74, 86 92, 92 116
+                         C 74 126, 76 156, 102 164
+                         C 104 186, 136 194, 148 176
+                         C 160 194, 192 186, 194 164
+                         C 220 156, 222 126, 204 116
+                         C 210 92, 186 74, 160 82 Z"
+                      fill="url(#alveolusSphereGrad)" stroke="#0369A1" stroke-width="2.5" stroke-linejoin="round"/>
+
+                <!-- 肺胞隔壁（Alveolar Septa）と内腔のサーファクタント層（白破線） -->
+                <path d="M 92 116 L 112 122 M 102 164 L 122 150 M 148 176 L 148 156 M 194 164 L 174 150 M 204 116 L 184 122"
+                      stroke="#0369A1" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="148" cy="128" r="34" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="5 3" opacity="0.9"/>
+                <text x="148" y="124" font-size="9.5" font-weight="900" fill="#0C4A6E" text-anchor="middle">肺胞腔 (FRC)</text>
+                <text x="148" y="137" font-size="8.5" font-weight="800" fill="#0369A1" text-anchor="middle">陽圧開存</text>
+
+                <!-- 肺胞壁に密着する肺毛細血管網（外周血管床＋赤血球の酸素化遷移） -->
+                <path d="M 84 118
+                         C 66 130, 70 162, 98 170
+                         C 102 194, 136 200, 148 184
+                         C 160 200, 194 194, 198 170
+                         C 226 162, 230 130, 212 118"
+                      fill="none" stroke="url(#capillaryOxyGrad)" stroke-width="7.5" stroke-linecap="round"/>
+
+                <!-- 毛細血管内を流れる赤血球（左：青紫の還元Hb → 中央：紫 → 右：鮮紅色の酸素化Hb） -->
+                <circle cx="80" cy="138" r="3.2" fill="#93C5FD"/><circle cx="92" cy="162" r="3.2" fill="#818CF8"/>
+                <circle cx="122" cy="184" r="3.2" fill="#C084FC"/><circle cx="148" cy="186" r="3.2" fill="#F472B6"/>
+                <circle cx="176" cy="184" r="3.2" fill="#FB7185"/><circle cx="204" cy="162" r="3.2" fill="#FDA4AF"/>
+                <circle cx="216" cy="138" r="3.2" fill="#FFE4E6"/>
+
+                <!-- 肺胞-毛細血管膜を通過するO2分子拡散ベクトル＆アニメーション粒子 -->
+                <g stroke="#0284C7" stroke-width="2.2" fill="#0284C7">
+                  <line x1="118" y1="142" x2="94" y2="156"/><polygon points="98,159 89,159 94,151"/>
+                  <line x1="148" y1="150" x2="148" y2="180"/><polygon points="144,176 148,184 152,176"/>
+                  <line x1="178" y1="142" x2="202" y2="156"/><polygon points="198,151 207,159 198,159"/>
                 </g>
-                <text x="242" y="82" font-size="15" font-weight="900" fill="#0369A1">O₂↑</text>
-                <text x="252" y="154" font-size="15" font-weight="900" fill="#0369A1">O₂↑</text>
-                <text x="64" y="182" font-size="15" font-weight="900" fill="#0369A1">O₂↑</text>
+                <text x="58" y="168" font-size="11" font-weight="900" fill="#0369A1">O₂拡散</text>
+                <text x="236" y="168" font-size="11" font-weight="900" fill="#E11D48">動脈血化↑</text>
 
-                <!-- 飛び出す酸素分子ドット（アニメーション） -->
+                <!-- リアルタイムO2分子拡散ドット -->
                 <g id="peepO2Particles" fill="#0284C7">
-                  <circle cx="160" cy="124" r="4.5">
-                    <animate attributeName="cx" values="160;228" dur="1.4s" repeatCount="indefinite"/>
-                    <animate attributeName="cy" values="124;80" dur="1.4s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="1;0" dur="1.4s" repeatCount="indefinite"/>
+                  <circle cx="148" cy="128" r="3.8">
+                    <animate attributeName="cx" values="132;92" dur="1.5s" repeatCount="indefinite"/>
+                    <animate attributeName="cy" values="134;158" dur="1.5s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="1;0" dur="1.5s" repeatCount="indefinite"/>
                   </circle>
-                  <circle cx="160" cy="124" r="4.5">
-                    <animate attributeName="cx" values="160;238" dur="1.4s" begin="0.4s" repeatCount="indefinite"/>
-                    <animate attributeName="cy" values="124;148" dur="1.4s" begin="0.4s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="1;0" dur="1.4s" begin="0.4s" repeatCount="indefinite"/>
+                  <circle cx="148" cy="128" r="3.8">
+                    <animate attributeName="cx" values="148;148" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+                    <animate attributeName="cy" values="142;184" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="1;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
                   </circle>
-                  <circle cx="160" cy="124" r="4.5">
-                    <animate attributeName="cx" values="160;95" dur="1.4s" begin="0.8s" repeatCount="indefinite"/>
-                    <animate attributeName="cy" values="124;170" dur="1.4s" begin="0.8s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="1;0" dur="1.4s" begin="0.8s" repeatCount="indefinite"/>
+                  <circle cx="148" cy="128" r="3.8">
+                    <animate attributeName="cx" values="164;204" dur="1.5s" begin="1.0s" repeatCount="indefinite"/>
+                    <animate attributeName="cy" values="134;158" dur="1.5s" begin="1.0s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="1;0" dur="1.5s" begin="1.0s" repeatCount="indefinite"/>
                   </circle>
                 </g>
               </g>
 
-              <!-- ==================== 中央エリア：解剖学的左右スプリット肺・気管・胸腔内圧 ==================== -->
-              <line x1="440" y1="8" x2="440" y2="198" stroke="#475569" stroke-width="2.5" stroke-dasharray="5 4"/>
-              <g id="peepCenterLungGroup" style="transform-origin: 440px 108px; transition: transform 0.45s ease; transform: scale(0.95);">
-                <!-- 気管軟骨輪 -->
-                <rect x="431" y="14" width="18" height="48" rx="4" fill="#E2E8F0" stroke="#334155" stroke-width="2"/>
-                <line x1="431" y1="24" x2="449" y2="24" stroke="#475569" stroke-width="2"/>
-                <line x1="431" y1="34" x2="449" y2="34" stroke="#475569" stroke-width="2"/>
-                <line x1="431" y1="44" x2="449" y2="44" stroke="#475569" stroke-width="2"/>
+              <!-- ==================== 2. 中央ビューポート：胸郭・両肺葉（右3葉/左2葉）・縦隔心臓の解剖学的力学関係 ==================== -->
+              <text x="440" y="21" font-size="11" font-weight="900" fill="#1E293B" text-anchor="middle">【胸腔断面】肺膨張と縦隔（心・大静脈）への圧迫伝達</text>
 
-                <!-- 左半分（緑の肺胞充満肺） -->
-                <path d="M 432 52 C 392 32, 348 64, 344 128 C 342 162, 354 186, 382 182 C 408 178, 428 158, 434 138 Z"
-                      fill="#BFDBFE" stroke="#1E3A8A" stroke-width="2.5"/>
-                <circle cx="398" cy="78" r="15" fill="#86EFAC" stroke="#15803D" stroke-width="1.5"/>
-                <circle cx="376" cy="105" r="16" fill="#86EFAC" stroke="#15803D" stroke-width="1.5"/>
-                <circle cx="406" cy="112" r="15" fill="#86EFAC" stroke="#15803D" stroke-width="1.5"/>
-                <circle cx="372" cy="142" r="17" fill="#86EFAC" stroke="#15803D" stroke-width="1.5"/>
-                <circle cx="404" cy="146" r="15" fill="#86EFAC" stroke="#15803D" stroke-width="1.5"/>
+              <!-- 胸郭（肋骨弓・胸壁）シルエット -->
+              <path d="M 422 34 C 362 34, 326 68, 322 138 C 320 166, 336 178, 376 172 C 406 167, 426 158, 440 156 C 454 158, 474 167, 504 172 C 544 178, 560 166, 558 138 C 554 68, 518 34, 458 34 Z"
+                    fill="#F1F5F9" stroke="#64748B" stroke-width="1.8" stroke-dasharray="5 3"/>
+              <!-- 横隔膜（Diaphragm）ドーム -->
+              <path d="M 326 170 Q 382 148 440 156 Q 498 148 554 170" fill="none" stroke="#B45309" stroke-width="3" stroke-linecap="round"/>
 
-                <!-- 右半分（過膨張肺と圧迫される心臓断面） -->
-                <path d="M 448 52 C 488 32, 532 64, 536 128 C 538 162, 526 186, 498 182 C 472 178, 452 158, 446 138 Z"
-                      fill="#FECDD3" stroke="#9F1239" stroke-width="2.5"/>
-                <path d="M 462 82 C 492 78, 514 110, 506 148 C 496 164, 468 158, 458 140 Z"
-                      fill="#E11D48" stroke="#881337" stroke-width="2" opacity="0.85"/>
+              <!-- PEEP値に応じて胸腔内で膨張する両肺＆圧迫を受ける縦隔心臓 -->
+              <g id="peepCenterLungGroup" style="transform-origin: 440px 106px; transition: transform 0.45s ease; transform: scale(0.95);">
+                <!-- 気管・気管軟骨輪・気管分岐部 -->
+                <path d="M 433 26 L 447 26 L 447 68 L 464 82 L 459 88 L 440 73 L 421 88 L 416 82 L 433 68 Z"
+                      fill="#FDE68A" stroke="#92400E" stroke-width="1.5"/>
+                <g stroke="#B45309" stroke-width="1.3">
+                  <line x1="434" y1="34" x2="446" y2="34"/><line x1="434" y1="42" x2="446" y2="42"/><line x1="434" y1="50" x2="446" y2="50"/><line x1="434" y1="58" x2="446" y2="58"/>
+                </g>
+
+                <!-- 解剖学的右肺（向かって左：上葉・中葉・下葉の3葉＋水平裂・斜裂＋区域気管支樹） -->
+                <path d="M 426 42 C 396 36, 354 60, 342 104 C 334 136, 340 164, 364 166 C 392 168, 416 154, 422 136 C 425 108, 427 68, 426 42 Z"
+                      fill="url(#thoraxLungRecruitedGrad)" stroke="#0F766E" stroke-width="2"/>
+                <!-- 右肺 水平裂 ＆ 斜裂 -->
+                <path d="M 424 94 C 398 94, 372 98, 344 104" fill="none" stroke="#115E59" stroke-width="1.4" opacity="0.8"/>
+                <path d="M 424 78 C 398 102, 374 132, 354 164" fill="none" stroke="#115E59" stroke-width="1.5" opacity="0.85"/>
+                <!-- 右肺 区域気管支樹 -->
+                <path d="M 418 82 L 392 66 M 402 72 L 382 76 M 415 86 L 378 102 M 414 90 L 380 138 M 394 118 L 368 144"
+                      fill="none" stroke="#CCFBF1" stroke-width="1.8" stroke-linecap="round"/>
+
+                <!-- 解剖学的左肺（向かって右：上葉・下葉の2葉＋心切痕＋斜裂＋区域気管支樹） -->
+                <path d="M 454 42 C 484 36, 526 60, 538 104 C 546 136, 540 164, 516 166 C 492 168, 476 156, 472 140 C 478 124, 474 106, 456 100 C 453 76, 453 58, 454 42 Z"
+                      fill="url(#thoraxLungRecruitedGrad)" stroke="#0F766E" stroke-width="2"/>
+                <!-- 左肺 斜裂 -->
+                <path d="M 456 76 C 482 100, 506 132, 526 164" fill="none" stroke="#115E59" stroke-width="1.5" opacity="0.85"/>
+                <!-- 左肺 区域気管支樹 -->
+                <path d="M 462 82 L 488 66 M 478 72 L 498 76 M 466 88 L 504 136 M 488 116 L 514 142"
+                      fill="none" stroke="#CCFBF1" stroke-width="1.8" stroke-linecap="round"/>
+
+                <!-- 中央縦隔：心膜腔内の心臓・上大静脈(SVC)・下大静脈(IVC)・大動脈弓 -->
+                <path d="M 432 68 L 432 156" stroke="#2563EB" stroke-width="6" stroke-linecap="round"/>
+                <path d="M 442 82 C 442 66, 456 66, 458 82" fill="none" stroke="#E11D48" stroke-width="4.5"/>
+                <path d="M 426 94 C 418 104, 418 134, 430 144 C 442 152, 464 152, 468 134 C 472 114, 458 92, 442 92 Z"
+                      fill="url(#peepHeartLeftGrad)" stroke="#881337" stroke-width="1.8"/>
+                <path d="M 426 94 C 418 104, 418 134, 434 144 L 440 94 Z"
+                      fill="url(#peepHeartRightGrad)" stroke="#1E3A8A" stroke-width="1.5"/>
+
+                <!-- 膨張した左右肺から縦隔（心臓・SVC/IVC）へかかる胸腔内圧ベクトル矢印 -->
+                <g stroke="#E11D48" stroke-width="2.5" fill="#E11D48">
+                  <line x1="398" y1="112" x2="418" y2="112"/><polygon points="415,108 422,112 415,116"/>
+                  <line x1="398" y1="132" x2="418" y2="132"/><polygon points="415,128 422,132 415,136"/>
+                  <line x1="490" y1="122" x2="472" y2="122"/><polygon points="475,118 468,122 475,126"/>
+                </g>
               </g>
-              <rect x="386" y="178" width="108" height="22" rx="11" fill="#0F172A" stroke="#CBD5E1" stroke-width="1.5"/>
+
+              <rect x="382" y="178" width="116" height="22" rx="11" fill="#0F172A" stroke="#CBD5E1" stroke-width="1.5"/>
               <text id="peepCenterPressText" x="440" y="193" font-size="11" font-weight="900" fill="#38BDF8" text-anchor="middle">PEEP: +5 cmH₂O</text>
 
-              <!-- ==================== 右エリア（− 影）：4腔心臓＆SVC/IVC 圧迫・静脈還流阻害 ==================== -->
-              <circle cx="846" cy="32" r="20" fill="#E11D48"/>
-              <text x="846" y="40" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle">−</text>
-              <text x="565" y="28" font-size="13" font-weight="900" fill="#BE123C">【影】胸腔内圧↑ ⇒ 静脈還流阻害・血圧↓</text>
-              <text id="peepShadowStatusText" x="565" y="45" font-size="11" font-weight="800" fill="#9F1239">循環抑制: 軽微 (還流良好)</text>
+              <!-- ==================== 3. 右ビューポート（− 影）：4腔心臓・大血管の解剖学的血行動態（SVC/IVC圧迫と静脈還流阻害） ==================== -->
+              <circle cx="614" cy="26" r="14" fill="#E11D48"/>
+              <text x="614" y="32" font-size="20" font-weight="900" fill="#FFFFFF" text-anchor="middle">−</text>
+              <text x="634" y="23" font-size="11.5" font-weight="900" fill="#BE123C">【影】胸腔内圧↑ ⇒ 大静脈圧迫・還流減少</text>
+              <text id="peepShadowStatusText" x="634" y="38" font-size="10" font-weight="800" fill="#9F1239">循環抑制: 軽微 (静脈還流は良好)</text>
 
-              <!-- 4腔心臓と上下大静脈（SVC/IVC）の解剖学モデル -->
-              <g transform="translate(620, 48)">
-                <!-- 大動脈弓 -->
-                <path d="M 88 46 C 88 12, 134 12, 136 46 L 120 46 C 118 26, 102 26, 102 46 Z" fill="#E11D48" stroke="#881337" stroke-width="2"/>
-                <!-- PEEP上昇で横方向に圧迫されて細くなるSVC・IVC・右心房グループ -->
-                <g id="peepVenaCavaGroup" style="transform-origin: 65px 80px; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); transform: scaleX(1);">
-                  <!-- 上大静脈 (SVC) -->
-                  <rect x="52" y="10" width="24" height="45" rx="4" fill="#93C5FD" stroke="#1E3A8A" stroke-width="2"/>
-                  <text x="64" y="6" font-size="11" font-weight="900" fill="#1E3A8A" text-anchor="middle">SVC</text>
-                  <!-- 下大静脈 (IVC) -->
-                  <rect x="52" y="105" width="24" height="46" rx="4" fill="#93C5FD" stroke="#1E3A8A" stroke-width="2"/>
-                  <text x="64" y="162" font-size="11" font-weight="900" fill="#1E3A8A" text-anchor="middle">IVC</text>
-                  <!-- 右心房・右心室（青系） -->
-                  <path d="M 48 48 C 32 54, 30 96, 48 112 C 66 124, 96 132, 108 124 L 94 54 Z" fill="url(#peepHeartRightGrad)" stroke="#1E3A8A" stroke-width="2.2"/>
-                  <!-- 静脈還流アニメーション矢印（SVC下向き・IVC上向き） -->
-                  <line id="peepSvcFlowLine" x1="64" y1="14" x2="64" y2="54" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="5 4" class="venous-stream-fast"/>
-                  <line id="peepIvcFlowLine" x1="64" y1="148" x2="64" y2="100" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="5 4" class="venous-stream-fast"/>
+              <!-- 4腔心臓と上下大静脈（SVC/IVC）・大動脈弓・肺動脈幹の精密解剖学モデル -->
+              <g transform="translate(612, 44)">
+                <!-- 上行大動脈・大動脈弓 (Aortic Arch) ＆ 腕頭・左総頸・左鎖骨下動脈起始部 -->
+                <path d="M 102 52 C 98 14, 148 10, 154 48 L 138 48 C 134 26, 114 28, 116 52 Z"
+                      fill="#E11D48" stroke="#881337" stroke-width="1.8"/>
+                <path d="M 114 20 L 112 8 M 124 17 L 124 6 M 134 19 L 138 8" stroke="#881337" stroke-width="3.5" stroke-linecap="round"/>
+
+                <!-- 肺動脈幹 (Pulmonary Trunk) ＆ 左右肺動脈分岐 -->
+                <path d="M 88 64 C 88 42, 114 34, 142 36 L 142 46 C 120 45, 102 50, 102 66 Z"
+                      fill="#3B82F6" stroke="#1E3A8A" stroke-width="1.6"/>
+
+                <!-- ★PEEP上昇時に外圧で内腔が狭小化するコンプライアンス血管群（SVC・IVC・右心房外壁）※文字ラベルは外に出して歪み防止 -->
+                <g id="peepVenaCavaGroup" style="transform-origin: 66px 80px; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); transform: scaleX(1);">
+                  <!-- 上大静脈 (Superior Vena Cava: SVC) 解剖学的円筒血管 -->
+                  <path d="M 54 8 C 56 24, 56 38, 52 52 L 78 52 C 76 38, 76 24, 78 8 Z"
+                        fill="url(#peepHeartRightGrad)" stroke="#1E3A8A" stroke-width="2"/>
+                  <ellipse cx="66" cy="8" rx="12" ry="3.5" fill="#1E3A8A" stroke="#93C5FD" stroke-width="1.2"/>
+
+                  <!-- 下大静脈 (Inferior Vena Cava: IVC) 解剖学的円筒血管 -->
+                  <path d="M 52 104 C 54 120, 54 136, 52 150 L 78 150 C 76 136, 76 120, 78 104 Z"
+                        fill="url(#peepHeartRightGrad)" stroke="#1E3A8A" stroke-width="2"/>
+                  <ellipse cx="65" cy="150" rx="13" ry="3.5" fill="#1E3A8A" stroke="#93C5FD" stroke-width="1.2"/>
+
+                  <!-- 右心房 (Right Atrium: RA) ＆ 右心耳 -->
+                  <path d="M 52 48 C 32 54, 28 88, 52 108 C 64 114, 78 110, 84 98 L 82 52 Z"
+                        fill="url(#peepHeartRightGrad)" stroke="#1E3A8A" stroke-width="2"/>
+
+                  <!-- 静脈還流アニメーション矢印（SVC下向き・IVC上向き → 右心房へ流入） -->
+                  <line id="peepSvcFlowLine" x1="66" y1="12" x2="66" y2="62" stroke="#E0F2FE" stroke-width="4" stroke-dasharray="5 4" class="venous-stream-fast"/>
+                  <line id="peepIvcFlowLine" x1="65" y1="146" x2="65" y2="92" stroke="#E0F2FE" stroke-width="4" stroke-dasharray="5 4" class="venous-stream-fast"/>
                 </g>
 
-                <!-- 左心房・左心室（赤系） -->
-                <path d="M 94 52 C 118 44, 152 62, 154 98 C 156 124, 132 138, 108 126 Z" fill="url(#peepHeartLeftGrad)" stroke="#881337" stroke-width="2.2"/>
+                <!-- 右心室 (Right Ventricle: RV) ＆ 三尖弁輪ライン -->
+                <path d="M 64 98 C 68 124, 96 138, 122 132 C 114 108, 104 82, 96 62 L 76 62 Z"
+                      fill="url(#peepHeartRightGrad)" stroke="#1E3A8A" stroke-width="2"/>
+                <path d="M 76 68 L 66 96" stroke="#DBEAFE" stroke-width="2" stroke-dasharray="3 2"/>
 
-                <!-- PEEPによる外からの圧迫赤矢印（PEEP 10/15で強く表示） -->
-                <g id="peepSqueezeArrows" style="opacity: 0.25; transition: all 0.4s ease;">
-                  <line x1="12" y1="32" x2="44" y2="32" stroke="#DC2626" stroke-width="4"/><polygon points="40,25 50,32 40,39" fill="#DC2626"/>
-                  <line x1="12" y1="82" x2="34" y2="82" stroke="#DC2626" stroke-width="4"/><polygon points="30,75 40,82 30,89" fill="#DC2626"/>
-                  <line x1="12" y1="128" x2="44" y2="128" stroke="#DC2626" stroke-width="4"/><polygon points="40,121 50,128 40,135" fill="#DC2626"/>
-                  <text x="6" y="64" font-size="10.5" font-weight="900" fill="#B91C1C">陽圧圧迫!</text>
+                <!-- 左心房 (LA) ＆ 左心室 (Left Ventricle: LV 厚い心筋壁) ＆ 心室中隔 -->
+                <path d="M 102 52 C 134 46, 168 68, 166 106 C 164 130, 142 140, 122 132 C 112 108, 104 80, 102 52 Z"
+                      fill="url(#peepHeartLeftGrad)" stroke="#881337" stroke-width="2.2"/>
+                <!-- 左室内腔と左室拍出ストリーム -->
+                <path d="M 114 68 C 134 66, 148 84, 146 108 C 144 120, 132 124, 124 118 Z"
+                      fill="#881337" opacity="0.45"/>
+                <path d="M 128 104 C 124 84, 120 62, 124 34" fill="none" stroke="#FFE4E6" stroke-width="2.5" stroke-dasharray="4 3" class="venous-stream-fast"/>
+
+                <!-- 解剖学ラベル（歪まない固定レイヤー） -->
+                <text x="90" y="15" font-size="9.5" font-weight="900" fill="#1E3A8A">SVC (上大静脈)</text>
+                <text x="90" y="152" font-size="9.5" font-weight="900" fill="#1E3A8A">IVC (下大静脈)</text>
+                <text x="58" y="81" font-size="10" font-weight="900" fill="#FFFFFF" text-anchor="middle">RA</text>
+                <text x="94" y="112" font-size="10" font-weight="900" fill="#DBEAFE" text-anchor="middle">RV</text>
+                <text x="138" y="102" font-size="10.5" font-weight="900" fill="#FFFFFF" text-anchor="middle">LV</text>
+                <text x="164" y="28" font-size="9.5" font-weight="900" fill="#9F1239">大動脈(Ao)</text>
+
+                <!-- PEEPによる胸腔内陽圧の圧迫ベクトル矢印（PEEP 10/15で強く表示） -->
+                <g id="peepSqueezeArrows" style="opacity: 0.22; transition: all 0.4s ease;">
+                  <!-- 膨張肺実質からの圧迫境界弧 -->
+                  <path d="M 8 10 C 20 50, 20 110, 8 150" fill="none" stroke="#FB7185" stroke-width="2.5" stroke-dasharray="4 3"/>
+                  <line x1="12" y1="28" x2="42" y2="28" stroke="#DC2626" stroke-width="3.8"/><polygon points="39,22 49,28 39,34" fill="#DC2626"/>
+                  <line x1="8" y1="78" x2="32" y2="78" stroke="#DC2626" stroke-width="3.8"/><polygon points="29,72 39,78 29,84" fill="#DC2626"/>
+                  <line x1="12" y1="128" x2="42" y2="128" stroke="#DC2626" stroke-width="3.8"/><polygon points="39,122 49,128 39,134" fill="#DC2626"/>
+                  <text x="4" y="62" font-size="9.5" font-weight="900" fill="#B91C1C">胸腔内圧↑</text>
+                  <text x="4" y="102" font-size="9" font-weight="900" fill="#B91C1C">静脈圧迫!</text>
                 </g>
 
-                <!-- 高PEEP時の血圧低下警告バッジ -->
+                <!-- 高PEEP時の心拍出量・血圧低下警告バッジ -->
                 <g id="peepHighWarnBadge" class="high-press-flash" style="display: none;">
-                  <rect x="92" y="134" width="136" height="22" rx="11" fill="#EF4444" stroke="#991B1B" stroke-width="1.5"/>
-                  <text x="160" y="149" font-size="10" font-weight="900" fill="#FFFFFF" text-anchor="middle">🚨 還流減少 ⇒ 血圧低下!</text>
+                  <rect x="108" y="122" width="146" height="22" rx="11" fill="#EF4444" stroke="#991B1B" stroke-width="1.5"/>
+                  <text x="181" y="137" font-size="9.5" font-weight="900" fill="#FFFFFF" text-anchor="middle">🚨 静脈還流↓ ⇒ 血圧低下!</text>
                 </g>
               </g>
             </svg>
