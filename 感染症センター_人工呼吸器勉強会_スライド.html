@@ -111,7 +111,7 @@
     /* ==========================================================================
        2. 講義本編スライドの「上下サンドイッチ構造」＋TCFD質問タグ帯
        ========================================================================== */
-    .sandwich-slide {
+    .reveal .slides section.sandwich-slide.present, .reveal .slides section.sandwich-slide.tv-cam-leaving {
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
@@ -1627,6 +1627,205 @@
       display: none !important;
     }
   </style>
+<!-- === SEAMLESS_STUDIO_CSS_START === -->
+  <style>
+    /* ==========================================================================
+       クリーン・シームレス遷移エンジン（常駐ヘッダー/フッター固定 ＋ 2画面連続カメラ移動）
+       ========================================================================== */
+
+    /* 非表示スライドは隠し、現在スライド(.present)と退場中スライド(.tv-cam-leaving)のみを同時駆動 */
+    .reveal .slides > section:not(.present):not(.tv-cam-leaving) {
+      display: none !important;
+    }
+    .reveal .slides > section.present {
+      z-index: 12 !important;
+    }
+    .reveal .slides > section.tv-cam-leaving {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 720px !important;
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: none !important;
+      z-index: 10 !important;
+      transform: none !important;
+    }
+    .reveal .slides > section.sandwich-slide.tv-cam-leaving {
+      display: flex !important;
+    }
+
+    /* パート内遷移時：退場スライドのヘッダー・フッターを隠し、現在スライドのヘッダー・フッターを揺らさず常駐させる */
+    .reveal .slides > section.tv-cam-leaving.tv-keep-studio-frame {
+      background: transparent !important;
+    }
+    .reveal .slides > section.tv-cam-leaving.tv-keep-studio-frame .slide-header-layer,
+    .reveal .slides > section.tv-cam-leaving.tv-keep-studio-frame .slide-footer-layer {
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+
+    /* ヘッダーのタイトル文字とピル、フッターの文字だけが滑らかにクロスフェード＆スライド */
+    @keyframes tvHeaderTextSwap {
+      0%   { opacity: 0; transform: translateY(7px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .reveal .slides > section.present.tv-studio-swap .slide-header-layer h2,
+    .reveal .slides > section.present.tv-studio-swap .slide-header-layer .question-pill,
+    .reveal .slides > section.present.tv-studio-swap .slide-header-layer .category-pill,
+    .reveal .slides > section.present.tv-studio-swap .slide-footer-layer span {
+      animation: tvHeaderTextSwap 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* 前後2スライド同時連動カメラワーク（Cross Zoom-In / Continuous Pan / Cross Zoom-Out） */
+    .reveal .slides section .slide-content-layer {
+      will-change: transform, opacity;
+      transform-origin: var(--tv-cam-origin, 50% 50%);
+    }
+
+    /* ① ズームイン遷移（前の図解が手前へ拡大して抜け、奥から次の図解が拡大して現れる） */
+    @keyframes tvLeaveZoomIn {
+      0%   { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.65); }
+    }
+    @keyframes tvEnterZoomIn {
+      0%   { opacity: 0; transform: scale(0.62); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .tv-leave-zoom-in {
+      animation: tvLeaveZoomIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+    .tv-enter-zoom-in {
+      animation: tvEnterZoomIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    /* ② 右パン遷移（前の図解が左へ流れ、右隣から次の図解が切れ目なく滑り込む） */
+    @keyframes tvLeavePanRight {
+      0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+      100% { opacity: 0; transform: translate3d(-96%, 0, 0) scale(0.95); }
+    }
+    @keyframes tvEnterPanRight {
+      0%   { opacity: 0; transform: translate3d(96%, 0, 0) scale(0.95); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    .tv-leave-pan-right {
+      animation: tvLeavePanRight 0.70s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+    .tv-enter-pan-right {
+      animation: tvEnterPanRight 0.70s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    /* ③ 左パン遷移（戻る操作時） */
+    @keyframes tvLeavePanLeft {
+      0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+      100% { opacity: 0; transform: translate3d(96%, 0, 0) scale(0.95); }
+    }
+    @keyframes tvEnterPanLeft {
+      0%   { opacity: 0; transform: translate3d(-96%, 0, 0) scale(0.95); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    .tv-leave-pan-left {
+      animation: tvLeavePanLeft 0.70s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+    .tv-enter-pan-left {
+      animation: tvEnterPanLeft 0.70s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    /* ④ ズームアウト遷移（詳細図解が中央へ縮小し、外側から全体まとめ図が引いて現れる） */
+    @keyframes tvLeaveZoomOut {
+      0%   { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.55); }
+    }
+    @keyframes tvEnterZoomOut {
+      0%   { opacity: 0; transform: scale(1.55); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .tv-leave-zoom-out {
+      animation: tvLeaveZoomOut 0.74s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+    .tv-enter-zoom-out {
+      animation: tvEnterZoomOut 0.74s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    /* ⑤ 中扉 ➔ パート本編突入時のスタジオ枠展開 */
+    @keyframes tvDividerEnter {
+      0%   { opacity: 0; transform: scale(1.08); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes tvStudioFrameSlideDown {
+      0%   { opacity: 0; transform: translateY(-22px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes tvStudioFooterSlideUp {
+      0%   { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .reveal .slides > section.present.tv-part-opening .slide-header-layer {
+      animation: tvStudioFrameSlideDown 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .reveal .slides > section.present.tv-part-opening .slide-footer-layer {
+      animation: tvStudioFooterSlideUp 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .reveal .slides > section.present.tv-divider-opening {
+      animation: tvDividerEnter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* ⑥ スライド内ステップ進行（.fragment）の滑らかなフリップ移動＆控えめなフォーカス */
+    .reveal .slides section .fragment.fade-up {
+      transform: translate3d(32px, 10px, 0) scale(0.96);
+      transition: opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.38s ease !important;
+    }
+    .reveal .slides section .fragment.fade-up.visible {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    .reveal .slides section .info-panel.fragment.current-fragment {
+      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.16), 0 0 0 2px rgba(37, 99, 235, 0.35) !important;
+    }
+
+    /* Slide 2（目次）のステップ進行中スポットライト */
+    .agenda-grid-6.has-active-spotlight .agenda-spotlight-card:not(.current-fragment) {
+      opacity: 0.55 !important;
+      transform: scale(0.975) !important;
+    }
+    .agenda-grid-6.has-active-spotlight .agenda-spotlight-card.current-fragment {
+      opacity: 1 !important;
+      transform: translateY(-4px) scale(1.03) !important;
+      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22), 0 0 0 2.5px #2563EB !important;
+      z-index: 10;
+    }
+
+    @media print {
+      .tv-leave-zoom-in, .tv-enter-zoom-in,
+      .tv-leave-pan-right, .tv-enter-pan-right,
+      .tv-leave-pan-left, .tv-enter-pan-left,
+      .tv-leave-zoom-out, .tv-enter-zoom-out {
+        animation: none !important;
+        transform: none !important;
+      }
+    }
+
+    /* ⑦ 2カラム比較のダイナミック・ステージング（最初は主役が中央に大きく表示され、次へで左へ移動＋右から比較パネルが滑り込む） */
+    .reveal .slides section:not(.tv-cam-leaving) .slide-content-layer > div:has(> .info-panel:first-child + .info-panel.fragment:last-child) > .info-panel:first-child {
+      transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.62s ease !important;
+    }
+    .reveal .slides section:not(.tv-cam-leaving) .slide-content-layer > div:has(> .info-panel:first-child + .info-panel.fragment:not(.visible):last-child) > .info-panel:first-child {
+      transform: translate3d(51%, 0, 0) scale(1.02) !important;
+      z-index: 8;
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14) !important;
+    }
+    html.print-pdf .reveal .slides section .slide-content-layer > div > .info-panel:first-child,
+    @media print {
+      .reveal .slides section .slide-content-layer > div > .info-panel:first-child {
+        transform: none !important;
+      }
+    }
+
+  </style>
+  <!-- === SEAMLESS_STUDIO_CSS_END === -->
 </head>
 <body>
   <div id="floatingToolbar" class="floating-toolbar">
@@ -1722,7 +1921,7 @@
       <!-- ====================================================================
            【Slide 1】表紙（白ベースデザイン ＋ CE & 看護師）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="light-cover-slide">
+      <section data-slide-num="1" data-part-id="0" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 OPENING｜感染症センター 人工呼吸器勉強会" data-short-title="🎬 表紙" data-background-color="#FFFFFF" class="light-cover-slide">
         <!-- 背景装飾：淡いバイタル波形SVG -->
         <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
           <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
@@ -1737,7 +1936,7 @@
             </div>
 
             <!-- メインタイトル：white-space: nowrap で改行崩れ・1文字落ちを完全防止 -->
-            <h1 style="font-size: clamp(2.05rem, 3.1vw, 2.65rem); font-weight: 900; line-height: 1.2; color: #0F172A; margin-bottom: 14px; letter-spacing: -0.01em;">
+            <h1 data-id="tv-title" style="font-size: clamp(2.05rem, 3.1vw, 2.65rem); font-weight: 900; line-height: 1.2; color: #0F172A; margin-bottom: 14px; letter-spacing: -0.01em;">
               <span style="color: #2563EB; display: block; white-space: nowrap;">感染症センター</span>
               <span style="display: block; white-space: nowrap;">人工呼吸器勉強会</span>
             </h1>
@@ -1797,10 +1996,10 @@
       <!-- ====================================================================
            【Slide 2】アジェンダ（目次：全6部構成）★追加スライド
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill"><i class="fa-solid fa-list-check"></i> AGENDA</span>
-          <h2>本日の講義プログラム（全6部・計45〜55分）</h2>
+      <section data-slide-num="2" data-part-id="0" data-camera-mode="zoom-in" data-camera-origin="50% 35%" data-camera-badge="📋 LINEUP｜全6部プログラム（ステップ連動スポットライト）" data-short-title="📋 全体目次" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill"><i class="fa-solid fa-list-check"></i> AGENDA</span>
+          <h2 data-id="tv-title">本日の講義プログラム（全6部・計45〜55分）</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -1815,39 +2014,39 @@
           </div>
 
           <div class="agenda-grid-6">
-            <div class="info-panel blue fragment fade-up" onclick="jumpToSlide(2)" style="cursor: pointer;" title="クリックして第1部へ移動">
+            <div data-id="part01-entry-morph" data-agenda-idx="1" class="info-panel blue agenda-spotlight-card" onclick="jumpToSlide(2)" style="cursor: pointer;" title="クリックして第1部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-blue);">PART 01｜導入・呼吸生理</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">人工呼吸器の二面性と呼吸生理</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">良い側面（メリット）と悪い側面（合併症）、自然呼吸（陰圧）と人工呼吸（陽圧）の決定的な違い</p>
             </div>
-            <div class="info-panel green fragment fade-up" onclick="jumpToSlide(9)" style="cursor: pointer;" title="クリックして第2部へ移動">
+            <div data-agenda-idx="2" class="info-panel green fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(9)" style="cursor: pointer;" title="クリックして第2部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-green);">PART 02｜機器安全・使用中点検</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">日常・使用中点検の実践</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">必須7項目、非常用電源・ガス配管、人工鼻の仕様（死腔85mL）、カフ圧（25〜30）、画面トリプルチェック</p>
             </div>
-            <div class="info-panel blue fragment fade-up" onclick="jumpToSlide(15)" style="cursor: pointer;" title="クリックして第3部へ移動">
+            <div data-agenda-idx="3" class="info-panel blue fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(15)" style="cursor: pointer;" title="クリックして第3部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-blue);">PART 03｜換気様式・モード解読 ★重点</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">VCV/PCVと換気モード・実機画面</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">VCV vs PCV、PEEPの光と影、A/C・CPAP・PSV・アプニア換気、Savina 300実機波形の読み解き</p>
             </div>
-            <div class="info-panel red fragment fade-up" onclick="jumpToSlide(25)" style="cursor: pointer;" title="クリックして第4部へ移動">
+            <div data-agenda-idx="4" class="info-panel red fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(25)" style="cursor: pointer;" title="クリックして第4部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--alert-red);">PART 04｜アラーム対応 ★重点</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">デュアル・アセスメントと対応</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">「患者」と「回路」の同時評価、分時換気量・気道内圧・無呼吸/頻呼吸アラームの特定と早見表</p>
             </div>
-            <div class="info-panel orange fragment fade-up" onclick="jumpToSlide(31)" style="cursor: pointer;" title="クリックして第5部へ移動">
+            <div data-agenda-idx="5" class="info-panel orange fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(31)" style="cursor: pointer;" title="クリックして第5部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-orange);">PART 05｜データ統合・血ガス調整</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">酸素化（P/F比）と酸塩基平衡（pH）</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">P/F比とFiO2・PEEP調整、pHシーソーモデル、PaCO2を目標とした分時換気量（VT×RR）調整</p>
             </div>
-            <div class="info-panel green fragment fade-up" onclick="jumpToSlide(38)" style="cursor: pointer;" title="クリックして第6部へ移動">
+            <div data-agenda-idx="6" class="info-panel green fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(38)" style="cursor: pointer;" title="クリックして第6部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-green);">PART 06｜総括・付録リファレンス</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">まとめ＆アンケート・基準値早見表</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">全体のまとめ、受講後アンケートQRコード、基本設定パラメータ基準値、肺力学・離脱指標（RSB）</p>
             </div>
           </div>
 
-          <div class="char-callout" data-step-texts="<strong>CE講師：</strong>「本日はこの6つのパートで進めます！特に第3部の『モード・実機画面解読』と第4部の『アラーム対応』は明日からのケアに直結する重点パートです！」||<strong>第1部（導入・呼吸生理）：</strong>「まずは人工呼吸器のメリット・合併症と、自然呼吸（陰圧）と人工呼吸（陽圧）の決定的な違いを押さえましょう！」||<strong>第2部（日常・使用中点検）：</strong>「非常用電源（赤・緑）や医療ガス配管、85mLの死腔がある人工鼻、カフ圧（25〜30 cmH₂O）の安全確認を学びます！」||<strong>第3部（換気モード・実機画面解読 ★重点）：</strong>「VCV（注射器）とPCV（送風機）の違い、PEEPの光と影、そしてSavina 300の波形解読をマスターします！」||<strong>第4部（アラーム対応 ★重点）：</strong>「アラームが鳴ったら『患者』と『回路』の両面から原因を特定するデュアル・アセスメントを実践します！」||<strong>第5部（データ統合・血ガス調整）：</strong>「P/F比による酸素化評価と、pHシーソーモデルを使った分時換気量（TV×RR）の調整ルールを紐解きます！」||<strong>第6部（総括・付録リファレンス）：</strong>「最後に本日のまとめと、ベッドサイドですぐ使える設定基準値・ウィーニング指標（RSB）を確認します！」">
+          <div data-id="tv-wipe" class="char-callout" data-step-texts="<strong>CE講師：</strong>「本日はこの6つのパートで進めます！特に第3部の『モード・実機画面解読』と第4部の『アラーム対応』は明日からのケアに直結する重点パートです！」||<strong>第1部（導入・呼吸生理）：</strong>「まずは人工呼吸器のメリット・合併症と、自然呼吸（陰圧）と人工呼吸（陽圧）の決定的な違いを押さえましょう！」||<strong>第2部（日常・使用中点検）：</strong>「非常用電源（赤・緑）や医療ガス配管、85mLの死腔がある人工鼻、カフ圧（25〜30 cmH₂O）の安全確認を学びます！」||<strong>第3部（換気モード・実機画面解読 ★重点）：</strong>「VCV（注射器）とPCV（送風機）の違い、PEEPの光と影、そしてSavina 300の波形解読をマスターします！」||<strong>第4部（アラーム対応 ★重点）：</strong>「アラームが鳴ったら『患者』と『回路』の両面から原因を特定するデュアル・アセスメントを実践します！」||<strong>第5部（データ統合・血ガス調整）：</strong>「P/F比による酸素化評価と、pHシーソーモデルを使った分時換気量（TV×RR）の調整ルールを紐解きます！」||<strong>第6部（総括・付録リファレンス）：</strong>「最後に本日のまとめと、ベッドサイドですぐ使える設定基準値・ウィーニング指標（RSB）を確認します！」">
             <div class="char-avatar"><img src="assets/icon ce.png" alt="CE"></div>
             <div class="char-bubble-text">
               <strong>CE講師：</strong>「本日はこの6つのパートで進めます！特に第3部の『モード・実機画面解読』と第4部の『アラーム対応』は明日からのケアに直結する重点パートです！」
@@ -1855,8 +2054,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">ROADMAP</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">ROADMAP</span>
           <span>基礎生理から点検・波形・アラーム・血液ガスまで、ベッドサイドの思考プロセスを一本の線で繋ぎます。</span>
         </div>
 
@@ -1869,7 +2068,7 @@
       <!-- ====================================================================
            【Slide 3】中扉①：第1部 導入・人工呼吸器の二面性と呼吸生理 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
+      <section data-slide-num="3" data-part-id="1" data-camera-mode="divider" data-camera-origin="25% 50%" data-camera-badge="🎬 PART 01 START｜二面性と呼吸生理" data-short-title="扉：第1部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
         <!-- 背景装飾：淡いバイタル波形SVG -->
         <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
           <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
@@ -1879,12 +2078,12 @@
         <div style="display: grid; grid-template-columns: 44% 56%; height: 100%; position: relative; z-index: 2;">
           
           <!-- 左側：セクションタイトル情報（白ベース） -->
-          <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
+          <div data-id="part01-entry-morph" style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
+            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
               <i class="fa-solid fa-lungs" style="color: #2563EB;"></i> PART 01｜INTRODUCTION
             </div>
 
-            <h2 style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
+            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
               二面性と呼吸生理
             </h2>
 
@@ -1896,7 +2095,7 @@
             <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #2563EB, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
 
             <!-- パート概要（白ベースカード） -->
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
+            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
               <div style="font-size: 0.72em; font-weight: 800; color: #2563EB; margin-bottom: 6px;">
                 <i class="fa-solid fa-check-double"></i> このパートのポイント
               </div>
@@ -1917,7 +2116,7 @@
             <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
 
             <!-- 1. 動画（assets/part01_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part01Video" class="part-char-video" autoplay loop muted playsinline preload="auto"
+            <video id="part01Video" class="part-char-video" autoplay loop muted playsinline preload="none"
                    style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
                    onloadedmetadata="activatePartVideo('part01')"
                    onloadeddata="activatePartVideo('part01')"
@@ -1981,10 +2180,10 @@
            【Slide 4】導入・問いかけ（原本 P.2 再現 ＋ 看護師疑問イラスト）
            [Character Prompt]: [Attach CE_base.jpg and Ns_base.jpg as character reference] Soft modern chibi anime style illustration. The baby clinical engineer explaining at a whiteboard while the short-haired female nurse in pink scrubs holds a pen to her chin with a thoughtful, questioning expression.
            ==================================================================== -->
-      <section data-background-color="#FFFDF9" class="sandwich-slide">
-        <div class="slide-header-layer" style="background: #4A5568;">
-          <span class="question-pill"><i class="fa-solid fa-circle-question"></i> 導入の問いかけ</span>
-          <h2>人工呼吸器って、患者さんにとって「良いもの」？それとも「悪いもの」？</h2>
+      <section data-slide-num="4" data-part-id="1" data-camera-mode="part-enter" data-camera-origin="50% 50%" data-camera-badge="🎥 STUDIO OPEN｜人工呼吸器はサポーターか悪者か？" data-short-title="⚖️ 良い？悪い？" data-background-color="#FFFDF9" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header" style="background: #4A5568;">
+          <span class="question-pill" data-id="tv-pill"><i class="fa-solid fa-circle-question"></i> 導入の問いかけ</span>
+          <h2 data-id="tv-title">人工呼吸器って、患者さんにとって「良いもの」？それとも「悪いもの」？</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -2001,7 +2200,7 @@
             </div>
 
             <!-- 中央：キャラクター画像（assets/char_thinking.png） -->
-            <div class="char-video-box" style="height: 360px; background: #FFFFFF; padding: 10px;">
+            <div data-id="tv-stage-1" class="char-video-box" style="height: 360px; background: #FFFFFF; padding: 10px;">
               <img src="assets/char_thinking.png" alt="良いもの？悪いもの？と考える看護師とCE" style="mix-blend-mode: normal; border-radius: 10px;">
             </div>
 
@@ -2026,8 +2225,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer">
-          <span class="footer-badge">KEY QUESTION</span>
+        <div class="slide-footer-layer" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">KEY QUESTION</span>
           <span>人工呼吸器は使い方や設定次第で「薬（ヒーロー）」にも「毒（悪者）」にもなります。</span>
         </div>
 
@@ -2040,15 +2239,15 @@
       <!-- ====================================================================
            【Slide 5】役割と二面性・イラスト版（原本 P.3 再現 ＋ assets/char_supporter.png）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="category-pill green">全体像</span>
-          <h2>人工呼吸器：患者さんの命を守る「良きサポーター」としての役割</h2>
+      <section data-slide-num="5" data-part-id="1" data-camera-mode="zoom-in-left" data-camera-origin="22% 50%" data-camera-badge="🎥 CAMERA ZOOM IN (左皿 1.8x)｜命を守る「良きサポーター」へ寄る" data-short-title="🛡️ サポーター" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="category-pill green" data-id="tv-pill">全体像</span>
+          <h2 data-id="tv-title">人工呼吸器：患者さんの命を守る「良きサポーター」としての役割</h2>
         </div>
 
         <div class="slide-content-layer">
           <!-- 上部リード文＋ステップ連動キャラクター吹き出し -->
-          <div class="char-callout" style="padding: 8px 14px;" data-step-texts="<strong>CE＆看護師：</strong>「人工呼吸器は『非生理的な陽圧換気』を行うため、メリットとデメリットが表裏一体！順番に確認していきましょう！」||<strong>メリット① 確実なガス交換：</strong>「まずは最大の目的！酸素（O₂）をしっかり取り込み、溜まった二酸化炭素（CO₂）を確実に排出して命を繋ぎます！」||<strong>メリット② 呼吸筋の休息：</strong>「ハァハァと苦しそうに呼吸している患者さんの呼吸仕事量を肩代わりし、疲弊した横隔膜や呼吸筋を休ませてあげられます！」||<strong>メリット③ PEEPによる肺胞保護：</strong>「息を吐ききったときも陽圧（PEEP）を残すことで、肺胞がペシャンコに潰れる無気肺を防ぎ、酸素化を劇的に改善します！」||<strong>⚠️ デメリット① 肺傷害（VALI）：</strong>「ここからは悪い側面です！強すぎる圧や多すぎる換気量は、肺胞を引き裂くVALI（人工呼吸器関連肺傷害）や気胸を招きます…」||<strong>⚠️ デメリット② 循環動態の抑制：</strong>「胸の中が陽圧になると心臓へ戻る静脈血が押し戻され、心拍出量や血圧が低下してしまいます。次のSlide 8で詳しく見ます！」||<strong>⚠️ デメリット③ 呼吸筋萎縮とPICS：</strong>「機械が助けすぎると数日で横隔膜が痩せてしまいます（VIDD）。患者さんごとに設定を個別化して『良きサポーター』にしましょう！」">
+          <div data-id="tv-wipe" class="char-callout" style="padding: 8px 14px;" data-step-texts="<strong>CE＆看護師：</strong>「人工呼吸器は『非生理的な陽圧換気』を行うため、メリットとデメリットが表裏一体！順番に確認していきましょう！」||<strong>メリット① 確実なガス交換：</strong>「まずは最大の目的！酸素（O₂）をしっかり取り込み、溜まった二酸化炭素（CO₂）を確実に排出して命を繋ぎます！」||<strong>メリット② 呼吸筋の休息：</strong>「ハァハァと苦しそうに呼吸している患者さんの呼吸仕事量を肩代わりし、疲弊した横隔膜や呼吸筋を休ませてあげられます！」||<strong>メリット③ PEEPによる肺胞保護：</strong>「息を吐ききったときも陽圧（PEEP）を残すことで、肺胞がペシャンコに潰れる無気肺を防ぎ、酸素化を劇的に改善します！」||<strong>⚠️ デメリット① 肺傷害（VALI）：</strong>「ここからは悪い側面です！強すぎる圧や多すぎる換気量は、肺胞を引き裂くVALI（人工呼吸器関連肺傷害）や気胸を招きます…」||<strong>⚠️ デメリット② 循環動態の抑制：</strong>「胸の中が陽圧になると心臓へ戻る静脈血が押し戻され、心拍出量や血圧が低下してしまいます。次のSlide 8で詳しく見ます！」||<strong>⚠️ デメリット③ 呼吸筋萎縮とPICS：</strong>「機械が助けすぎると数日で横隔膜が痩せてしまいます（VIDD）。患者さんごとに設定を個別化して『良きサポーター』にしましょう！」">
             <div class="char-avatar"><img src="assets/icon ce.png" alt="CE"></div>
             <div class="char-bubble-text">
               <strong>CE＆看護師：</strong>「人工呼吸器は『非生理的な陽圧換気』を行うため、メリットとデメリットが表裏一体！順番に確認していきましょう！」
@@ -2059,7 +2258,7 @@
           <!-- 下部：良い側面 vs 悪い側面 2カラム -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <!-- 左：良い側面（メリット） -->
-            <div class="info-panel blue" style="background: #F0F9FF; border-color: #BAE6FD; padding: 12px 16px;">
+            <div data-id="tv-stage-1" class="info-panel blue" style="background: #F0F9FF; border-color: #BAE6FD; padding: 12px 16px;">
               <h3 style="font-size: 0.9em; font-weight: 900; color: #0369A1; text-align: center; margin-bottom: 8px; border-bottom: 2px solid #BAE6FD; padding-bottom: 4px;">
                 <i class="fa-solid fa-circle-plus"></i> 人工呼吸の「良い側面」（メリット）
               </h3>
@@ -2080,7 +2279,7 @@
             </div>
 
             <!-- 右：悪い側面（デメリット・合併症） -->
-            <div class="info-panel red" style="background: #FFF1F2; border-color: #FECDD3; padding: 12px 16px;">
+            <div data-id="tv-card-1" class="info-panel red" style="background: #FFF1F2; border-color: #FECDD3; padding: 12px 16px;">
               <h3 style="font-size: 0.9em; font-weight: 900; color: #BE123C; text-align: center; margin-bottom: 8px; border-bottom: 2px solid #FECDD3; padding-bottom: 4px;">
                 <i class="fa-solid fa-triangle-exclamation"></i> 人工呼吸の「悪い側面」（デメリット・合併症）
               </h3>
@@ -2102,8 +2301,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">TAKEAWAY</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">TAKEAWAY</span>
           <span>単なる機械の運転ではなく、デメリットを最小限に抑える「個別化された設定管理」が私たちの役割です。</span>
         </div>
 
@@ -2117,16 +2316,16 @@
            【Slide 6】導入の目的：生体へのメリット（原本 P.4 再現）
            [Medical Illustration Prompt (assets/fig_gas_exchange.png)]: Modern flat vector medical illustration, clean infographic style, alveolar gas exchange cross-section showing O2 entering capillary and CO2 leaving, with protective hands supporting lungs, white background (#FFFFFF), color palette restricted to slate blue (#4A5568), teal green (#38A169), sky blue (#3182CE), and soft red, no text inside image.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">導入の目的は？</span>
-          <h2>人工呼吸器の役割 〜生体へのメリット〜</h2>
+      <section data-slide-num="6" data-part-id="1" data-camera-mode="pan-right" data-camera-origin="75% 50%" data-camera-badge="🎥 CAMERA PAN RIGHT｜サポーターから「生体への3大メリット」へ横移動" data-short-title="✨ 3大メリット" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">導入の目的は？</span>
+          <h2 data-id="tv-title">人工呼吸器の役割 〜生体へのメリット〜</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 270px 1fr; gap: 16px; align-items: stretch;">
             <!-- 左：生理学的メリット -->
-            <div class="info-panel blue" style="background: #F8FAFC; display: flex; flex-direction: column; justify-content: space-between;">
+            <div data-id="tv-stage-1" class="info-panel blue" style="background: #F8FAFC; display: flex; flex-direction: column; justify-content: space-between;">
               <div style="background: #DBEAFE; color: #1E3A8A; font-weight: 800; font-size: 0.82em; padding: 8px 12px; border-radius: 8px; text-align: center; margin-bottom: 8px;">
                 生理学的メリット：肺と身体への効果
               </div>
@@ -2164,7 +2363,7 @@
             </div>
 
             <!-- 右：臨床的メリット -->
-            <div class="info-panel green" style="background: #F8FAFC; display: flex; flex-direction: column; justify-content: space-between;">
+            <div data-id="tv-card-1" class="info-panel green" style="background: #F8FAFC; display: flex; flex-direction: column; justify-content: space-between;">
               <div style="background: #D1FAE5; color: #065F46; font-weight: 800; font-size: 0.82em; padding: 8px 12px; border-radius: 8px; text-align: center; margin-bottom: 8px;">
                 臨床的メリット：患者に現れる効果
               </div>
@@ -2190,8 +2389,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">KEY POINT</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">KEY POINT</span>
           <span>「呼吸仕事量の軽減」が「全身・心筋の酸素消費量の減少」に直結し、単なる換気補助以上の役割を果たします。</span>
         </div>
 
@@ -2205,17 +2404,17 @@
            【Slide 7】人工呼吸中の合併症：デメリット（原本 P.5 再現）
            [Medical Illustration Prompt (assets/fig_complications.png)]: Modern flat vector medical illustration, silhouette of an intubated patient lying on an ICU bed with warning triangles mapped on airway, lungs, heart, head, and lower back, white background (#FFFFFF), slate blue (#4A5568) and yellow warning accents, no text inside image.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">陽圧換気と気管挿管がもたらすリスクは？</span>
-          <h2>人工呼吸中の合併症 〜デメリット〜</h2>
+      <section data-slide-num="7" data-part-id="1" data-camera-mode="pan-right" data-camera-origin="82% 50%" data-camera-badge="🎥 CAMERA PAN TO ALERT｜天秤の反対側「4大合併症リスク」へ横移動" data-short-title="⚠️ 4大合併症" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">陽圧換気と気管挿管がもたらすリスクは？</span>
+          <h2 data-id="tv-title">人工呼吸中の合併症 〜デメリット〜</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 14px; align-items: center;">
             <!-- 左列（1 & 3） -->
             <div style="display: flex; flex-direction: column; gap: 14px;">
-              <div class="info-panel blue fragment fade-up">
+              <div data-id="tv-stage-1" class="info-panel blue ">
                 <div style="background: #3B82F6; color: #FFF; font-weight: 800; font-size: 0.78em; padding: 6px 12px; border-radius: 6px; margin-bottom: 8px;">
                   1. 人工気道（挿管チューブ）による合併症
                 </div>
@@ -2290,8 +2489,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer red">
-          <span class="footer-badge">RISK ALERT</span>
+        <div class="slide-footer-layer red" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">RISK ALERT</span>
           <span>気管挿管・陽圧換気・高濃度酸素・体動制限の4大リスクが常に背中合わせにあることを意識して観察します。</span>
         </div>
 
@@ -2305,16 +2504,16 @@
            【Slide 8】自然呼吸時と人工呼吸時の違い 〜陰圧と陽圧〜（原本 P.6 再現）
            [Medical Illustration Prompt (assets/fig_neg_pos_pressure.png)]: Modern flat vector medical illustration, side-by-side comparison of thorax anatomy. Left: Natural breathing with negative intrathoracic pressure (-) and large blue upward arrow showing venous return pump effect to the heart. Right: Mechanical positive pressure ventilation (+) compressing the heart and vena cava with red X mark blocking venous return. White background, no text.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">呼吸のメカニズムはどう変わる？</span>
-          <h2>自然呼吸時と人工呼吸時の違い 〜陰圧と陽圧〜</h2>
+      <section data-slide-num="8" data-part-id="1" data-camera-mode="zoom-in" data-camera-origin="50% 58%" data-camera-badge="🎥 ANATOMY ZOOM 1.8x｜胸郭・横隔膜モデル（自然呼吸［陰圧］vs 人工呼吸［陽圧］）" data-short-title="🫁 陰圧 vs 陽圧" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">呼吸のメカニズムはどう変わる？</span>
+          <h2 data-id="tv-title">自然呼吸時と人工呼吸時の違い 〜陰圧と陽圧〜</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
             <!-- 左：自然呼吸のメカニズム -->
-            <div class="info-panel blue" style="background: #F0F9FF; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
+            <div data-id="tv-stage-1" class="info-panel blue" style="background: #F0F9FF; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-size: 0.95em; font-weight: 900; color: #0369A1;">自然呼吸のメカニズム</h3>
                 <span style="background: #0284C7; color: #FFF; font-size: 0.68em; font-weight: 800; padding: 3px 10px; border-radius: 999px;">
@@ -2463,7 +2662,7 @@
             </div>
 
             <!-- 右：人工呼吸のメカニズム -->
-            <div class="info-panel red" style="background: #FFF7ED; border-left-color: #EA580C; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
+            <div data-id="tv-card-1" class="info-panel red fragment fade-up" style="background: #FFF7ED; border-left-color: #EA580C; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-size: 0.95em; font-weight: 900; color: #C2410C;">人工呼吸のメカニズム</h3>
                 <span style="background: #EA580C; color: #FFF; font-size: 0.68em; font-weight: 800; padding: 3px 10px; border-radius: 999px;">
@@ -2604,8 +2803,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer orange">
-          <span class="footer-badge">PHYSIOLOGY</span>
+        <div class="slide-footer-layer orange" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">PHYSIOLOGY</span>
           <span>「人工呼吸器をつけると血圧が下がりやすい」のは、胸腔内陽圧による静脈還流の阻害が根本原因です。</span>
         </div>
 
@@ -2618,10 +2817,10 @@
       <!-- ====================================================================
            【Slide 9】人工呼吸器：命を救う「サポーター」か、それとも「害」か？（原本 P.7 プロ版再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">人工呼吸の真の目的は？</span>
-          <h2>人工呼吸器：命を救う「サポーター」か、それとも「害」か？</h2>
+      <section data-slide-num="9" data-part-id="1" data-camera-mode="zoom-out" data-camera-origin="50% 50%" data-camera-badge="🎥 CAMERA ZOOM OUT｜全体の天秤へ引き、第1部の結論へ収束" data-short-title="🎯 天秤まとめ" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">人工呼吸の真の目的は？</span>
+          <h2 data-id="tv-title">人工呼吸器：命を救う「サポーター」か、それとも「害」か？</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -2634,7 +2833,7 @@
             <!-- 左：良い影響（メリット） -->
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <div style="font-size: 0.82em; font-weight: 900; color: var(--mute-green); text-align: center;">人工呼吸器の「良い影響」（メリット）</div>
-              <div class="info-panel green fragment fade-up" style="padding: 9px 14px;">
+              <div data-id="tv-stage-1" class="info-panel green " style="padding: 9px 14px;">
                 <strong style="font-size: 0.78em; color: var(--mute-green); display: block;">① 確実なガス交換の維持</strong>
                 <span style="font-size: 0.66em; color: var(--text-muted);">酸素を確実に取り込み二酸化炭素を排出、低酸素血症を速やかに改善します。</span>
               </div>
@@ -2676,8 +2875,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">PART 1 SUMMARY</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">PART 1 SUMMARY</span>
           <span>漫然と初期設定のまま放置せず、患者の病態変化に合わせて設定を最適化し続けることが不可欠です。</span>
         </div>
 
@@ -2690,7 +2889,7 @@
       <!-- ====================================================================
            【Slide 10】中扉②：第2部 機器安全と日常・使用中点検の実践 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
+      <section data-slide-num="10" data-part-id="2" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 02 START｜機器安全と使用中点検" data-short-title="扉：第2部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
         <!-- 背景装飾：淡いバイタル波形SVG -->
         <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
           <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
@@ -2701,11 +2900,11 @@
           
           <!-- 左側：セクションタイトル情報（白ベース） -->
           <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
+            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
               <i class="fa-solid fa-clipboard-check" style="color: #059669;"></i> PART 02｜SAFETY CHECK
             </div>
 
-            <h2 style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
+            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
               機器安全と使用中点検
             </h2>
 
@@ -2717,7 +2916,7 @@
             <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #059669, #34D399); border-radius: 3px; margin-bottom: 22px;"></div>
 
             <!-- パート概要（白ベースカード） -->
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #059669; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
+            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #059669; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
               <div style="font-size: 0.72em; font-weight: 800; color: #059669; margin-bottom: 6px;">
                 <i class="fa-solid fa-check-double"></i> このパートのポイント
               </div>
@@ -2738,7 +2937,7 @@
             <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
 
             <!-- 1. 動画（assets/part02_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part02Video" class="part-char-video" autoplay loop muted playsinline preload="auto"
+            <video id="part02Video" class="part-char-video" autoplay loop muted playsinline preload="none"
                    style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
                    onloadedmetadata="activatePartVideo('part02')"
                    onloadeddata="activatePartVideo('part02')"
@@ -2800,14 +2999,14 @@
       <!-- ====================================================================
            【Slide 11】使用中点検項目一覧（原本 P.8 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="category-pill green">CHECKLIST</span>
-          <h2>使用中点検における必須7項目チェックリスト</h2>
+      <section data-slide-num="11" data-part-id="2" data-camera-mode="part-enter" data-camera-origin="50% 50%" data-camera-badge="🎥 TOUR MAP WIDE｜人工呼吸器＋回路 必須7項目チェックリスト全体像" data-short-title="🗺️ 7項目全体" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="category-pill green" data-id="tv-pill">CHECKLIST</span>
+          <h2 data-id="tv-title">使用中点検における必須7項目チェックリスト</h2>
         </div>
 
         <div class="slide-content-layer">
-          <table class="matrix-table">
+          <table data-id="tv-stage-1" class="matrix-table">
             <thead>
               <tr>
                 <th style="width: 26%; background: var(--mute-green);">点検項目</th>
@@ -2815,7 +3014,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="fragment fade-up">
+              <tr>
                 <td class="label-col"><i class="fa-solid fa-plug" style="color:var(--alert-red);"></i> 電源接続の確認</td>
                 <td>人工呼吸器および加温加湿器の電源が<strong>非常用電源（赤・緑）</strong>に接続されているか？また抜けかかっていないか？（人工呼吸器本体側の電源も確認）</td>
               </tr>
@@ -2846,7 +3045,7 @@
             </tbody>
           </table>
 
-          <div class="char-callout nurse" data-step-texts="<strong>看護師：</strong>「電源や配管から始まって、回路→カフ圧→画面→最後に患者さんの胸の動きまで、上から順番に指差し確認するルーティンを作れば見落としが防げますね！」||<strong>① 電源接続チェック：</strong>「まずは命綱の電源！一般用の白いコンセントではなく、必ず非常用電源（赤・緑）に3Pプラグでしっかり挿さっているか確認します！」||<strong>② 医療ガス配管チェック：</strong>「酸素（緑）のホースが壁のアウトレットにカチッとロックされ、『シュー』というガス漏れ音がないか耳でも確認します！」||<strong>③ 呼吸器回路チェック：</strong>「回路の破損やコネクターの緩み、そして人工鼻フィルターに痰や結露水が詰まっていないかをチェックします！」||<strong>④ カフ圧チェック：</strong>「カフ圧計を使って『25〜30 cmH₂O』の適正範囲にあるか実測します！指でつまむだけの触診はNGです！」||<strong>⑤ 換気条件の設定チェック：</strong>「モード・FiO₂・呼吸回数・PEEPなどの設定ダイヤルが、医師の指示簿と一致しているか指差し確認します！」||<strong>⑥ 実測値のチェック：</strong>「モニター右側の大きな実測値を見て、一回換気量の低下や気道内圧の上昇、頻呼吸が起きていないか評価します！」||<strong>⑦ 換気動作（患者）のチェック：</strong>「最後は必ず機械ではなく『患者さん自身』を見ます！胸が左右対称に上がっているか、苦悶表情や異音がないか確認してラウンド完了です！」">
+          <div data-id="tv-wipe" class="char-callout nurse" data-step-texts="<strong>看護師：</strong>「電源や配管から始まって、回路→カフ圧→画面→最後に患者さんの胸の動きまで、上から順番に指差し確認するルーティンを作れば見落としが防げますね！」||<strong>① 電源接続チェック：</strong>「まずは命綱の電源！一般用の白いコンセントではなく、必ず非常用電源（赤・緑）に3Pプラグでしっかり挿さっているか確認します！」||<strong>② 医療ガス配管チェック：</strong>「酸素（緑）のホースが壁のアウトレットにカチッとロックされ、『シュー』というガス漏れ音がないか耳でも確認します！」||<strong>③ 呼吸器回路チェック：</strong>「回路の破損やコネクターの緩み、そして人工鼻フィルターに痰や結露水が詰まっていないかをチェックします！」||<strong>④ カフ圧チェック：</strong>「カフ圧計を使って『25〜30 cmH₂O』の適正範囲にあるか実測します！指でつまむだけの触診はNGです！」||<strong>⑤ 換気条件の設定チェック：</strong>「モード・FiO₂・呼吸回数・PEEPなどの設定ダイヤルが、医師の指示簿と一致しているか指差し確認します！」||<strong>⑥ 実測値のチェック：</strong>「モニター右側の大きな実測値を見て、一回換気量の低下や気道内圧の上昇、頻呼吸が起きていないか評価します！」||<strong>⑦ 換気動作（患者）のチェック：</strong>「最後は必ず機械ではなく『患者さん自身』を見ます！胸が左右対称に上がっているか、苦悶表情や異音がないか確認してラウンド完了です！」">
             <div class="char-avatar"><img src="assets/icon ns.png" alt="看護師"></div>
             <div class="char-bubble-text">
               <strong>看護師：</strong>「電源や配管から始まって、回路→カフ圧→画面→最後に患者さんの胸の動きまで、上から順番に指差し確認するルーティンを作れば見落としが防げますね！」
@@ -2854,8 +3053,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">ROUTINE</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">ROUTINE</span>
           <span>ハードウェアから患者の胸郭挙上まで、毎回同じ順序で点検するルーティンが重大インシデントを防ぎます。</span>
         </div>
 
@@ -2869,16 +3068,16 @@
            【Slide 12】使用中点検① ハードウェア安全：電源と配管（原本 P.9 再現・白ベース）
            [Medical Illustration Prompt (assets/fig_power_gas_check.png)]: Clean medical illustration on white background. Left: Hospital emergency power outlets (white general, red emergency 10s, green UPS 0.5s) with 3-pin grounded plug. Right: Wall medical gas outlets for Oxygen (green) and Medical Air (yellow) with pin-index connectors.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">機器の生命線をどう守るか？</span>
-          <h2>使用中点検① 〜ハードウェア安全（電源と配管）〜</h2>
+      <section data-slide-num="12" data-part-id="2" data-camera-mode="zoom-in-left" data-camera-origin="26% 52%" data-camera-badge="🎥 TOUR ZOOM ① (1.8x)｜全体マップから「呼吸器背面（非常用電源＆ガス配管）」へズーム" data-short-title="🔌 ①電源・配管" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">機器の生命線をどう守るか？</span>
+          <h2 data-id="tv-title">使用中点検① 〜ハードウェア安全（電源と配管）〜</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <!-- 左：電源接続のトリプルチェック -->
-            <div class="info-panel blue" style="display: flex; flex-direction: column; gap: 10px;">
+            <div data-id="tv-stage-1" class="info-panel blue" style="display: flex; flex-direction: column; gap: 10px;">
               <h3 style="font-size: 0.95em; font-weight: 900; color: var(--mute-blue); text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">
                 <i class="fa-solid fa-bolt"></i> 電源接続のトリプルチェック
               </h3>
@@ -2914,7 +3113,7 @@
             </div>
 
             <!-- 右：医療ガス配管の安全点検 -->
-            <div class="info-panel blue" style="display: flex; flex-direction: column; gap: 10px;">
+            <div data-id="tv-card-1" class="info-panel blue fragment fade-up" style="display: flex; flex-direction: column; gap: 10px;">
               <h3 style="font-size: 0.95em; font-weight: 900; color: var(--mute-blue); text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">
                 <i class="fa-solid fa-fire-flame-simple"></i> 医療ガス配管の安全点検
               </h3>
@@ -2943,8 +3142,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer red">
-          <span class="footer-badge" style="background:#EF4444;">CRITICAL</span>
+        <div class="slide-footer-layer red" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge" style="background:#EF4444;">CRITICAL</span>
           <span>一般コンセント（白）への接続と2P変換プラグの使用は厳禁！赤・緑コンセントと配管ロックを必ず確認します。</span>
         </div>
 
@@ -2957,16 +3156,16 @@
       <!-- ====================================================================
            【Slide 13】呼吸器回路の構造 & 人工鼻仕様（原本 P.10 再現・実機写真組込）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="category-pill blue">実機構造</span>
-          <h2>呼吸器回路の構造 ＜感染症センター 呼吸器回路（人工鼻）＞</h2>
+      <section data-slide-num="13" data-part-id="2" data-camera-mode="pan-right" data-camera-origin="62% 48%" data-camera-badge="🎥 TOUR PAN ②｜呼吸器本体から回路をたどって「患者口元の人工鼻（死腔85mL）」へ横移動" data-short-title="💧 ②回路・人工鼻" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="category-pill blue" data-id="tv-pill">実機構造</span>
+          <h2 data-id="tv-title">呼吸器回路の構造 ＜感染症センター 呼吸器回路（人工鼻）＞</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1.05fr 60px 1fr; gap: 10px; align-items: center;">
             <!-- 左：Savina 300 全体写真＋赤丸注釈 -->
-            <div class="info-panel" style="padding: 10px; text-align: center; position: relative;">
+            <div data-id="tv-stage-1" class="info-panel" style="padding: 10px; text-align: center; position: relative;">
               <div style="font-size: 0.78em; font-weight: 900; color: var(--text-main); margin-bottom: 6px;">
                 ＜感染症センター 呼吸器回路(<span style="color:var(--alert-red);">人工鼻</span>)＞
               </div>
@@ -2989,7 +3188,7 @@
 
             <!-- 右：人工鼻マクロ写真 ＋ スペック枠 -->
             <div style="display: flex; flex-direction: column; gap: 12px;">
-              <div class="info-panel" style="padding: 10px; text-align: center;">
+              <div data-id="tv-card-1" class="info-panel" style="padding: 10px; text-align: center;">
                 <div style="font-size: 0.82em; font-weight: 900; color: var(--text-main); margin-bottom: 6px;">＜人工鼻（HMEF）＞</div>
                 <img src="assets/artificial_nose_pall.jpg" alt="PALL人工鼻フィルター" style="height: 210px; width: auto; border-radius: 8px; margin: 0 auto; display: block;">
               </div>
@@ -3009,8 +3208,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">CLINICAL NOTE</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">CLINICAL NOTE</span>
           <span>死腔量85mLによるCO2貯留と、喀痰・結露水によるフィルター目詰まり（気道抵抗急増）に常に注意し、汚染時は即時交換します。</span>
         </div>
 
@@ -3024,10 +3223,10 @@
            【Slide 14】使用中点検②-B カフ圧管理の重要性（原本 P.11 再現・インタラクティブ解剖学シミュレーター）
            [Medical Illustration Prompt (assets/fig_cuff_pressure.png)]: Clean medical illustration on white background showing endotracheal tube cuff in trachea. Left (<25 cmH2O): loose cuff allowing secretions to pool and leak downward into lungs causing VAP. Right (>30 cmH2O): overinflated cuff compressing tracheal mucosal capillaries causing ischemia and necrosis.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">？ カフ圧のわずかなズレが招く事態とは？</span>
-          <h2>使用中点検②-B 〜カフ圧管理の重要性〜</h2>
+      <section data-slide-num="14" data-part-id="2" data-camera-mode="zoom-in-left" data-camera-origin="32% 52%" data-camera-badge="🎥 TOUR DEEP ZOOM ③ (2.0x)｜人工鼻の奥「気管チューブ＆カフ断面（25〜30cmH2O）」へズーム" data-short-title="🎈 ③カフ圧管理" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">？ カフ圧のわずかなズレが招く事態とは？</span>
+          <h2 data-id="tv-title">使用中点検②-B 〜カフ圧管理の重要性〜</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -3036,7 +3235,7 @@
 
           <div style="display: grid; grid-template-columns: 1fr 300px 1fr; gap: 14px; align-items: stretch;">
             <!-- 左：低すぎる場合 [<25 cmH2O]（解剖学的な気管断面＆分泌物垂れ込み・リークアニメーション） -->
-            <div id="cuffLowCard" class="info-panel red" style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 10px 14px; transition: all 0.3s ease;">
+            <div data-id="tv-stage-1" id="cuffLowCard" class="info-panel red" style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 10px 14px; transition: all 0.3s ease;">
               <div id="cuffLowHeader" style="background: #FEE2E2; border: 1.5px solid #FCA5A5; padding: 5px 10px; border-radius: 6px; text-align: center; font-weight: 900; font-size: 0.82em; color: #B91C1C; transition: all 0.3s;">
                 ❌ 低すぎる場合 ［&lt; 25 cmH₂O］
               </div>
@@ -3226,7 +3425,7 @@
             </div>
 
             <!-- 右：高すぎる場合 [>30 cmH2O]（解剖学的な気管断面＆毛細血管圧迫・粘膜虚血アニメーション） -->
-            <div id="cuffHighCard" class="info-panel red" style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 10px 14px; transition: all 0.3s ease;">
+            <div data-id="tv-card-1" id="cuffHighCard" class="info-panel red fragment fade-up" style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 10px 14px; transition: all 0.3s ease;">
               <div id="cuffHighHeader" style="background: #FEE2E2; border: 1.5px solid #FCA5A5; padding: 5px 10px; border-radius: 6px; text-align: center; font-weight: 900; font-size: 0.82em; color: #B91C1C; transition: all 0.3s;">
                 ❌ 高すぎる場合 ［&gt; 30 cmH₂O］
               </div>
@@ -3298,7 +3497,7 @@
           </div>
 
           <!-- シミュレーター連動型・キャラクターリアクション吹き出し -->
-          <div id="cuffSimCharCallout" class="char-callout reaction-good" style="padding: 6px 14px; margin-top: 2px;">
+          <div data-id="tv-wipe" id="cuffSimCharCallout" class="char-callout reaction-good" style="padding: 6px 14px; margin-top: 2px;">
             <div id="cuffSimCharAvatar" class="char-avatar" style="width: 44px; height: 44px;"><img src="assets/icon ce.png" alt="CE"></div>
             <div id="cuffSimCharText" class="char-bubble-text" style="font-size: 0.7em;">
               <strong>CE：</strong>「✅ 適正範囲（28 cmH₂O）です！気管壁に優しく密着し、分泌物の垂れ込みも粘膜の虚血も防げています。この状態をキープしましょう！」
@@ -3306,8 +3505,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge" style="background:#22C55E;">25-30 cmH2O</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge" style="background:#22C55E;">25-30 cmH2O</span>
           <span>パイロットバルーンの触診だけに頼らず、毎勤務帯必ずカフ圧計で「25〜30 cmH2O」を実測します。</span>
         </div>
 
@@ -3320,17 +3519,17 @@
       <!-- ====================================================================
            【Slide 15】使用中点検③-A 設定・実測値・警報のトリプルチェック（原本 P.12 再現・白ベース）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">？ 画面の数値から何を読み解くか？</span>
-          <h2>使用中点検③-A 〜設定・実測値・警報のトリプルチェック〜</h2>
+      <section data-slide-num="15" data-part-id="2" data-camera-mode="zoom-out" data-camera-origin="50% 45%" data-camera-badge="🎥 TOUR ZOOM OUT ④｜気管から引き「呼吸器モニター画面（設定・実測・警報の3点確認）」へ移動" data-short-title="🖥️ ④画面3点確認" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">？ 画面の数値から何を読み解くか？</span>
+          <h2 data-id="tv-title">使用中点検③-A 〜設定・実測値・警報のトリプルチェック〜</h2>
         </div>
 
         <div class="slide-content-layer">
           <!-- 上段：3段階UIモック（指示 → 実測 → 警報） -->
           <div style="display: grid; grid-template-columns: 0.9fr 1.4fr 0.95fr; gap: 14px; align-items: stretch;">
             <!-- Step 1: 指示 Settings -->
-            <div class="info-panel blue fragment fade-up">
+            <div data-id="tv-stage-1" class="info-panel blue ">
               <div style="text-align: center; font-weight: 900; font-size: 0.85em; color: var(--mute-blue); border-bottom: 2px solid #E2E8F0; padding-bottom: 4px; margin-bottom: 8px;">
                 ① 指示：Settings
               </div>
@@ -3407,15 +3606,15 @@
 
           <!-- 下段：解説カード3列 -->
           <div style="display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 12px;">
-            <div class="info-panel orange" style="padding: 10px 14px; font-size: 0.66em; line-height: 1.5; color: #1E293B;">
+            <div data-id="tv-card-1" class="info-panel orange" style="padding: 10px 14px; font-size: 0.66em; line-height: 1.5; color: #1E293B;">
               <strong style="color:#B45309; display:block; margin-bottom:3px;">指示通りの換気設定：指示受けの確認</strong>
               ・現在の設定（換気モード、FiO₂、換気回数、PEEPなど）が、<strong>医師のカルテ最新指示と完全に一致</strong>しているか照合する。
             </div>
-            <div class="info-panel blue" style="padding: 10px 14px; font-size: 0.66em; line-height: 1.5; color: #1E293B;">
+            <div data-id="tv-card-2" class="info-panel blue" style="padding: 10px 14px; font-size: 0.66em; line-height: 1.5; color: #1E293B;">
               <strong style="color:#0284C7; display:block; margin-bottom:3px;">実測値のモニタリング</strong>
               ・設定に対して、実際の患者の<strong>1回換気量、分時換気量、呼吸数、気道内圧</strong>が異常な変動を起こしていないか画面の数値を点検。
             </div>
-            <div class="info-panel red" style="padding: 10px 14px; font-size: 0.66em; line-height: 1.5; color: #1E293B;">
+            <div data-id="tv-card-3" class="info-panel red" style="padding: 10px 14px; font-size: 0.66em; line-height: 1.5; color: #1E293B;">
               <strong style="color:#DC2626; display:block; margin-bottom:3px;">安全を守る警報：アラーム設定</strong>
               ・低換気防止：<strong>「分時換気量下限（例: 3 L/min）」</strong>や<strong>「無呼吸（20秒）」</strong>。<br>
               ・肺損傷防止：<strong>「気道内圧上限（例: 40 cmH₂O程度）」</strong>。
@@ -3423,8 +3622,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge" style="background:#0284C7;">TRIPLE CHECK</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge" style="background:#0284C7;">TRIPLE CHECK</span>
           <span>毎回の訪室時に「①指示照合 → ②実測値確認 → ③アラーム閾値確認」へ視線を動かす習慣をつけます。</span>
         </div>
 
@@ -3438,7 +3637,7 @@
       <!-- ====================================================================
            【Slide 16】中扉③：第3部 換気様式（VCV/PCV）と換気モードの解読 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
+      <section data-slide-num="16" data-part-id="3" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 03 START｜換気モードと実機画面" data-short-title="扉：第3部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
         <!-- 背景装飾：淡いバイタル波形SVG -->
         <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
           <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
@@ -3449,11 +3648,11 @@
           
           <!-- 左側：セクションタイトル情報（白ベース） -->
           <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
+            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
               <i class="fa-solid fa-wave-square" style="color: #4F46E5;"></i> PART 03｜MODES &amp; WAVEFORMS
             </div>
 
-            <h2 style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
+            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
               換気モードと実機画面
             </h2>
 
@@ -3465,7 +3664,7 @@
             <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #4F46E5, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
 
             <!-- パート概要（白ベースカード） -->
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #4F46E5; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
+            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #4F46E5; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
               <div style="font-size: 0.72em; font-weight: 800; color: #4F46E5; margin-bottom: 6px;">
                 <i class="fa-solid fa-check-double"></i> このパートのポイント
               </div>
@@ -3486,7 +3685,7 @@
             <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
 
             <!-- 1. 動画（assets/part03_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part03Video" class="part-char-video" autoplay loop muted playsinline preload="auto"
+            <video id="part03Video" class="part-char-video" autoplay loop muted playsinline preload="none"
                    style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
                    onloadedmetadata="activatePartVideo('part03')"
                    onloadeddata="activatePartVideo('part03')"
@@ -3549,10 +3748,10 @@
            【Slide 17】送気規定の基礎：従量式（VCV）vs 従圧式（PCV）（原本 P.13 再現＋コンプライアンス切替シミュレーター）
            [Medical Illustration Prompt (assets/fig_vcv_pcv.png)]: Modern flat vector medical illustration comparing VCV and PCV. Left (VCV): Large calibrated syringe pushing fixed volume into lungs with pressure gauge rising into red zone. Right (PCV): Electric blower fan with digital display "20 cmH2O" sending regulated pressure into lungs. White background, no text.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">【送気規定】機械はどうやって空気を送るのか？</span>
-          <h2>送気規定の基礎：従量式（VCV）vs 従圧式（PCV）</h2>
+      <section data-slide-num="17" data-part-id="3" data-camera-mode="part-enter" data-camera-origin="50% 50%" data-camera-badge="🎥 ANATOMY & WAVE｜送気規定の基礎：従量式（VCV）vs 従圧式（PCV）" data-short-title="🫁 VCV vs PCV" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">【送気規定】機械はどうやって空気を送るのか？</span>
+          <h2 data-id="tv-title">送気規定の基礎：従量式（VCV）vs 従圧式（PCV）</h2>
         </div>
 
         <div class="slide-content-layer" style="gap: 8px;">
@@ -3577,7 +3776,7 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <!-- ==================== 左：従量式 VCV（定容量ピストンシリンダー＋気道内圧計＋解剖学的胸郭・肺葉モデル） ==================== -->
-            <div id="vcvPanelCard" class="info-panel blue fragment fade-up" style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 8px 14px; transition: all 0.3s;">
+            <div data-id="tv-stage-1" id="vcvPanelCard" class="info-panel blue " style="display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 8px 14px; transition: all 0.3s;">
               <div style="background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%); border: 1.5px solid #93C5FD; border-radius: 12px; padding: 6px; position: relative; box-shadow: inset 0 2px 6px rgba(15,23,42,0.04);">
                 <svg viewBox="0 0 400 182" width="100%" height="150" style="overflow: visible;">
                   <defs>
@@ -3861,7 +4060,7 @@
           </div>
 
           <!-- ステップ＆シミュレーター連動・キャラクター吹き出し -->
-          <div id="vcvPcvCharCallout" class="char-callout reaction-good" style="padding: 6px 14px;" data-step-texts="<strong>CE講師：</strong>「VCVは『量を保証して圧が変動する注射器』、PCVは『圧を制限して換気量が変動する送風機』です！ステップを進めるか上部の切替ボタンを押してみてください！」||<strong>① 従量式（VCV）の仕組み：</strong>「注射器のピストンで決まった量（500mL）を必ず押し込みます！換気量は絶対守られますが、肺が硬いと圧力が跳ね上がるので最高気道内圧の監視が必須です！」||<strong>② 従圧式（PCV）の仕組み：</strong>「送風機で一定の圧力（20 cmH₂O）をかけて膨らませます！圧が上がりすぎないので肺に優しいですが、肺が硬くなると入る換気量が減ってしまう点に注意です！」">
+          <div data-id="tv-wipe" id="vcvPcvCharCallout" class="char-callout reaction-good" style="padding: 6px 14px;" data-step-texts="<strong>CE講師：</strong>「VCVは『量を保証して圧が変動する注射器』、PCVは『圧を制限して換気量が変動する送風機』です！ステップを進めるか上部の切替ボタンを押してみてください！」||<strong>① 従量式（VCV）の仕組み：</strong>「注射器のピストンで決まった量（500mL）を必ず押し込みます！換気量は絶対守られますが、肺が硬いと圧力が跳ね上がるので最高気道内圧の監視が必須です！」||<strong>② 従圧式（PCV）の仕組み：</strong>「送風機で一定の圧力（20 cmH₂O）をかけて膨らませます！圧が上がりすぎないので肺に優しいですが、肺が硬くなると入る換気量が減ってしまう点に注意です！」">
             <div id="vcvPcvCharAvatar" class="char-avatar" style="width: 44px; height: 44px;"><img src="assets/icon ce.png" alt="CE"></div>
             <div id="vcvPcvCharText" class="char-bubble-text" style="font-size: 0.7em;">
               <strong>CE講師：</strong>「VCVは『量を保証して圧が変動する注射器』、PCVは『圧を制限して換気量が変動する送風機』です！ステップを進めるか上部の切替ボタンを押してみてください！」
@@ -3869,8 +4068,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">VCV vs PCV</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">VCV vs PCV</span>
           <span>VCV管理中は「気道内圧の上昇」を監視し、PCV管理中は「一回換気量の低下」を厳重に監視します。</span>
         </div>
 
@@ -3884,10 +4083,10 @@
            【Slide 18】全モードに付加される「PEEP」の光と影（原本 P.14 再現＋PEEP 5/10/15 シミュレーター）
            [Medical Illustration Prompt (assets/fig_peep_effect.png)]: Modern flat vector medical illustration showing PEEP effects. Left (+): Open alveoli surrounded by capillaries with active O2 diffusion. Center: Split lungs (healthy green left, compressed red right). Right (-): Heart with compressed SVC/IVC reducing venous return.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">【基礎設定】 PEEP（呼気終末陽圧）とは何か？</span>
-          <h2>全モードに付加される「PEEP」の光と影</h2>
+      <section data-slide-num="18" data-part-id="3" data-camera-mode="zoom-in-right" data-camera-origin="62% 55%" data-camera-badge="🎥 CAMERA ZOOM IN (1.9x)｜前ページの解剖図から「肺胞拡張（光）」と「心臓・大静脈圧迫（影）」へズーム" data-short-title="❤️ PEEP光と影" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">【基礎設定】 PEEP（呼気終末陽圧）とは何か？</span>
+          <h2 data-id="tv-title">全モードに付加される「PEEP」の光と影</h2>
         </div>
 
         <div class="slide-content-layer" style="gap: 8px;">
@@ -4183,7 +4382,7 @@
 
           <!-- 下段：3カラムカード -->
           <div style="display: grid; grid-template-columns: 0.85fr 1.1fr 1.15fr; gap: 12px;">
-            <div class="info-panel blue" style="padding: 10px 14px;">
+            <div data-id="tv-stage-1" class="info-panel blue" style="padding: 10px 14px;">
               <div style="background: #DBEAFE; color: #1E3A8A; font-weight: 800; font-size: 0.74em; padding: 4px 10px; border-radius: 6px; text-align: center; margin-bottom: 6px;">
                 PEEP（呼気終末陽圧）の定義
               </div>
@@ -4192,7 +4391,7 @@
               </p>
             </div>
 
-            <div class="info-panel green" style="padding: 10px 14px;">
+            <div data-id="tv-card-1" class="info-panel green fragment fade-up" style="padding: 10px 14px;">
               <div style="background: #38A169; color: #FFFFFF; font-weight: 800; font-size: 0.74em; padding: 4px 10px; border-radius: 6px; text-align: center; margin-bottom: 6px;">
                 効果（メリット：呼吸系への光）
               </div>
@@ -4202,7 +4401,7 @@
               </ul>
             </div>
 
-            <div class="info-panel red" style="padding: 10px 14px;">
+            <div data-id="tv-card-2" class="info-panel red fragment fade-up" style="padding: 10px 14px;">
               <div style="background: #E11D48; color: #FFFFFF; font-weight: 800; font-size: 0.74em; padding: 4px 10px; border-radius: 6px; text-align: center; margin-bottom: 6px;">
                 副作用（デメリット：循環系への影）
               </div>
@@ -4214,8 +4413,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer">
-          <span class="footer-badge">PEEP BALANCE</span>
+        <div class="slide-footer-layer" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">PEEP BALANCE</span>
           <span>PEEPを上げるときは「酸素化の改善（光）」と「血圧低下・循環抑制（影）」を必ずセットで評価します。</span>
         </div>
 
@@ -4228,16 +4427,16 @@
       <!-- ====================================================================
            【Slide 19】A/C（Assist/Control）の動作原理と波形（原本 P.15 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">［ 基本的なモード：A/Cとは？ ］</span>
-          <h2>A/C（Assist/Control）の動作原理と波形</h2>
+      <section data-slide-num="19" data-part-id="3" data-camera-mode="pan-right" data-camera-origin="50% 45%" data-camera-badge="🎥 MONITOR WIDE PAN｜波形モニターへワイド横移動（A/C：強制換気 CMV vs 自発トリガー AV）" data-short-title="📈 A/C波形" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">［ 基本的なモード：A/Cとは？ ］</span>
+          <h2 data-id="tv-title">A/C（Assist/Control）の動作原理と波形</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
             <!-- 左：調節換気 CMV -->
-            <div class="info-panel fragment fade-up" style="padding: 14px 18px;">
+            <div data-id="tv-stage-1" class="info-panel " style="padding: 14px 18px;">
               <h3 style="font-size: 0.88em; font-weight: 900; text-align: center; margin-bottom: 10px; color: var(--header-navy);">
                 調節換気 (CMV: Control Mandatory Ventilation)
               </h3>
@@ -4389,8 +4588,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">A/C MODE</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">A/C MODE</span>
           <span>患者の自発呼吸を助けつつ、無呼吸時には設定回数で強制換気を行う安全設計の基本モードです。</span>
         </div>
 
@@ -4403,21 +4602,21 @@
       <!-- ====================================================================
            【Slide 20】PC-AC 実機画面（注釈なし初期画面・原本 P.16 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="category-pill blue">実機モニター</span>
-          <h2>Dräger Savina 300 実機画面：PC-AC（従圧式補助調節換気）</h2>
+      <section data-slide-num="20" data-part-id="3" data-camera-mode="zoom-in" data-camera-origin="50% 50%" data-camera-badge="🎥 MORPH TO SAVINA 300｜Dräger Savina 300 実機画面（PC-AC 全体ビュー）へズーム展開" data-short-title="🖥️ PC-AC全体" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="category-pill blue" data-id="tv-pill">実機モニター</span>
+          <h2 data-id="tv-title">Dräger Savina 300 実機画面：PC-AC（従圧式補助調節換気）</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; align-items: center;">
-            <div class="info-panel monitor-zoom-trigger" onclick="openMonitorZoom(this)" style="padding: 8px; background: #4A78B8; text-align: center; position: relative;">
+            <div data-id="tv-card-1" data-id="tv-stage-1" class="info-panel monitor-zoom-trigger" onclick="openMonitorZoom(this)" style="padding: 8px; background: #4A78B8; text-align: center; position: relative;">
               <span class="zoom-hint-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> 🔍 クリックで拡大</span>
               <img src="assets/monitor_pc_ac.png" alt="Savina 300 PC-AC画面" style="width: 100%; max-height: 450px; object-fit: contain; border-radius: 6px; display: block;">
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
-              <div class="info-panel blue">
+              <div data-id="tv-card-2" class="info-panel blue">
                 <h4 style="font-size: 0.82em; font-weight: 900; color: var(--mute-blue); margin-bottom: 6px;">
                   <i class="fa-solid fa-display"></i> モニター画面の3大エリア
                 </h4>
@@ -4428,7 +4627,7 @@
                 </ul>
               </div>
 
-              <div class="char-callout" data-step-texts="<strong>CE講師：</strong>「こちらがSavina 300の実機画面です！画面をクリックすると大きく拡大できます。3つのエリアを順番に見ていきましょう！」||<strong>① 左エリア（3段波形）：</strong>「上から順番に『気道内圧』『フロー（流速）』『ボリューム（換気量）』の波形がリアルタイムに流れています！」||<strong>② 右エリア（実測値パネル）：</strong>「ここが一番大事！実際に患者さんに入っている最高圧20、分時換気量4.59L、一回換気量388mLなどの『結果』が表示されます！」||<strong>③ 下エリア（設定ダイヤル）：</strong>「私たちが呼吸器に命令している設定値です！次のSlide 21で、この画面から時間を計算するプロの読み解き方を体験しましょう！」">
+              <div data-id="tv-wipe" class="char-callout" data-step-texts="<strong>CE講師：</strong>「こちらがSavina 300の実機画面です！画面をクリックすると大きく拡大できます。3つのエリアを順番に見ていきましょう！」||<strong>① 左エリア（3段波形）：</strong>「上から順番に『気道内圧』『フロー（流速）』『ボリューム（換気量）』の波形がリアルタイムに流れています！」||<strong>② 右エリア（実測値パネル）：</strong>「ここが一番大事！実際に患者さんに入っている最高圧20、分時換気量4.59L、一回換気量388mLなどの『結果』が表示されます！」||<strong>③ 下エリア（設定ダイヤル）：</strong>「私たちが呼吸器に命令している設定値です！次のSlide 21で、この画面から時間を計算するプロの読み解き方を体験しましょう！」">
                 <div class="char-avatar"><img src="assets/icon ce.png" alt="CE"></div>
                 <div class="char-bubble-text">
                   <strong>CE講師：</strong>「こちらがSavina 300の実機画面です！画面をクリックすると大きく拡大できます。3つのエリアを順番に見ていきましょう！」
@@ -4438,8 +4637,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">MONITOR LAYOUT</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">MONITOR LAYOUT</span>
           <span>実機画面は「下のダイヤル＝設定値」「右の大きな数字＝実測値」「中央左＝リアルタイム波形」で構成されます。</span>
         </div>
 
@@ -4452,14 +4651,14 @@
       <!-- ====================================================================
            【Slide 21】PC-AC 実機画面と波形・パラメータ読み解き（原本 P.17 完全再現＋SVG注釈）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="category-pill red">実機波形解読</span>
-          <h2>PC-AC 実機画面の読み解き（吸気・呼気時間計算と自発トリガー）</h2>
+      <section data-slide-num="21" data-part-id="3" data-camera-mode="zoom-in-left" data-camera-origin="35% 60%" data-camera-badge="🎥 SAVINA DETAIL ZOOM (1.7x)｜実機画面の「設定ノブ＆自発トリガー波形」へズーム解読" data-short-title="🔍 PC-AC解読" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="category-pill red" data-id="tv-pill">実機波形解読</span>
+          <h2 data-id="tv-title">PC-AC 実機画面の読み解き（吸気・呼気時間計算と自発トリガー）</h2>
         </div>
 
         <div class="slide-content-layer" style="gap: 8px;">
-          <div class="monitor-zoom-trigger" onclick="openMonitorZoom(this)" style="background: #4674B9; border-radius: 12px; padding: 6px; box-shadow: var(--shadow-md); display: flex; justify-content: center; position: relative;">
+          <div data-id="tv-stage-1" class="monitor-zoom-trigger" onclick="openMonitorZoom(this)" style="background: #4674B9; border-radius: 12px; padding: 6px; box-shadow: var(--shadow-md); display: flex; justify-content: center; position: relative;">
             <span class="zoom-hint-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> 🔍 クリックで拡大</span>
             <!-- 原本 P.17 の全アノテーションを完全再現したSVGオーバーレイ -->
             <svg viewBox="0 0 1280 680" width="100%" height="360" preserveAspectRatio="xMidYMid meet">
@@ -4587,8 +4786,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">TIME LOGIC</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">TIME LOGIC</span>
           <span>呼吸回数12回/分 ＝ 1呼吸5.0秒（吸気1.2秒＋呼気3.8秒）。画面上部の白い肺マークが自発トリガー感知のサインです。</span>
         </div>
 
@@ -4601,15 +4800,15 @@
       <!-- ====================================================================
            【Slide 22】CPAP（持続的気道陽圧）の特徴（原本 P.18 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">［ 患者自身の呼吸を活かすには？ ］</span>
-          <h2>CPAP（持続的気道陽圧）の特徴</h2>
+      <section data-slide-num="22" data-part-id="3" data-camera-mode="pan-right" data-camera-origin="50% 42%" data-camera-badge="🎥 WAVE TRACK PAN｜圧波形トラックへ移動（PEEPベース圧上の自発呼吸 CPAP）" data-short-title="🌬️ CPAP波形" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">［ 患者自身の呼吸を活かすには？ ］</span>
+          <h2 data-id="tv-title">CPAP（持続的気道陽圧）の特徴</h2>
         </div>
 
         <div class="slide-content-layer">
           <!-- 上段：CPAP波形モニター ＆ 呼気終末の肺胞開存動態比較 -->
-          <div class="info-panel" style="padding: 12px 18px; background: #F8FAFC; border: 2px solid #CBD5E1;">
+          <div data-id="tv-stage-1" class="info-panel" style="padding: 12px 18px; background: #F8FAFC; border: 2px solid #CBD5E1;">
             <svg viewBox="0 0 880 198" width="100%" height="188">
               <defs>
                 <linearGradient id="cpapCushionGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -4726,8 +4925,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer orange">
-          <span class="footer-badge">CPAP CAUTION</span>
+        <div class="slide-footer-layer orange" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">CPAP CAUTION</span>
           <span>CPAP単体には強制換気がないため、鎮静や疲労による自発呼吸消失（無呼吸）に注意が必要です。</span>
         </div>
 
@@ -4740,15 +4939,15 @@
       <!-- ====================================================================
            【Slide 23】PSV（圧支持換気）とターミネーション（原本 P.19 再現＋圧・フロー2段同期アニメーション）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">［ 呼吸の負担を減らすには？ ］</span>
-          <h2>PSV（圧支持換気）とターミネーション</h2>
+      <section data-slide-num="23" data-part-id="3" data-camera-mode="zoom-in" data-camera-origin="60% 52%" data-camera-badge="🎥 WAVE ZOOM IN｜CPAP波形から「PSV圧サポート＆25%ピークフロー終了基準」へズーム" data-short-title="🚀 PSV＆終了基準" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">［ 呼吸の負担を減らすには？ ］</span>
+          <h2 data-id="tv-title">PSV（圧支持換気）とターミネーション</h2>
         </div>
 
         <div class="slide-content-layer" style="gap: 10px;">
           <!-- 上段：PSV 気道内圧波形 ＆ 吸気フロー波形（25%ターミネーション連動ループアニメーション） -->
-          <div class="info-panel" style="padding: 10px 18px; background: #F8FAFC; border: 2px solid #CBD5E1;">
+          <div data-id="tv-stage-1" class="info-panel" style="padding: 10px 18px; background: #F8FAFC; border: 2px solid #CBD5E1;">
             <svg viewBox="0 0 860 285" width="100%" height="265" style="overflow: visible;">
               <defs>
                 <linearGradient id="psvPressFill" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -4883,8 +5082,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">PSV MECHANISM</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">PSV MECHANISM</span>
           <span>PSVは患者自身の吸いたい長さに合わせて吸気が終了（ターミネーション）するため、高い同調性を発揮します。</span>
         </div>
 
@@ -4897,14 +5096,14 @@
       <!-- ====================================================================
            【Slide 24】SPN-CPAP/PS 実機画面（原本 P.20 完全再現＋SVG注釈）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="category-pill green">実機波形解読</span>
-          <h2>Dräger Savina 300 実機画面：SPN-CPAP/PS の読み解き</h2>
+      <section data-slide-num="24" data-part-id="3" data-camera-mode="zoom-out" data-camera-origin="50% 50%" data-camera-badge="🎥 CAMERA ZOOM OUT｜波形トラックから再び「Savina 300 実機全体（SPN-CPAP/PS）」へ引く" data-short-title="🖥️ SPN実機全体" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="category-pill green" data-id="tv-pill">実機波形解読</span>
+          <h2 data-id="tv-title">Dräger Savina 300 実機画面：SPN-CPAP/PS の読み解き</h2>
         </div>
 
         <div class="slide-content-layer">
-          <div class="monitor-zoom-trigger" onclick="openMonitorZoom(this)" style="background: #4674B9; border-radius: 12px; padding: 6px; box-shadow: var(--shadow-md); display: flex; justify-content: center; position: relative;">
+          <div data-id="tv-stage-1" class="monitor-zoom-trigger" onclick="openMonitorZoom(this)" style="background: #4674B9; border-radius: 12px; padding: 6px; box-shadow: var(--shadow-md); display: flex; justify-content: center; position: relative;">
             <span class="zoom-hint-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> 🔍 クリックで拡大</span>
             <svg viewBox="0 0 1280 680" width="100%" height="475" preserveAspectRatio="xMidYMid meet">
               <image href="assets/monitor_spn_cpap_ps.png" x="0" y="0" width="1015" height="680" preserveAspectRatio="none"/>
@@ -4931,8 +5130,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">SPN-CPAP/PS</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">SPN-CPAP/PS</span>
           <span>自発呼吸フロー波形は「黄土色」で描画。PEEP 5.0 ＋ ΔPS圧 10 ＝ 最高圧 16 mbar。右下にアプニア換気(ON)を確認！</span>
         </div>
 
@@ -4945,15 +5144,15 @@
       <!-- ====================================================================
            【Slide 25】アプニア換気（Apnea Ventilation）の機能（原本 P.21 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">［ 無呼吸時のバックアップは？ ］</span>
-          <h2>アプニア換気（Apnea Ventilation）の機能</h2>
+      <section data-slide-num="25" data-part-id="3" data-camera-mode="zoom-in" data-camera-origin="55% 50%" data-camera-badge="🎥 EMERGENCY ZOOM IN｜自発呼吸停止（フラットライン）➔ アプニア換気（無呼吸バックアップ）発動" data-short-title="⏱️ 無呼吸換気" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">［ 無呼吸時のバックアップは？ ］</span>
+          <h2 data-id="tv-title">アプニア換気（Apnea Ventilation）の機能</h2>
         </div>
 
         <div class="slide-content-layer">
           <!-- 上段：3フェーズ時系列ライブモニター（自発呼吸 → 無呼吸タイマー計測 → 自動バックアップ強制換気） -->
-          <div class="info-panel" style="padding: 12px 18px; background: #0F172A; border: 2px solid #334155; box-shadow: var(--shadow-md);">
+          <div data-id="tv-stage-1" class="info-panel" style="padding: 12px 18px; background: #0F172A; border: 2px solid #334155; box-shadow: var(--shadow-md);">
             <svg viewBox="0 0 860 198" width="100%" height="188">
               <defs>
                 <linearGradient id="apneaSpontGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -5055,8 +5254,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">BACKUP SAFETY</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">BACKUP SAFETY</span>
           <span>自発呼吸モード（CPAP/PSV）選択時は、必ずアプニア換気がON（適切なVT・RR設定）になっていることを確認します。</span>
         </div>
 
@@ -5069,7 +5268,7 @@
       <!-- ====================================================================
            【Slide 26】中扉④：第4部 アラーム対応の原則とトラブルシューティング ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
+      <section data-slide-num="26" data-part-id="4" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 04 START｜アラーム対応の原則" data-short-title="扉：第4部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
         <!-- 背景装飾：淡いバイタル波形SVG -->
         <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
           <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
@@ -5080,11 +5279,11 @@
           
           <!-- 左側：セクションタイトル情報（白ベース） -->
           <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #FFF1F2; color: #BE123C; border: 1.5px solid #FECDD3; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
+            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #FFF1F2; color: #BE123C; border: 1.5px solid #FECDD3; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
               <i class="fa-solid fa-bell" style="color: #E11D48;"></i> PART 04｜ALARM RESPONSE
             </div>
 
-            <h2 style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
+            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
               アラーム対応の原則
             </h2>
 
@@ -5096,7 +5295,7 @@
             <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #E11D48, #F59E0B); border-radius: 3px; margin-bottom: 22px;"></div>
 
             <!-- パート概要（白ベースカード） -->
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #E11D48; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
+            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #E11D48; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
               <div style="font-size: 0.72em; font-weight: 800; color: #E11D48; margin-bottom: 6px;">
                 <i class="fa-solid fa-check-double"></i> このパートのポイント
               </div>
@@ -5117,7 +5316,7 @@
             <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
 
             <!-- 1. 動画（assets/part04_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part04Video" class="part-char-video" autoplay loop muted playsinline preload="auto"
+            <video id="part04Video" class="part-char-video" autoplay loop muted playsinline preload="none"
                    style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
                    onloadedmetadata="activatePartVideo('part04')"
                    onloadeddata="activatePartVideo('part04')"
@@ -5179,15 +5378,15 @@
       <!-- ====================================================================
            【Slide 27】アラーム対応の基本「デュアル・アセスメント」（原本 P.22 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">アラーム対応の基本原則とは？</span>
-          <h2>「患者」と「回路」のデュアル・アセスメント</h2>
+      <section data-slide-num="27" data-part-id="4" data-camera-mode="part-enter" data-camera-origin="50% 50%" data-camera-badge="🎥 DUAL MAP WIDE｜「患者側」と「回路側」を同時評価するデュアル・アセスメント全体マップ" data-short-title="🔄 デュアル全体" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">アラーム対応の基本原則とは？</span>
+          <h2 data-id="tv-title">「患者」と「回路」のデュアル・アセスメント</h2>
         </div>
 
         <div class="slide-content-layer">
           <!-- 上段：大原則バナー -->
-          <div class="info-panel red pulse-attention" style="background: #F8FAFC; border: 2px solid var(--header-navy); text-align: center; padding: 12px 20px;">
+          <div data-id="tv-stage-1" class="info-panel red pulse-attention" style="background: #F8FAFC; border: 2px solid var(--header-navy); text-align: center; padding: 12px 20px;">
             <div style="font-size: 0.92em; font-weight: 900; color: var(--text-main); line-height: 1.5;">
               大原則：アラーム発生時は、アラーム音を消すことではなく、<br>
               <span style="color: var(--alert-red);">「患者要因」</span>と<span style="color: var(--mute-orange);">「機械要因」</span>の両面から原因を特定することが必須。
@@ -5290,8 +5489,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer red">
-          <span class="footer-badge">DUAL ASSESSMENT</span>
+        <div class="slide-footer-layer red" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">DUAL ASSESSMENT</span>
           <span>「患者を診る」と「回路を診る」の2つを同時に行う習慣をつけるだけで、重大事故の9割は防げます。</span>
         </div>
 
@@ -5304,16 +5503,16 @@
       <!-- ====================================================================
            【Slide 28】分時換気量（MV）アラームの特定と対応（原本 P.23 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">換気量がズレる原因は？</span>
-          <h2>分時換気量（MV）アラームの特定と対応</h2>
+      <section data-slide-num="28" data-part-id="4" data-camera-mode="zoom-in-left" data-camera-origin="35% 55%" data-camera-badge="🎥 ALARM ZOOM ①｜デュアルマップから「分時換気量（MV）アラーム」の原因分岐へズーム" data-short-title="📊 MVアラーム" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">換気量がズレる原因は？</span>
+          <h2 data-id="tv-title">分時換気量（MV）アラームの特定と対応</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <!-- 左：低下 (Low) -->
-            <div class="info-panel blue fragment fade-up" style="border: 2.5px solid #3B82F6; background: linear-gradient(180deg, #EFF6FF 0%, #FFFFFF 100%); padding: 16px 20px;">
+            <div data-id="tv-stage-1" class="info-panel blue " style="border: 2.5px solid #3B82F6; background: linear-gradient(180deg, #EFF6FF 0%, #FFFFFF 100%); padding: 16px 20px;">
               <div style="background: #FFFFFF; border-radius: 10px; padding: 10px; text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 12px;">
                 <div style="font-size: 1.25em; font-weight: 900; color: #1D4ED8;">低下 (Low)</div>
                 <div style="font-size: 0.76em; font-weight: 800; color: var(--text-main); margin-top: 4px;">設定より患者の換気量が低い状態。</div>
@@ -5347,8 +5546,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">MV ALARM</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">MV ALARM</span>
           <span>MV低下は「リーク・抜管・痰詰まり」を即座に確認し、MV上限は「患者の苦痛・発熱・努力呼吸」のサインとして捉えます。</span>
         </div>
 
@@ -5361,16 +5560,16 @@
       <!-- ====================================================================
            【Slide 29】気道内圧アラームの特定と対応（原本 P.24 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">回路内の圧が変化する理由は？</span>
-          <h2>気道内圧アラームの特定と対応</h2>
+      <section data-slide-num="29" data-part-id="4" data-camera-mode="pan-right" data-camera-origin="65% 55%" data-camera-badge="🎥 ALARM PAN ②｜モニター枠を維持したまま「気道内圧アラーム（高圧・低圧）」へ横移動" data-short-title="🚨 気道内圧" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">回路内の圧が変化する理由は？</span>
+          <h2 data-id="tv-title">気道内圧アラームの特定と対応</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <!-- 左：圧低下 (Low Pressure) -->
-            <div class="info-panel blue fragment fade-up" style="border: 2.5px solid #3B82F6; padding: 14px 18px;">
+            <div data-id="tv-stage-1" class="info-panel blue " style="border: 2.5px solid #3B82F6; padding: 14px 18px;">
               <div style="background: #93C5FD; color: #0F172A; font-weight: 900; font-size: 0.95em; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px;">
                 圧低下 (Low Pressure)
               </div>
@@ -5417,8 +5616,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer red">
-          <span class="footer-badge">PRESSURE ALARM</span>
+        <div class="slide-footer-layer red" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">PRESSURE ALARM</span>
           <span>圧上昇（High Pressure）放置は気胸などの圧外傷に直結します。直ちに聴診・吸引・回路屈曲・人工鼻閉塞を確認します。</span>
         </div>
 
@@ -5431,16 +5630,16 @@
       <!-- ====================================================================
            【Slide 30】無呼吸・頻呼吸アラームの特定と対応（原本 P.25 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">呼吸リズムが崩れたら？</span>
-          <h2>無呼吸・頻呼吸アラームの特定と対応</h2>
+      <section data-slide-num="30" data-part-id="4" data-camera-mode="pan-right" data-camera-origin="55% 55%" data-camera-badge="🎥 ALARM PAN ③｜モニター枠を維持したまま「無呼吸・頻呼吸リズム異常」へ横移動" data-short-title="⚡ 無呼吸・頻呼吸" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">呼吸リズムが崩れたら？</span>
+          <h2 data-id="tv-title">無呼吸・頻呼吸アラームの特定と対応</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 220px 1fr; gap: 14px; align-items: center;">
             <!-- 左：無呼吸 (Apnea) -->
-            <div class="info-panel blue fragment fade-up" style="border: 2.5px solid #3B82F6; padding: 14px 16px;">
+            <div data-id="tv-stage-1" class="info-panel blue " style="border: 2.5px solid #3B82F6; padding: 14px 16px;">
               <div style="background: var(--header-navy); color: #FFF; font-weight: 900; font-size: 0.9em; padding: 7px; border-radius: 6px; text-align: center; margin-bottom: 10px;">
                 無呼吸 (Apnea)
               </div>
@@ -5481,7 +5680,7 @@
             </div>
           </div>
 
-          <div class="char-callout nurse" data-step-texts="<strong>看護師：</strong>「呼吸リズムのアラームには『無呼吸（Apnea）』と『呼吸数上昇（頻呼吸）』の2つがあるんですね！順番に原因と対応を見てみましょう！」||<strong>① 無呼吸（Apnea）への対応：</strong>「設定時間を超えて自発呼吸が感知されない状態です！鎮静薬が効きすぎていないか、トリガー感度が重すぎないか確認し、必要ならA/Cモードへの変更を検討します！」||<strong>② 頻呼吸とミストリガーの発見：</strong>「回路の中に結露水がチャポチャポ溜まっていると、水滴の揺れを機械が『自発呼吸だ！』と誤認して勝手に連発する<strong>ミストリガー（オートトリガー）</strong>が起きるんですね！」">
+          <div data-id="tv-wipe" class="char-callout nurse" data-step-texts="<strong>看護師：</strong>「呼吸リズムのアラームには『無呼吸（Apnea）』と『呼吸数上昇（頻呼吸）』の2つがあるんですね！順番に原因と対応を見てみましょう！」||<strong>① 無呼吸（Apnea）への対応：</strong>「設定時間を超えて自発呼吸が感知されない状態です！鎮静薬が効きすぎていないか、トリガー感度が重すぎないか確認し、必要ならA/Cモードへの変更を検討します！」||<strong>② 頻呼吸とミストリガーの発見：</strong>「回路の中に結露水がチャポチャポ溜まっていると、水滴の揺れを機械が『自発呼吸だ！』と誤認して勝手に連発する<strong>ミストリガー（オートトリガー）</strong>が起きるんですね！」">
             <div class="char-avatar"><img src="assets/icon ns.png" alt="看護師"></div>
             <div class="char-bubble-text">
               <strong>看護師：</strong>「呼吸リズムのアラームには『無呼吸（Apnea）』と『呼吸数上昇（頻呼吸）』の2つがあるんですね！順番に原因と対応を見てみましょう！」
@@ -5489,8 +5688,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer orange">
-          <span class="footer-badge">RHYTHM CHECK</span>
+        <div class="slide-footer-layer orange" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">RHYTHM CHECK</span>
           <span>患者の実際の胸郭の動きと画面の呼吸数が一致しない場合は、回路内結露水によるミストリガーを疑います。</span>
         </div>
 
@@ -5503,10 +5702,10 @@
       <!-- ====================================================================
            【Slide 31】アラーム原因とアクション・マトリックス（原本 P.26 早見表再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">全アラームの早見表は？</span>
-          <h2>アラーム原因とアクション・マトリックス</h2>
+      <section data-slide-num="31" data-part-id="4" data-camera-mode="zoom-out" data-camera-origin="50% 50%" data-camera-badge="🎥 CAMERA ZOOM OUT｜全アラームの原因（患者/回路）とアクション早見表へズームアウト集約" data-short-title="📋 早見マトリックス" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">全アラームの早見表は？</span>
+          <h2 data-id="tv-title">アラーム原因とアクション・マトリックス</h2>
         </div>
 
         <div class="slide-content-layer" style="justify-content: flex-start; padding-top: 6px;">
@@ -5531,7 +5730,7 @@
             <div class="alarm-print-title">① 分時換気量（MV 低下 / 上限）アラーム</div>
             <div style="display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 16px; align-items: stretch;">
               <!-- カード1：主な原因 -->
-              <div class="info-panel blue" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+              <div data-id="tv-stage-1" class="info-panel blue" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
                 <div style="font-size: 0.92em; font-weight: 900; color: var(--mute-blue); border-bottom: 2px solid #DBEAFE; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                   <span style="background:#2563EB; color:#FFF; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.85em;">1</span>
                   主な原因（患者・回路）
@@ -5544,7 +5743,7 @@
               </div>
 
               <!-- カード2：患者・回路の確認（最優先アクション） -->
-              <div class="info-panel green" style="padding: 18px 20px; background: #F0FDF4; border: 2px solid #22C55E; display: flex; flex-direction: column; gap: 10px;">
+              <div data-id="tv-card-1" class="info-panel green" style="padding: 18px 20px; background: #F0FDF4; border: 2px solid #22C55E; display: flex; flex-direction: column; gap: 10px;">
                 <div style="font-size: 0.95em; font-weight: 900; color: #15803D; border-bottom: 2px solid #BBF7D0; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                   <span style="background:#16A34A; color:#FFF; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.85em;">2</span>
                   患者・回路の確認（最優先アクション）
@@ -5557,7 +5756,7 @@
               </div>
 
               <!-- カード3：設定・治療の検討 -->
-              <div class="info-panel orange" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+              <div data-id="tv-card-2" class="info-panel orange" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
                 <div style="font-size: 0.92em; font-weight: 900; color: #B45309; border-bottom: 2px solid #FDE68A; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                   <span style="background:#D97706; color:#FFF; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.85em;">3</span>
                   設定・治療の検討
@@ -5576,7 +5775,7 @@
             <div class="alarm-print-title">② 気道内圧（Paw 低下 / 上限）アラーム</div>
             <div style="display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 16px; align-items: stretch;">
               <!-- カード1：主な原因 -->
-              <div class="info-panel red" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+              <div data-id="tv-card-3" class="info-panel red" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
                 <div style="font-size: 0.92em; font-weight: 900; color: #BE123C; border-bottom: 2px solid #FECDD3; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                   <span style="background:#E11D48; color:#FFF; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.85em;">1</span>
                   主な原因（患者・回路）
@@ -5589,7 +5788,7 @@
               </div>
 
               <!-- カード2：患者・回路の確認（最優先アクション） -->
-              <div class="info-panel green" style="padding: 18px 20px; background: #FFF1F2; border: 2px solid #E11D48; display: flex; flex-direction: column; gap: 10px;">
+              <div data-id="tv-card-4" class="info-panel green" style="padding: 18px 20px; background: #FFF1F2; border: 2px solid #E11D48; display: flex; flex-direction: column; gap: 10px;">
                 <div style="font-size: 0.95em; font-weight: 900; color: #BE123C; border-bottom: 2px solid #FECDD3; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                   <span style="background:#E11D48; color:#FFF; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.85em;">2</span>
                   患者・回路の確認（最優先アクション）
@@ -5662,8 +5861,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">CHEAT SHEET</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">CHEAT SHEET</span>
           <span>必ず「患者・回路の確認」を先に行った上で、医師や臨床工学技士と「設定の検討」を行います。</span>
         </div>
 
@@ -5677,7 +5876,7 @@
       <!-- ====================================================================
            【Slide 32】中扉⑤：第5部 データ統合・血液ガスとパラメータ調整 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
+      <section data-slide-num="32" data-part-id="5" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 05 START｜血液ガスと設定調整" data-short-title="扉：第5部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
         <!-- 背景装飾：淡いバイタル波形SVG -->
         <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
           <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
@@ -5688,11 +5887,11 @@
           
           <!-- 左側：セクションタイトル情報（白ベース） -->
           <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #FFFBEB; color: #B45309; border: 1.5px solid #FDE68A; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
+            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #FFFBEB; color: #B45309; border: 1.5px solid #FDE68A; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
               <i class="fa-solid fa-scale-balanced" style="color: #D97706;"></i> PART 05｜BLOOD GAS &amp; TUNING
             </div>
 
-            <h2 style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
+            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
               血液ガスと設定調整
             </h2>
 
@@ -5704,7 +5903,7 @@
             <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #D97706, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
 
             <!-- パート概要（白ベースカード） -->
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #D97706; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
+            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #D97706; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
               <div style="font-size: 0.72em; font-weight: 800; color: #D97706; margin-bottom: 6px;">
                 <i class="fa-solid fa-check-double"></i> このパートのポイント
               </div>
@@ -5725,7 +5924,7 @@
             <div style="position: absolute; bottom: 44px; width: 70%; height: 22px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.16) 0%, rgba(100, 116, 139, 0.05) 55%, transparent 78%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
 
             <!-- 1. 動画（assets/part05_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part05Video" class="part-char-video" autoplay loop muted playsinline preload="auto"
+            <video id="part05Video" class="part-char-video" autoplay loop muted playsinline preload="none"
                    style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
                    onloadedmetadata="activatePartVideo('part05')"
                    onloadeddata="activatePartVideo('part05')"
@@ -5788,10 +5987,10 @@
            【Slide 33】フィジカルからデータへの統合的アセスメント（原本 P.27 再現）
            [Medical Illustration Prompt (assets/fig_integrated_assess.png)]: Modern flat vector medical infographic. Patient silhouette surrounded by three circular nodes connected by arrows: arterial blood gas printout, chest X-ray image, and stethoscope with vital sign monitor. Clean white background, slate blue palette.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">アラームの先にある評価とは？</span>
-          <h2>フィジカルからデータへの統合的アセスメント</h2>
+      <section data-slide-num="33" data-part-id="5" data-camera-mode="part-enter" data-camera-origin="50% 50%" data-camera-badge="🎥 ASSESSMENT LOOP｜フィジカル評価から血液ガス3指標（PaO2・PaCO2・pH）への統合ループ" data-short-title="🩺 統合評価" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">アラームの先にある評価とは？</span>
+          <h2 data-id="tv-title">フィジカルからデータへの統合的アセスメント</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -5828,7 +6027,7 @@
             </div>
 
             <!-- 右：目的別アプローチの整理 -->
-            <div class="info-panel blue" style="padding: 14px 20px;">
+            <div data-id="tv-stage-1" class="info-panel blue" style="padding: 14px 20px;">
               <div style="background: #94A3B8; color: #0F172A; font-weight: 900; font-size: 0.85em; padding: 7px 12px; border-radius: 6px; text-align: center; margin-bottom: 10px;">
                 目的別アプローチの整理
               </div>
@@ -5845,8 +6044,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">INTEGRATION</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">INTEGRATION</span>
           <span>聴診・モニター・レントゲン・血液ガスを一つの線として繋ぎ、「酸素化」と「換気」の2軸で調整します。</span>
         </div>
 
@@ -5859,10 +6058,10 @@
       <!-- ====================================================================
            【Slide 34】P/F比の評価とPEEP/FiO2の調整（原本 P.28 再現＋ライブP/F比計算＆重症度ハイライト）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">酸素化をどう改善するか？</span>
-          <h2>P/F比の評価とPEEP / FiO₂の調整</h2>
+      <section data-slide-num="34" data-part-id="5" data-camera-mode="zoom-in-left" data-camera-origin="30% 50%" data-camera-badge="🎥 CAMERA ZOOM IN (酸素化)｜血液ガスの「PaO2・P/F比」へ寄り、PEEP / FiO2 調整へ直結" data-short-title="🫧 P/F比・酸素化" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">酸素化をどう改善するか？</span>
+          <h2 data-id="tv-title">P/F比の評価とPEEP / FiO₂の調整</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -5871,7 +6070,7 @@
 
           <div style="display: grid; grid-template-columns: 0.92fr 1.18fr; gap: 16px; align-items: stretch;">
             <!-- 左：酸素の調整ロジック（解剖学的肺胞・毛細血管赤血球ガス交換SVG） -->
-            <div class="info-panel blue" style="padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div data-id="tv-stage-1" class="info-panel blue" style="padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between;">
               <h3 style="font-size: 0.9em; font-weight: 900; text-align: center; color: var(--text-main); margin-bottom: 4px;">
                 酸素の調整ロジック（肺胞から毛細血管への拡散）
               </h3>
@@ -5969,7 +6168,7 @@
             </div>
 
             <!-- 右：P/F ratio ライブ計算機 ＆ 重症度ハイライトバー -->
-            <div class="info-panel" style="padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+            <div data-id="tv-card-1" class="info-panel fragment fade-up" style="padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
               <!-- 上段：インタラクティブ PaO2 / FiO2 操作パネル -->
               <div style="background: #0F172A; color: #F8FAFC; border-radius: 12px; padding: 10px 14px; display: grid; grid-template-columns: 1fr 1fr 0.9fr; gap: 10px; align-items: center;">
                 <!-- PaO2 操作 -->
@@ -6061,8 +6260,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">P/F RATIO</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">P/F RATIO</span>
           <span>PaO₂単体ではなく必ずFiO₂で割った「P/F比」で酸素化能を評価し、FiO₂とPEEPのバランスを調整します。</span>
         </div>
 
@@ -6075,15 +6274,15 @@
       <!-- ====================================================================
            【Slide 35】血液ガスデータとpHのバランス（原本 P.29 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">酸塩基平衡の指標とは？</span>
-          <h2>血液ガスデータとpHのバランス</h2>
+      <section data-slide-num="35" data-part-id="5" data-camera-mode="pan-right" data-camera-origin="68% 50%" data-camera-badge="🎥 CAMERA PAN RIGHT (酸塩基)｜酸素化パネルから隣の「pH 7.40・PaCO2・HCO3-」基準値へ横移動" data-short-title="🧪 pHバランス" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">酸塩基平衡の指標とは？</span>
+          <h2 data-id="tv-title">血液ガスデータとpHのバランス</h2>
         </div>
 
         <div class="slide-content-layer">
           <!-- 上段：血液ガスの基準値テーブル -->
-          <div class="info-panel" style="padding: 12px 18px;">
+          <div data-id="tv-stage-1" class="info-panel" style="padding: 12px 18px;">
             <div style="text-align: center; font-weight: 900; font-size: 0.85em; color: var(--header-navy); margin-bottom: 8px;">血液ガスの基準値</div>
             <table class="matrix-table" style="font-size: 0.8em;">
               <thead>
@@ -6129,8 +6328,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">pH PRIORITY</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">pH PRIORITY</span>
           <span>PaCO₂の数値単体に一喜一憂するのではなく、「pHが7.35〜7.45の正常域に保たれているか」を最優先します。</span>
         </div>
 
@@ -6144,16 +6343,16 @@
            【Slide 36】酸塩基平衡のメカニズム：pHシーソーモデル（原本 P.30 再現）
            [Medical Illustration Prompt (assets/fig_ph_seesaw.png)]: Modern 3D isometric medical illustration of a balance scale seesaw with digital display "pH 7.4" at the fulcrum. Left pan holds glowing red spheres (Acid: PCO2 / Acidosis), right pan holds glowing green spheres (Base: HCO3 / Alkalosis). Clean white background, no text.
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">呼吸器でpHをどう操る？</span>
-          <h2>酸塩基平衡のメカニズム：pHシーソーモデル</h2>
+      <section data-slide-num="36" data-part-id="5" data-camera-mode="zoom-in" data-camera-origin="50% 55%" data-camera-badge="🎥 MORPH TO SEESAW｜pH 7.40を支点に「PaCO2（肺）× HCO3-（腎）シーソーモデル」へズーム変形" data-short-title="⚖️ pHシーソー" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">呼吸器でpHをどう操る？</span>
+          <h2 data-id="tv-title">酸塩基平衡のメカニズム：pHシーソーモデル</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1.08fr 1fr; gap: 20px; align-items: center;">
             <!-- 左：リアルタイム連動 3Dメタリック精密天秤シーソーSVGモデル -->
-            <div style="background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%); border: 2px solid #CBD5E1; border-radius: 18px; padding: 12px 16px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 424px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);">
+            <div data-id="tv-stage-1" style="background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%); border: 2px solid #CBD5E1; border-radius: 18px; padding: 12px 16px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 424px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);">
               <!-- 酸塩基バランス状態バッジ -->
               <div id="phSimStatusBadge" style="background: #DCFCE7; color: #15803D; border: 2px solid #22C55E; padding: 5px 18px; border-radius: 999px; font-size: 0.8em; font-weight: 900; text-align: center; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(34,197,94,0.15);">
                 ✅ 正常バランス（pH 7.35〜7.45：酸塩基平衡）
@@ -6473,7 +6672,7 @@
                 </div>
 
                 <!-- シミュレーター連動キャラクター吹き出し（正常＝緑・異常＝赤＋振動） -->
-                <div id="phSimCharCallout" class="char-callout reaction-good" style="padding: 8px 12px; margin-top: 2px;">
+                <div data-id="tv-wipe" id="phSimCharCallout" class="char-callout reaction-good" style="padding: 8px 12px; margin-top: 2px;">
                   <div id="phSimCharAvatar" class="char-avatar" style="width: 42px; height: 42px;"><img src="assets/icon ce.png" alt="CE"></div>
                   <div style="font-size: 0.68em; line-height: 1.45;">
                     <span id="phSimCharText"><strong>適正範囲です！この状態をキープしましょう。</strong>MV 6.0 L/min で PaCO₂ 40 Torr・pH 7.40 の美しい酸塩基バランスが保たれています。</span>
@@ -6484,8 +6683,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">SEESAW MODEL</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">SEESAW MODEL</span>
           <span>分時換気量（MV＝TV×RR）を増やせば酸（PCO₂）が吹き飛んでpHは上がり、減らせば酸が溜まってpHは下がります。</span>
         </div>
 
@@ -6498,15 +6697,15 @@
       <!-- ====================================================================
            【Slide 37】PCO2を目標とした人工呼吸器のパラメーター調整（原本 P.31 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">実際の数値変更ルールは？</span>
-          <h2>PCO₂を目標とした人工呼吸器のパラメーター調整</h2>
+      <section data-slide-num="37" data-part-id="5" data-camera-mode="zoom-in-left" data-camera-origin="25% 55%" data-camera-badge="🎥 CAMERA ZOOM IN (左皿 PaCO2)｜シーソーの肺側から「分時換気量 MV ＝ VT × RR」調整へズーム" data-short-title="🎛️ PaCO2調整" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">実際の数値変更ルールは？</span>
+          <h2 data-id="tv-title">PCO₂を目標とした人工呼吸器のパラメーター調整</h2>
         </div>
 
         <div class="slide-content-layer">
           <!-- 上段：PCO2を上げる（↑）目的の場合 -->
-          <div class="info-panel orange fragment fade-up" style="padding: 14px 22px; background: #FFFBF5;">
+          <div data-id="tv-stage-1" class="info-panel orange " style="padding: 14px 22px; background: #FFFBF5;">
             <div style="text-align: center; font-size: 0.95em; font-weight: 900; margin-bottom: 10px;">
               PCO₂を上げる (↑) 目的の場合 <span style="font-size:0.8em; color:#9A3412;">（※アルカレミア改善等）</span>
             </div>
@@ -6542,8 +6741,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer blue">
-          <span class="footer-badge">INVERSE RULE</span>
+        <div class="slide-footer-layer blue" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">INVERSE RULE</span>
           <span>補足：分時換気量（MV）の調整がダイレクトにPCO₂の増減に反比例します（MV↑ ⇒ PCO₂↓）。</span>
         </div>
 
@@ -6556,15 +6755,15 @@
       <!-- ====================================================================
            【Slide 38】Key Takeaways（本編まとめ・原本 P.32 再現）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">持ち帰るべきポイントは？</span>
-          <h2>Key Takeaways（本日の3大鉄則）</h2>
+      <section data-slide-num="38" data-part-id="5" data-camera-mode="zoom-out" data-camera-origin="50% 50%" data-camera-badge="🎥 GRAND SUMMARY ZOOM OUT｜全5部の結論を「本日の3大鉄則」ボードへズームアウト集約" data-short-title="🏆 3大鉄則" data-background-color="#FFFFFF" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">持ち帰るべきポイントは？</span>
+          <h2 data-id="tv-title">Key Takeaways（本日の3大鉄則）</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: flex; flex-direction: column; gap: 14px;">
-            <div class="info-panel blue fragment fade-up" style="display: flex; align-items: center; gap: 18px; padding: 14px 22px;">
+            <div data-id="tv-stage-1" class="info-panel blue " style="display: flex; align-items: center; gap: 18px; padding: 14px 22px;">
               <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--header-navy); color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 1.3em; flex-shrink: 0;">
                 <i class="fa-solid fa-check"></i>
               </div>
@@ -6608,8 +6807,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">CORE PILLARS</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">CORE PILLARS</span>
           <span>この3本の柱が、これからのベッドサイド人工呼吸器管理における揺るぎない羅針盤になります。</span>
         </div>
 
@@ -6622,7 +6821,7 @@
       <!-- ====================================================================
            【Slide 39】中扉⑥：第6部 総括・アンケート・付録（基準値リファレンス） ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
-      <section data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
+      <section data-slide-num="39" data-part-id="6" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 06 START｜総括・付録リファレンス" data-short-title="扉：第6部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
         <!-- 背景装飾：淡いバイタル波形SVG -->
         <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
           <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
@@ -6633,11 +6832,11 @@
           
           <!-- 左側：セクションタイトル情報（白ベース） -->
           <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #F0FDFA; color: #0F766E; border: 1.5px solid #99F6E4; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
+            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #F0FDFA; color: #0F766E; border: 1.5px solid #99F6E4; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
               <i class="fa-solid fa-book-medical" style="color: #0D9488;"></i> PART 06｜SUMMARY &amp; APPENDIX
             </div>
 
-            <h2 style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
+            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
               総括・付録リファレンス
             </h2>
 
@@ -6649,7 +6848,7 @@
             <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #0D9488, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
 
             <!-- パート概要（白ベースカード） -->
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #0D9488; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
+            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #0D9488; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
               <div style="font-size: 0.72em; font-weight: 800; color: #0D9488; margin-bottom: 6px;">
                 <i class="fa-solid fa-check-double"></i> このパートのポイント
               </div>
@@ -6670,7 +6869,7 @@
             <div style="position: absolute; bottom: 44px; width: 70%; height: 22px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.16) 0%, rgba(100, 116, 139, 0.05) 55%, transparent 78%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
 
             <!-- 1. 動画（assets/part06_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part06Video" class="part-char-video" autoplay loop muted playsinline preload="auto"
+            <video id="part06Video" class="part-char-video" autoplay loop muted playsinline preload="none"
                    style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
                    onloadedmetadata="activatePartVideo('part06')"
                    onloadeddata="activatePartVideo('part06')"
@@ -6732,17 +6931,17 @@
       <!-- ====================================================================
            【Slide 40】お疲れ様でした！まとめ＆アンケート（原本 P.33-34 再現 ＋ 新キャラクター組込）
            ==================================================================== -->
-      <section data-background-color="#FFFDF9" class="sandwich-slide">
-        <div class="slide-header-layer" style="background: #4A5568;">
-          <span class="category-pill green">SUMMARY &amp; SURVEY</span>
-          <h2>お疲れ様でした！ICU呼吸器勉強会 まとめ＆アンケート</h2>
+      <section data-slide-num="40" data-part-id="6" data-camera-mode="part-enter" data-camera-origin="50% 50%" data-camera-badge="🎥 ENDING STUDIO｜勉強会全体のまとめ ＆ 受講後アンケートQRコード" data-short-title="🎉 まとめ＆QR" data-background-color="#FFFDF9" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header" style="background: #4A5568;">
+          <span class="category-pill green" data-id="tv-pill">SUMMARY &amp; SURVEY</span>
+          <h2 data-id="tv-title">お疲れ様でした！ICU呼吸器勉強会 まとめ＆アンケート</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1.25fr 0.85fr 0.78fr; gap: 14px; align-items: stretch;">
             <!-- 左列：呼吸の基礎 ＋ 呼吸器の基本モード（assets/char_modes_step.png） -->
             <div style="display: flex; flex-direction: column; gap: 10px;">
-              <div class="info-panel" style="background: #FEFCE8; border: 1.5px solid #FDE047; padding: 10px 14px;">
+              <div data-id="tv-stage-1" class="info-panel" style="background: #FEFCE8; border: 1.5px solid #FDE047; padding: 10px 14px;">
                 <h4 style="font-size: 0.82em; font-weight: 900; text-align: center; color: #713F12; margin-bottom: 6px;">
                   🌸 呼吸の基礎
                 </h4>
@@ -6757,7 +6956,7 @@
               </div>
 
               <!-- 呼吸器の基本モード（assets/char_modes_step.png） -->
-              <div class="info-panel" style="padding: 8px 12px; text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+              <div data-id="tv-card-1" class="info-panel" style="padding: 8px 12px; text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center;">
                 <h4 style="font-size: 0.8em; font-weight: 900; color: var(--text-main); margin-bottom: 4px;">
                   🎀 呼吸器の基本モード
                 </h4>
@@ -6766,7 +6965,7 @@
             </div>
 
             <!-- 中央列：アラーム対応のヒント ＋ CE＆看護師（assets/char_closing.png） -->
-            <div class="info-panel" style="background: #FFFBEB; border: 1.5px solid #FDE68A; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div data-id="tv-card-2" class="info-panel" style="background: #FFFBEB; border: 1.5px solid #FDE68A; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;">
               <div>
                 <h4 style="font-size: 0.82em; font-weight: 900; text-align: center; color: #92400E; border-bottom: 1px dashed #F59E0B; padding-bottom: 6px; margin-bottom: 8px;">
                   ⚠️ アラーム対応のヒント
@@ -6791,7 +6990,7 @@
             </div>
 
             <!-- 右列：アンケートQRコード ＋ 病院ロゴ -->
-            <div class="info-panel" style="background: #FFFFFF; border: 2px solid var(--mute-blue); padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center;">
+            <div data-id="tv-card-3" class="info-panel" style="background: #FFFFFF; border: 2px solid var(--mute-blue); padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center;">
               <div style="font-size: 0.72em; font-weight: 800; line-height: 1.5; color: var(--text-main);">
                 今後のより良い勉強会のために、<br>
                 <strong style="color:var(--mute-blue);">アンケートにご協力をお願いします</strong>
@@ -6806,8 +7005,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">THANK YOU</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">THANK YOU</span>
           <span>ご清聴ありがとうございました！スマートフォンのカメラで右側のQRコードよりアンケート回答をお願いいたします。</span>
         </div>
 
@@ -6820,10 +7019,10 @@
       <!-- ====================================================================
            【Slide 41】付録①：人工呼吸器の基本設定：圧・換気量パラメータの基準値（原本 P.34/35 再現）
            ==================================================================== -->
-      <section data-background-color="#F8FAFC" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">安全かつ適切な換気を実現するための基本設定とは？</span>
-          <h2>人工呼吸器の基本設定：圧・換気量パラメータの基準値</h2>
+      <section data-slide-num="41" data-part-id="6" data-camera-mode="pan-right" data-camera-origin="50% 50%" data-camera-badge="🎥 REFERENCE PAN ①｜基本設定パラメータ基準値 ＆ 予測体重（PBW）計算機へ横移動" data-short-title="📏 基本設定＆PBW" data-background-color="#F8FAFC" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">安全かつ適切な換気を実現するための基本設定とは？</span>
+          <h2 data-id="tv-title">人工呼吸器の基本設定：圧・換気量パラメータの基準値</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -6834,7 +7033,7 @@
                 <i class="fa-solid fa-gauge-high" style="color:var(--mute-blue);"></i> 主要な呼吸・圧パラメータ
               </h3>
 
-              <div class="info-panel blue" style="padding: 9px 14px;">
+              <div data-id="tv-stage-1" class="info-panel blue" style="padding: 9px 14px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">最高圧 (PIP)</strong>
                   <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-blue);">30 mbar以下 <small style="font-size:0.65em; color:var(--text-main);">（可能な限り低圧を維持）</small></span>
@@ -6842,7 +7041,7 @@
                 <p style="font-size:0.62em; color:var(--text-muted); margin-top:2px;">送気中の気道内圧の最大値。30 mbar超過の継続は、肺胞過伸展や気圧外傷（バロトラウマ）のリスクを増大させます。</p>
               </div>
 
-              <div class="info-panel blue" style="padding: 9px 14px;">
+              <div data-id="tv-card-1" class="info-panel blue" style="padding: 9px 14px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">プラトー圧 (Pplat)</strong>
                   <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-blue);">30 mbar以下</span>
@@ -6850,7 +7049,7 @@
                 <p style="font-size:0.62em; color:var(--text-muted); margin-top:2px;">吸気終末の一時的なガス静止期（ポーズ）の圧。肺胞に直接かかる実質的な圧で、肺保護換気において最も重視されます。</p>
               </div>
 
-              <div class="info-panel blue" style="padding: 9px 14px;">
+              <div data-id="tv-card-2" class="info-panel blue" style="padding: 9px 14px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">平均圧 (Pmean)</strong>
                   <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-blue);">10〜15 mbar以下 <small style="font-size:0.65em; color:var(--text-main);">（換気モード等で変動）</small></span>
@@ -6858,7 +7057,7 @@
                 <p style="font-size:0.62em; color:var(--text-muted); margin-top:2px;">1呼吸周期の平均的な気道内圧。酸素化（PaO₂）と密接に関連し、主にPEEPや吸気時間の設定に左右されます。</p>
               </div>
 
-              <div class="info-panel blue" style="padding: 9px 14px;">
+              <div data-id="tv-card-3" class="info-panel blue" style="padding: 9px 14px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">PEEP (呼気終末陽圧)</strong>
                   <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-blue);">5 mbar〜 <small style="font-size:0.65em; color:var(--text-main);">（臨床判断により段階的に設定）</small></span>
@@ -6873,7 +7072,7 @@
                 <i class="fa-solid fa-lungs" style="color:var(--mute-green);"></i> 換気量・リーク・その他パラメータ
               </h3>
 
-              <div class="info-panel green" style="padding: 8px 12px;">
+              <div data-id="tv-card-4" class="info-panel green" style="padding: 8px 12px;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <strong style="font-size:0.78em;">一回換気量 (VT)</strong>
                   <span class="tabular-nums" style="font-size:1.05em; font-weight:900; color:var(--mute-green);">6〜8 mL/kg <small style="font-size:0.65em; color:var(--text-main);">（理想体重あたり）</small></span>
@@ -6927,8 +7126,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer">
-          <span class="footer-badge">REFERENCE 01</span>
+        <div class="slide-footer-layer" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">REFERENCE 01</span>
           <span>肺保護換気の基本：最高圧・プラトー圧は「30 mbar以下」、一回換気量は「理想体重あたり 6〜8 mL/kg」を基準とします。</span>
         </div>
 
@@ -6942,17 +7141,17 @@
            【Slide 42】付録②：肺力学・呼吸生理パラメータ：状態評価とウィーニング（離脱）の指標（原本 P.35/36 再現）
            [Medical Illustration Prompt (assets/fig_lung_mechanics.png)]: Clean anatomical vector diagram of trachea, bronchial tree, lungs, and diaphragm muscle in the center, white background, slate blue and soft coral accents, no text.
            ==================================================================== -->
-      <section data-background-color="#F8FAFC" class="sandwich-slide">
-        <div class="slide-header-layer">
-          <span class="question-pill">患者の肺の状態と自発呼吸をどう評価するか？</span>
-          <h2>肺力学・呼吸生理パラメータ：状態評価とウィーニング（離脱）の指標</h2>
+      <section data-slide-num="42" data-part-id="6" data-camera-mode="pan-right" data-camera-origin="65% 50%" data-camera-badge="🎥 REFERENCE PAN ②｜外枠固定のまま「肺力学・ウィーニング指標（RSB）計算機」へ横移動" data-short-title="📈 肺力学＆RSB" data-background-color="#F8FAFC" class="sandwich-slide">
+        <div class="slide-header-layer" data-id="tv-header">
+          <span class="question-pill" data-id="tv-pill">患者の肺の状態と自発呼吸をどう評価するか？</span>
+          <h2 data-id="tv-title">肺力学・呼吸生理パラメータ：状態評価とウィーニング（離脱）の指標</h2>
         </div>
 
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 240px 1fr; gap: 16px; align-items: center;">
             <!-- 左列：気道抵抗 (R) & 時定数 -->
             <div style="display: flex; flex-direction: column; gap: 14px;">
-              <div class="info-panel orange">
+              <div data-id="tv-stage-1" class="info-panel orange">
                 <div style="font-size:0.65em; font-weight:800; color:var(--text-muted);">空気抵抗の評価</div>
                 <div style="font-size:0.9em; font-weight:900; color:var(--text-main);">気道抵抗 (R)</div>
                 <div class="tabular-nums" style="font-size:1.35em; font-weight:900; color:var(--mute-orange); margin:4px 0;">5〜10 <small style="font-size:0.65em;">mbar/L/秒以下</small></div>
@@ -6961,7 +7160,7 @@
                 </p>
               </div>
 
-              <div class="info-panel orange">
+              <div data-id="tv-card-1" class="info-panel orange">
                 <div style="font-size:0.65em; font-weight:800; color:var(--text-muted);">時間的バランスの評価</div>
                 <div style="font-size:0.9em; font-weight:900; color:var(--text-main);">時定数 (Time Constant)</div>
                 <div class="tabular-nums" style="font-size:1.35em; font-weight:900; color:var(--mute-orange); margin:4px 0;">0.5〜0.8 <small style="font-size:0.65em;">秒程度</small></div>
@@ -6993,7 +7192,7 @@
 
             <!-- 右列：コンプライアンス (C) & RSB -->
             <div style="display: flex; flex-direction: column; gap: 14px;">
-              <div class="info-panel green">
+              <div data-id="tv-card-2" class="info-panel green">
                 <div style="font-size:0.65em; font-weight:800; color:var(--text-muted);">膨らみやすさの評価</div>
                 <div style="font-size:0.9em; font-weight:900; color:var(--text-main);">コンプライアンス (C)</div>
                 <div class="tabular-nums" style="font-size:1.35em; font-weight:900; color:var(--mute-orange); margin:4px 0;">50〜80 <small style="font-size:0.65em;">mL/mbar</small></div>
@@ -7002,7 +7201,7 @@
                 </p>
               </div>
 
-              <div class="info-panel green" style="padding: 10px 14px;">
+              <div data-id="tv-card-3" class="info-panel green" style="padding: 10px 14px;">
                 <div style="font-size:0.65em; font-weight:800; color:var(--text-muted);">ウィーニングの評価</div>
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
                   <div style="font-size:0.9em; font-weight:900; color:var(--text-main);">RSB (浅速呼吸指数)</div>
@@ -7039,8 +7238,8 @@
           </div>
         </div>
 
-        <div class="slide-footer-layer green">
-          <span class="footer-badge">REFERENCE 02</span>
+        <div class="slide-footer-layer green" data-id="tv-footer">
+          <span class="footer-badge" data-id="tv-footer-badge">REFERENCE 02</span>
           <span>気道抵抗（R：通りにくさ）、コンプライアンス（C：肺の柔らかさ）、RSB（＜105回/L：離脱指標）をベッドサイド評価に活用します。</span>
         </div>
 
@@ -7069,6 +7268,8 @@
       hash: true,
       slideNumber: 'c/t',
       transition: 'none',
+      backgroundTransition: 'fade',
+      autoAnimate: false,
       controls: true,
       progress: true,
       center: false,
@@ -7118,7 +7319,7 @@
         const steps = raw.split('||').map(function(s) { return s.trim(); }).filter(Boolean);
         if (!steps.length) return;
         const idx = Math.min(visibleFragments, steps.length - 1);
-        const targetSpan = callout.querySelector('.char-step-text');
+        const targetSpan = callout.querySelector('.char-step-text') || callout.querySelector('.char-bubble-text');
         if (targetSpan && targetSpan.innerHTML !== steps[idx]) {
           targetSpan.innerHTML = steps[idx];
           if (shouldAnimate) {
@@ -7900,13 +8101,12 @@
         const fb = document.getElementById(pid + 'Fallback');
         if (!fb) return;
 
-        // 動画イベント登録（初回のみ）
+        // 動画イベント登録（初回のみ：一斉ロードは避け、スマートプリロードで順次読み込む）
         if (vid && !vid.dataset.boundEvents) {
           vid.dataset.boundEvents = 'true';
           vid.addEventListener('loadedmetadata', function() { activatePartVideo(pid); });
           vid.addEventListener('loadeddata', function() { activatePartVideo(pid); });
           vid.addEventListener('canplay', function() { activatePartVideo(pid); });
-          try { vid.load(); } catch(e) {}
         }
 
         // 動画がすでに読み込まれている場合
@@ -7938,8 +8138,44 @@
       });
     }
 
-    // ドキュメント読み込み完了時にも即座にチェック
-    window.addEventListener('load', checkAllImages);
+    // スマート・プリロード制御：起動時は表紙のみ優先し、他パートは順次または接近時に先読み
+    function loadPartVideoIfNeeded(vid) {
+      if (!vid || vid.dataset.smartLoaded === 'true') return;
+      vid.dataset.smartLoaded = 'true';
+      vid.preload = 'auto';
+      try { vid.load(); } catch(e) {}
+    }
+
+    function smartPreloadNearbyVideos() {
+      if (typeof Reveal === 'undefined' || !Reveal.getSlides) return;
+      const slides = Reveal.getSlides();
+      const idx = Reveal.getIndices ? Reveal.getIndices().h : 0;
+      for (let offset = -1; offset <= 3; offset++) {
+        const s = slides[idx + offset];
+        if (!s) continue;
+        s.querySelectorAll('video.part-char-video').forEach(function(v) {
+          loadPartVideoIfNeeded(v);
+          if (offset === 0 && v.paused) {
+            v.play().catch(function(){});
+          }
+        });
+      }
+    }
+
+    window.addEventListener('load', function() {
+      checkAllImages();
+      smartPreloadNearbyVideos();
+      // 表紙表示後にバックグラウンドで1本ずつ時間差プリロード（通信渋滞を防止）
+      const partIds = ['part01', 'part02', 'part03', 'part04', 'part05', 'part06'];
+      partIds.forEach(function(pid, i) {
+        setTimeout(function() {
+          loadPartVideoIfNeeded(document.getElementById(pid + 'Video'));
+        }, 1200 + i * 900);
+      });
+      if (typeof Reveal !== 'undefined' && Reveal.on) {
+        Reveal.on('slidechanged', smartPreloadNearbyVideos);
+      }
+    });
     document.addEventListener('DOMContentLoaded', checkAllImages);
 
     /* ==========================================================================
@@ -8398,6 +8634,177 @@
         }
       }
     }, true);
+  /* === SEAMLESS_STUDIO_JS_START === */
+    (function initTvSeamlessDirector() {
+      const SLIDE_DIRECTOR = {"1":{"part":0,"mode":"divider","origin":"50% 50%"},"2":{"part":0,"mode":"zoom-in","origin":"50% 35%"},"3":{"part":1,"mode":"divider","origin":"25% 50%"},"4":{"part":1,"mode":"part-enter","origin":"50% 50%"},"5":{"part":1,"mode":"zoom-in","origin":"25% 50%"},"6":{"part":1,"mode":"pan-right","origin":"70% 50%"},"7":{"part":1,"mode":"pan-right","origin":"80% 50%"},"8":{"part":1,"mode":"zoom-in","origin":"50% 55%"},"9":{"part":1,"mode":"zoom-out","origin":"50% 50%"},"10":{"part":2,"mode":"divider","origin":"50% 50%"},"11":{"part":2,"mode":"part-enter","origin":"50% 50%"},"12":{"part":2,"mode":"zoom-in","origin":"28% 52%"},"13":{"part":2,"mode":"pan-right","origin":"60% 50%"},"14":{"part":2,"mode":"zoom-in","origin":"32% 52%"},"15":{"part":2,"mode":"zoom-out","origin":"50% 48%"},"16":{"part":3,"mode":"divider","origin":"50% 50%"},"17":{"part":3,"mode":"part-enter","origin":"50% 50%"},"18":{"part":3,"mode":"zoom-in","origin":"62% 55%"},"19":{"part":3,"mode":"pan-right","origin":"50% 48%"},"20":{"part":3,"mode":"zoom-in","origin":"50% 50%"},"21":{"part":3,"mode":"zoom-in","origin":"35% 58%"},"22":{"part":3,"mode":"pan-right","origin":"50% 45%"},"23":{"part":3,"mode":"zoom-in","origin":"60% 52%"},"24":{"part":3,"mode":"zoom-out","origin":"50% 50%"},"25":{"part":3,"mode":"zoom-in","origin":"55% 50%"},"26":{"part":4,"mode":"divider","origin":"50% 50%"},"27":{"part":4,"mode":"part-enter","origin":"50% 50%"},"28":{"part":4,"mode":"zoom-in","origin":"35% 55%"},"29":{"part":4,"mode":"pan-right","origin":"65% 55%"},"30":{"part":4,"mode":"pan-right","origin":"55% 55%"},"31":{"part":4,"mode":"zoom-out","origin":"50% 50%"},"32":{"part":5,"mode":"divider","origin":"50% 50%"},"33":{"part":5,"mode":"part-enter","origin":"50% 50%"},"34":{"part":5,"mode":"zoom-in","origin":"30% 50%"},"35":{"part":5,"mode":"pan-right","origin":"68% 50%"},"36":{"part":5,"mode":"zoom-in","origin":"50% 55%"},"37":{"part":5,"mode":"zoom-in","origin":"28% 55%"},"38":{"part":5,"mode":"zoom-out","origin":"50% 50%"},"39":{"part":6,"mode":"divider","origin":"50% 50%"},"40":{"part":6,"mode":"part-enter","origin":"50% 50%"},"41":{"part":6,"mode":"pan-right","origin":"50% 50%"},"42":{"part":6,"mode":"pan-right","origin":"65% 50%"}};
+      const DIVIDER_SLIDES = [1, 2, 3, 10, 16, 26, 32, 39];
+
+      let prevSlideIdx = 0;
+      let leaveCleanupTimer = null;
+
+      function clearCameraClasses(slideEl) {
+        if (!slideEl) return;
+        slideEl.classList.remove(
+          'tv-cam-leaving',
+          'tv-keep-studio-frame',
+          'tv-studio-swap',
+          'tv-part-opening',
+          'tv-divider-opening'
+        );
+        const layer = slideEl.querySelector('.slide-content-layer');
+        if (layer) {
+          layer.classList.remove(
+            'tv-leave-zoom-in', 'tv-enter-zoom-in',
+            'tv-leave-pan-right', 'tv-enter-pan-right',
+            'tv-leave-pan-left', 'tv-enter-pan-left',
+            'tv-leave-zoom-out', 'tv-enter-zoom-out'
+          );
+        }
+      }
+
+      function updateAgendaSpotlight() {
+        const cur = (typeof Reveal !== 'undefined' && Reveal.getCurrentSlide) ? Reveal.getCurrentSlide() : null;
+        if (!cur) return;
+        const grid = cur.querySelector('.agenda-grid-6');
+        if (!grid) return;
+        const visibleFrags = grid.querySelectorAll('.agenda-spotlight-card.fragment.visible');
+        const hasCurrent = grid.querySelector('.agenda-spotlight-card.current-fragment');
+        if (hasCurrent && visibleFrags.length > 0 && visibleFrags.length < 5) {
+          grid.classList.add('has-active-spotlight');
+        } else {
+          grid.classList.remove('has-active-spotlight');
+        }
+      }
+
+      function runDualSlideCameraTransition(prevSlide, currSlide, prevNum, currNum, isBack) {
+        const meta = SLIDE_DIRECTOR[currNum] || { part: 0, mode: 'pan-right', origin: '50% 50%' };
+        const prevMeta = SLIDE_DIRECTOR[prevNum] || { part: 0, mode: 'pan-right', origin: '50% 50%' };
+
+        if (leaveCleanupTimer) {
+          clearTimeout(leaveCleanupTimer);
+          leaveCleanupTimer = null;
+        }
+        document.querySelectorAll('.reveal .slides > section').forEach(clearCameraClasses);
+
+        if (!currSlide) return;
+
+        if (meta.mode === 'divider') {
+          currSlide.classList.add('tv-divider-opening');
+        } else if (meta.mode === 'part-enter' && !isBack) {
+          currSlide.classList.add('tv-part-opening');
+          const currLayer = currSlide.querySelector('.slide-content-layer');
+          if (currLayer) {
+            currLayer.style.setProperty('--tv-cam-origin', meta.origin || '50% 50%');
+            currLayer.classList.add('tv-enter-zoom-in');
+          }
+        } else if (prevSlide && prevSlide !== currSlide) {
+          const samePartStudio = (meta.part === prevMeta.part) && !DIVIDER_SLIDES.includes(currNum) && !DIVIDER_SLIDES.includes(prevNum);
+          const prevLayer = prevSlide.querySelector('.slide-content-layer');
+          const currLayer = currSlide.querySelector('.slide-content-layer');
+
+          if (samePartStudio && prevLayer && currLayer) {
+            prevSlide.removeAttribute('hidden');
+            prevSlide.removeAttribute('aria-hidden');
+            prevSlide.style.removeProperty('display');
+            prevSlide.classList.add('tv-cam-leaving', 'tv-keep-studio-frame');
+            currSlide.classList.add('tv-studio-swap');
+
+            const origin = isBack ? (prevMeta.origin || '50% 50%') : (meta.origin || '50% 50%');
+            prevLayer.style.setProperty('--tv-cam-origin', origin);
+            currLayer.style.setProperty('--tv-cam-origin', origin);
+
+            let leaveAnim = 'tv-leave-pan-right';
+            let enterAnim = 'tv-enter-pan-right';
+
+            if (isBack) {
+              if (prevMeta.mode === 'zoom-in') {
+                leaveAnim = 'tv-leave-zoom-out';
+                enterAnim = 'tv-enter-zoom-out';
+              } else if (prevMeta.mode === 'zoom-out') {
+                leaveAnim = 'tv-leave-zoom-in';
+                enterAnim = 'tv-enter-zoom-in';
+              } else {
+                leaveAnim = 'tv-leave-pan-left';
+                enterAnim = 'tv-enter-pan-left';
+              }
+            } else {
+              if (meta.mode === 'zoom-in') {
+                leaveAnim = 'tv-leave-zoom-in';
+                enterAnim = 'tv-enter-zoom-in';
+              } else if (meta.mode === 'zoom-out') {
+                leaveAnim = 'tv-leave-zoom-out';
+                enterAnim = 'tv-enter-zoom-out';
+              } else {
+                leaveAnim = 'tv-leave-pan-right';
+                enterAnim = 'tv-enter-pan-right';
+              }
+            }
+
+            void prevLayer.offsetWidth;
+            void currLayer.offsetWidth;
+            prevLayer.classList.add(leaveAnim);
+            currLayer.classList.add(enterAnim);
+
+            leaveCleanupTimer = setTimeout(() => {
+              clearCameraClasses(prevSlide);
+              clearCameraClasses(currSlide);
+              if (!prevSlide.classList.contains('present')) {
+                prevSlide.setAttribute('hidden', '');
+                prevSlide.setAttribute('aria-hidden', 'true');
+              }
+            }, 760);
+          } else {
+            const currLayer2 = currSlide.querySelector('.slide-content-layer');
+            if (currLayer2) {
+              currLayer2.style.setProperty('--tv-cam-origin', meta.origin || '50% 50%');
+              currLayer2.classList.add('tv-enter-zoom-in');
+            }
+          }
+        }
+      }
+
+      function bindDirectorEvents() {
+        if (typeof Reveal === 'undefined' || !Reveal.on) return;
+
+        const initIdx = Reveal.getIndices ? Reveal.getIndices().h : 0;
+        prevSlideIdx = initIdx;
+        updateAgendaSpotlight();
+
+        Reveal.on('slidechanged', function(event) {
+          const currIdx = event.indexh || 0;
+          const prevIdx = (typeof event.previousSlide !== 'undefined' && prevSlideIdx !== currIdx) ? prevSlideIdx : currIdx;
+          const isBack = currIdx < prevIdx;
+          prevSlideIdx = currIdx;
+
+          runDualSlideCameraTransition(
+            event.previousSlide,
+            event.currentSlide,
+            prevIdx + 1,
+            currIdx + 1,
+            isBack
+          );
+          syncSlideStepCallouts(false);
+          updateAgendaSpotlight();
+        });
+
+        Reveal.on('fragmentshown', function() {
+          syncSlideStepCallouts(true);
+          updateAgendaSpotlight();
+        });
+
+        Reveal.on('fragmenthidden', function() {
+          syncSlideStepCallouts(true);
+          updateAgendaSpotlight();
+        });
+      }
+
+      if (document.readyState === 'complete') {
+        bindDirectorEvents();
+      } else {
+        window.addEventListener('load', bindDirectorEvents);
+      }
+    })();
+    /* === SEAMLESS_STUDIO_JS_END === */
   </script>
 </body>
 </html>

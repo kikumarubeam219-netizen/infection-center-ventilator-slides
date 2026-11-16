@@ -5,9 +5,12 @@
   "description": "感染症センター 人工呼吸器勉強会 HTMLスライド ＆ PPTX書き出しツール",
   "scripts": {
     "start": "node server.js",
-    "export-pptx": "node export_pptx.mjs"
+    "export-pptx": "node export_pptx.mjs",
+    "export-video": "node export_video.mjs"
   },
   "dependencies": {
+    "ffmpeg-static": "^5.3.0",
+    "msedge-tts": "^2.1.1",
     "pptxgenjs": "^3.12.0",
     "puppeteer-core": "^24.0.0"
   }

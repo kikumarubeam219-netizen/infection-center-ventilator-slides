@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>テレビ・YouTube風 シームレス遷移プロトタイプ（2スライド体験版）</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --header-navy: #1E3A5F;
+      --bg-studio: #F1F5F9;
+      --panel-bg: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #475569;
+      --mute-blue: #2563EB;
+      --mute-green: #16A34A;
+      --mute-orange: #EA580C;
+      --alert-red: #E11D48;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: #0F172A;
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    /* 16:9 番組ステージ */
+    .tv-stage {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      background: radial-gradient(circle at 50% 40%, #FFFFFF 0%, #E2E8F0 100%);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    }
+
+    /* 背景の常駐グリッド（カメラ移動に連動してパララックス移動） */
+    .bg-parallax-grid {
+      position: absolute;
+      inset: -100px;
+      background-image:
+        linear-gradient(to right, rgba(30, 58, 95, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(30, 58, 95, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 0;
+    }
+
+    /* ① 常駐スタジオ・トップヘッダー（ページが変わっても枠は動かず中身だけモーフィング） */
+    .tv-top-bar {
+      position: absolute;
+      top: 18px;
+      left: 24px;
+      right: 24px;
+      height: 74px;
+      background: linear-gradient(135deg, #1E3A5F 0%, #2B4C7E 100%);
+      border-radius: 14px;
+      padding: 10px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(30, 58, 95, 0.22);
+      z-index: 20;
+      color: #fff;
+    }
+    .tv-top-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .tv-live-badge {
+      background: #E11D48;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.08em;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .tv-live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #fff;
+      animation: blink 1.4s infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    .tv-question-pill {
+      background: rgba(255,255,255,0.95);
+      color: #1E3A5F;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 2px 12px;
+      border-radius: 999px;
+      transition: all 0.45s ease;
+    }
+    .tv-main-title {
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    /* ② 中央メインキャンバス（図解とカードがシームレスに移動・変形する領域） */
+    .tv-canvas {
+      position: absolute;
+      top: 106px;
+      bottom: 76px;
+      left: 24px;
+      right: 24px;
+      z-index: 10;
+    }
+
+    /* 主役オブジェクト：解剖＆モニター統合ステージ（ページ1とページ2で消えずに連続移動・ズーム！） */
+    .hero-anatomy-card {
+      position: absolute;
+      background: #FFFFFF;
+      border-radius: 18px;
+      border: 2px solid #CBD5E1;
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.10);
+      overflow: hidden;
+      transition: all 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* カメラズーム用内部ラッパー */
+    .camera-viewport {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: center center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%);
+    }
+
+    /* 右側に滑り込んでくる解説フリップ群 */
+    .side-flip-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 540px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .flip-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 18px 20px;
+      border-left: 7px solid var(--mute-blue);
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      transition: all 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+      opacity: 0;
+      transform: translateX(60px) scale(0.96);
+      pointer-events: none;
+    }
+    .flip-card.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+    .flip-card.dimmed {
+      opacity: 0.42;
+      transform: translateX(0) scale(0.97);
+    }
+
+    /* ③ 常駐ワイプ（右下ナビゲーター） */
+    .tv-wipe-box {
+      position: absolute;
+      bottom: 84px;
+      right: 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 2px solid #CBD5E1;
+      border-radius: 999px;
+      padding: 8px 18px 8px 10px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+      z-index: 30;
+      max-width: 520px;
+      transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .tv-wipe-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 3px solid var(--mute-blue);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tv-wipe-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      mix-blend-mode: multiply;
+    }
+    .tv-wipe-text {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1E293B;
+      line-height: 1.45;
+    }
+
+    /* ④ 常駐ボトム・ニュースティッカー（結論バー） */
+    .tv-bottom-ticker {
+      position: absolute;
+      bottom: 16px;
+      left: 24px;
+      right: 24px;
+      height: 48px;
+      background: #1E293B;
+      color: #FFFFFF;
+      border-radius: 12px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+      transition: background 0.5s ease;
+    }
+    .ticker-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .ticker-badge {
+      background: #38BDF8;
+      color: #0F172A;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    /* 操作ガイドバー */
+    .demo-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .demo-btn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .demo-btn:hover { background: rgba(255,255,255,0.28); }
+    .demo-step-indicator {
+      font-size: 13px;
+      font-weight: 800;
+      color: #93C5FD;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    /* スポットライト暗転マスク */
+    .focus-ring {
+      transition: all 0.7s ease;
+      opacity: 0;
+    }
+    .focus-ring.on {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="tv-stage" id="stage">
+  <div class="bg-parallax-grid" id="bgGrid"></div>
+
+  <!-- ① 常駐スタジオ・ヘッダー（枠は固定されたまま文字だけ変化） -->
+  <header class="tv-top-bar">
+    <div class="tv-top-row">
+      <span class="tv-live-badge"><span class="tv-live-dot"></span>第3部：換気モードと設定</span>
+      <span class="tv-question-pill" id="qPill">Q. 量を決めるか、圧を決めるかで何が変わる？</span>
+    </div>
+    <h2 class="tv-main-title" id="mainTitle">スライド17：VCVは「換気量保証」、PCVは「気道内圧制限」が最大の武器</h2>
+  </header>
+
+  <!-- ② メインキャンバス（スライド17と18で要素が消えずに変形・カメラ移動） -->
+  <main class="tv-canvas">
+
+    <!-- 左（最初は中央ドーン！）：解剖＆波形統合ステージ -->
+    <div class="hero-anatomy-card" id="heroCard" style="left: 190px; top: 0px; width: 850px; height: 538px;">
+      <div style="background:#0F172A; color:#fff; padding:8px 16px; font-size:13px; font-weight:800; display:flex; justify-content:space-between; align-items:center; z-index:5;">
+        <span id="monitorLabel"><i class="fa-solid fa-wave-square" style="color:#38BDF8;"></i> リアルタイム生体＆人工呼吸器モニター（全体ビュー）</span>
+        <span id="cameraBadge" style="background:#1E293B; color:#38BDF8; padding:2px 10px; border-radius:999px; font-size:11px; border:1px solid #38BDF8;">CAMERA: WIDE 1.0x</span>
+      </div>
+
+      <div class="camera-viewport" id="cameraView">
+        <svg viewBox="0 0 720 460" style="width:100%; height:100%;">
+          <defs>
+            <linearGradient id="lungGradL" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FDA4AF"/>
+              <stop offset="100%" stop-color="#FB7185"/>
+            </linearGradient>
+            <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#E11D48"/>
+              <stop offset="100%" stop-color="#9F1239"/>
+            </linearGradient>
+          </defs>
+
+          <!-- 胸郭・気管・左右肺・心臓の解剖モデル -->
+          <g id="thoraxGroup" transform="translate(30, 20)">
+            <!-- 胸郭アウトライン -->
+            <path d="M180,30 C90,40 50,130 45,270 C45,330 95,360 180,350 C265,360 315,330 315,270 C310,130 270,40 180,30 Z"
+                  fill="#F1F5F9" stroke="#94A3B8" stroke-width="2.5" stroke-dasharray="6 4"/>
+
+            <!-- 気管・気管分岐部 -->
+            <path d="M172,5 L172,95 L130,135 M188,5 L188,95 L230,135" fill="none" stroke="#0284C7" stroke-width="8" stroke-linecap="round"/>
+            <line x1="173" y1="25" x2="187" y2="25" stroke="#BAE6FD" stroke-width="3"/>
+            <line x1="173" y1="45" x2="187" y2="45" stroke="#BAE6FD" stroke-width="3"/>
+            <line x1="173" y1="65" x2="187" y2="65" stroke="#BAE6FD" stroke-width="3"/>
+
+            <!-- 右肺（3葉） -->
+            <path id="rightLung" d="M158,85 C105,85 70,145 68,255 C68,305 115,315 158,295 Z"
+                  fill="url(#lungGradL)" stroke="#E11D48" stroke-width="2.5" style="transition: all 0.7s ease;"/>
+            <!-- 左肺（2葉＋心切痕） -->
+            <path id="leftLung" d="M202,85 C255,85 290,145 292,255 C292,305 245,315 212,290 C215,250 200,220 202,85 Z"
+                  fill="url(#lungGradL)" stroke="#E11D48" stroke-width="2.5" style="transition: all 0.7s ease;"/>
+
+            <!-- 上大静脈・下大静脈（Scene 2のPEEPで圧迫をズーム表示） -->
+            <path id="veinSvc" d="M168,125 L168,195" stroke="#2563EB" stroke-width="12" stroke-linecap="round" style="transition: all 0.6s ease;"/>
+            <path id="veinIvc" d="M168,260 L168,345" stroke="#2563EB" stroke-width="14" stroke-linecap="round" style="transition: all 0.6s ease;"/>
+
+            <!-- 心臓 -->
+            <path id="heartShape" d="M182,190 C155,180 142,210 150,245 C158,275 185,290 205,275 C225,260 228,220 208,200 C198,190 190,192 182,190 Z"
+                  fill="url(#heartGrad)" stroke="#881337" stroke-width="2.5" style="transition: all 0.7s ease; transform-origin: 185px 235px;"/>
+
+            <!-- 横隔膜ドーム -->
+            <path d="M55,320 Q180,275 305,320" fill="none" stroke="#D97706" stroke-width="6" stroke-linecap="round"/>
+
+            <!-- スポットライト1：気道・肺胞（VCV/PCV用） -->
+            <g class="focus-ring" id="focusAirway">
+              <circle cx="130" cy="195" r="58" fill="none" stroke="#2563EB" stroke-width="4" stroke-dasharray="8 4"/>
+              <rect x="65" y="110" width="135" height="26" rx="6" fill="#1E3A5F"/>
+              <text x="132" y="128" fill="#fff" font-size="12" font-weight="800" text-anchor="middle">肺胞コンプライアンス</text>
+            </g>
+
+            <!-- スポットライト2：PEEPによる静脈還流＆心臓圧迫（Slide 18用） -->
+            <g class="focus-ring" id="focusHeart">
+              <circle cx="180" cy="235" r="72" fill="none" stroke="#E11D48" stroke-width="4" stroke-dasharray="8 4"/>
+              <path d="M115,215 L150,215 M245,215 L212,215" stroke="#E11D48" stroke-width="4" marker-end="url(#arrow)"/>
+              <rect x="100" y="138" width="165" height="28" rx="6" fill="#E11D48"/>
+              <text x="182" y="156" fill="#fff" font-size="12" font-weight="800" text-anchor="middle">胸腔内圧↑ → 静脈還流↓</text>
+            </g>
+          </g>
+
+          <!-- 右側：ダーク医療モニター波形パネル -->
+          <g id="waveMonitorGroup" transform="translate(385, 35)" style="transition: all 0.7s ease;">
+            <rect x="0" y="0" width="305" height="365" rx="14" fill="#0B111E" stroke="#334155" stroke-width="2"/>
+            <text x="18" y="30" fill="#94A3B8" font-size="12" font-weight="800">PAW (気道内圧 cmH2O)</text>
+            <!-- 圧波形（VCVの三角波 vs PCVの矩形波 vs PEEP上昇） -->
+            <path id="pawWavePath" d="M20,130 L45,130 L85,55 L110,130 L170,130 L210,55 L235,130 L285,130"
+                  fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="transition: all 0.6s ease;"/>
+            <line id="peepBaseLine" x1="20" y1="130" x2="285" y2="130" stroke="#38BDF8" stroke-width="2" stroke-dasharray="5 4" style="transition: all 0.6s ease;"/>
+            <text id="peepBaseText" x="25" y="148" fill="#38BDF8" font-size="11" font-weight="800">PEEP 5 cmH2O (ベース圧)</text>
+
+            <text x="18" y="205" fill="#94A3B8" font-size="12" font-weight="800">FLOW (流量 L/min)</text>
+            <path id="flowWavePath" d="M20,280 L45,280 L45,220 L95,220 L95,330 L125,280 L170,280 L170,220 L220,220 L220,330 L250,280 L285,280"
+                  fill="none" stroke="#10B981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 右側に順番に滑り込むフリップ解説パネル群（YouTube/TV番組スタイル） -->
+    <div class="side-flip-panel" id="sidePanel">
+      <!-- Step 1: VCV カード -->
+      <div class="flip-card" id="cardVcv" style="border-left-color: #2563EB;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="background:#DBEAFE; color:#1D4ED8; font-size:12px; font-weight:800; padding:3px 10px; border-radius:999px;">VCV（量規定換気）</span>
+          <span style="font-size:12px; font-weight:800; color:#2563EB;">主役：1回換気量（VT）を固定</span>
+        </div>
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:6px; color:#0F172A;">肺が硬くなると「気道内圧が跳ね上がる」</h3>
+        <p style="font-size:13.5px; color:#475569; line-height:1.55;">
+          設定した量（例：450mL）を必ず押し込むため、痰詰まりやコンプライアンス低下が起きると<strong>最高気道内圧（Ppeak）が急上昇</strong>します。
+        </p>
+      </div>
+
+      <!-- Step 2: PCV カード -->
+      <div class="flip-card" id="cardPcv" style="border-left-color: #16A34A;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="background:#DCFCE7; color:#15803D; font-size:12px; font-weight:800; padding:3px 10px; border-radius:999px;">PCV（圧規定換気）</span>
+          <span style="font-size:12px; font-weight:800; color:#16A34A;">主役：吸気圧（Pi）を固定</span>
+        </div>
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:6px; color:#0F172A;">圧は安全だが、肺が硬くなると「換気量が減る」</h3>
+        <p style="font-size:13.5px; color:#475569; line-height:1.55;">
+          決めた圧までしか押さないため肺損傷リスクは低い一方、痰や気道狭窄が起きると<strong>1回換気量（VTe）が気づかぬうちに激減</strong>します。
+        </p>
+      </div>
+
+      <!-- Slide 18 (Scene 2): PEEPの光と影カード（同じパネル位置にシームレス入替！） -->
+      <div class="flip-card" id="cardPeep" style="border-left-color: #E11D48; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="background:#FFE4E6; color:#BE123C; font-size:12px; font-weight:800; padding:3px 10px; border-radius:999px;">スライド18へシームレス移動！</span>
+          <span style="font-size:12px; font-weight:800; color:#E11D48;">カメラが心臓・大静脈へ2.1倍ズーム</span>
+        </div>
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:8px; color:#0F172A;">高PEEPは肺胞を広げるが「血圧低下」を招く</h3>
+        <p style="font-size:13.5px; color:#475569; line-height:1.55; margin-bottom:12px;">
+          前のスライドの解剖図が消えずにそのまま<strong>心臓と上下大静脈（SVC/IVC）へカメラがズームイン</strong>！ページをめくった継ぎ目を感じさせません。
+        </p>
+        <div style="display:flex; gap:8px;">
+          <button onclick="setPeepDemo(5)" style="flex:1; padding:8px; border-radius:8px; border:2px solid #2563EB; background:#EFF6FF; font-weight:800; cursor:pointer;">PEEP 5 (正常還流)</button>
+          <button onclick="setPeepDemo(15)" style="flex:1; padding:8px; border-radius:8px; border:2px solid #E11D48; background:#FFF1F2; color:#BE123C; font-weight:800; cursor:pointer;">PEEP 15 (還流圧迫!)</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ③ 常駐ワイプ（右下に常駐し、ページをまたいでも消えずにセリフが連動） -->
+  <div class="tv-wipe-box" id="wipeBox">
+    <div class="tv-wipe-avatar">
+      <img src="assets/CE_base.jpg" alt="CE">
+    </div>
+    <div class="tv-wipe-text" id="wipeText">
+      最初は中央に大きく全体図を見せて、視聴者の視線を1点に集中させます！
+    </div>
+  </div>
+
+  <!-- ④ 常駐ボトム・ニュースティッカー ＆ 体験操作バー -->
+  <footer class="tv-bottom-ticker" id="bottomTicker">
+    <div class="ticker-left">
+      <span class="ticker-badge" id="tickerBadge">TAKE HOME</span>
+      <span id="tickerText">VCVは「圧の上昇」、PCVは「換気量の低下」をアラームで監視する</span>
+    </div>
+    <div class="demo-controls">
+      <button class="demo-btn" onclick="prevStep()"><i class="fa-solid fa-chevron-left"></i> 戻る</button>
+      <span class="demo-step-indicator" id="stepLabel">Step 0 / 3 (Slide 17)</span>
+      <button class="demo-btn" style="background:#2563EB; border-color:#60A5FA;" onclick="nextStep()">次へ進む (→) <i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </footer>
+</div>
+
+<script>
+  let currentStep = 0;
+  const maxStep = 3;
+
+  function renderStep() {
+    const heroCard = document.getElementById('heroCard');
+    const cameraView = document.getElementById('cameraView');
+    const cameraBadge = document.getElementById('cameraBadge');
+    const bgGrid = document.getElementById('bgGrid');
+    const qPill = document.getElementById('qPill');
+    const mainTitle = document.getElementById('mainTitle');
+    const cardVcv = document.getElementById('cardVcv');
+    const cardPcv = document.getElementById('cardPcv');
+    const cardPeep = document.getElementById('cardPeep');
+    const focusAirway = document.getElementById('focusAirway');
+    const focusHeart = document.getElementById('focusHeart');
+    const wipeText = document.getElementById('wipeText');
+    const tickerText = document.getElementById('tickerText');
+    const stepLabel = document.getElementById('stepLabel');
+    const pawWavePath = document.getElementById('pawWavePath');
+
+    if (currentStep === 0) {
+      // 【Slide 17 - 導入】中央に大きく1枚の解剖＆モニター図だけがドーンと表示
+      qPill.textContent = 'Q. 量を決めるか、圧を決めるかで何が変わる？';
+      mainTitle.textContent = 'スライド17：VCVは「換気量保証」、PCVは「気道内圧制限」が最大の武器';
+      heroCard.style.left = '190px';
+      heroCard.style.width = '850px';
+      cameraView.style.transform = 'scale(1) translate(0px, 0px)';
+      cameraBadge.textContent = 'CAMERA: CENTER WIDE 1.0x';
+      bgGrid.style.transform = 'translate(0px, 0px)';
+
+      cardVcv.style.display = 'block';
+      cardPcv.style.display = 'block';
+      cardPeep.style.display = 'none';
+      cardVcv.className = 'flip-card';
+      cardPcv.className = 'flip-card';
+
+      focusAirway.classList.remove('on');
+      focusHeart.classList.remove('on');
+      wipeText.textContent = '【Step 0】最初は文字を並べず、中央の図解だけに注目させます（[次へ]を押してください）';
+      tickerText.textContent = 'VCVは「圧の上昇」、PCVは「換気量の低下」をアラームで監視する';
+      stepLabel.textContent = 'Step 0 / 3 (Slide 17)';
+    } else if (currentStep === 1) {
+      // 【Slide 17 - Step 1】主役図解が左へスッと移動し、右からVCV解説パネルがスライドイン！
+      qPill.textContent = 'Q. 量を決めるか、圧を決めるかで何が変わる？';
+      mainTitle.textContent = 'スライド17：VCVは「換気量保証」、PCVは「気道内圧制限」が最大の武器';
+      heroCard.style.left = '0px';
+      heroCard.style.width = '670px';
+      cameraView.style.transform = 'scale(1.08) translate(-10px, 5px)';
+      cameraBadge.textContent = 'CAMERA: PAN LEFT + VCV WAVE';
+      bgGrid.style.transform = 'translate(-25px, 0px)';
+
+      cardVcv.style.display = 'block';
+      cardPcv.style.display = 'block';
+      cardPeep.style.display = 'none';
+      cardVcv.className = 'flip-card active';
+      cardPcv.className = 'flip-card';
+
+      pawWavePath.setAttribute('d', 'M20,130 L45,130 L85,40 L110,130 L170,130 L210,40 L235,130 L285,130');
+      focusAirway.classList.add('on');
+      focusHeart.classList.remove('on');
+      wipeText.textContent = '【Step 1】図が左へ滑らかに移動し、右にVCVフリップが登場！圧波形も三角波（シャークフィン）に連動！';
+      stepLabel.textContent = 'Step 1 / 3 (Slide 17)';
+    } else if (currentStep === 2) {
+      // 【Slide 17 - Step 2】PCVカードが登場し、波形が矩形波にリアルタイム変形！
+      qPill.textContent = 'Q. 量を決めるか、圧を決めるかで何が変わる？';
+      mainTitle.textContent = 'スライド17：VCVは「換気量保証」、PCVは「気道内圧制限」が最大の武器';
+      heroCard.style.left = '0px';
+      heroCard.style.width = '670px';
+      cameraView.style.transform = 'scale(1.08) translate(-10px, 5px)';
+      cameraBadge.textContent = 'CAMERA: PCV PRESSURE LIMIT';
+      bgGrid.style.transform = 'translate(-25px, -15px)';
+
+      cardVcv.style.display = 'block';
+      cardPcv.style.display = 'block';
+      cardPeep.style.display = 'none';
+      cardVcv.className = 'flip-card dimmed';
+      cardPcv.className = 'flip-card active';
+
+      // PCVの台形（矩形）圧波形にモーフィング
+      pawWavePath.setAttribute('d', 'M20,130 L45,130 L50,68 L105,68 L110,130 L170,130 L175,68 L230,68 L235,130 L285,130');
+      focusAirway.classList.add('on');
+      focusHeart.classList.remove('on');
+      wipeText.textContent = '【Step 2】PCVに進むと圧波形がフラットな台形に変形！次を押すと「スライド18（PEEP）」へシームレス移動します！';
+      stepLabel.textContent = 'Step 2 / 3 (Slide 17)';
+    } else if (currentStep === 3) {
+      // 【Slide 17 → Slide 18 シームレス遷移】ページが切り替わらず、解剖図の心臓・大静脈にカメラがグッと2.1倍ズームイン！
+      qPill.textContent = 'Q. PEEPを上げると、なぜ血圧が下がることがあるの？';
+      mainTitle.textContent = 'スライド18：PEEPは「肺胞虚脱を防ぐ光」と「静脈還流を減らす影」を持つ';
+      heroCard.style.left = '0px';
+      heroCard.style.width = '670px';
+      // 胸腔・心臓（左側）へカメラがグッとズームイン＆パン！
+      cameraView.style.transform = 'scale(1.75) translate(115px, -25px)';
+      cameraBadge.textContent = 'CAMERA: HEART & VENA CAVA ZOOM 1.75x';
+      bgGrid.style.transform = 'translate(-60px, -40px)';
+
+      cardVcv.style.display = 'none';
+      cardPcv.style.display = 'none';
+      cardPeep.style.display = 'block';
+      setTimeout(() => { cardPeep.className = 'flip-card active'; }, 20);
+
+      focusAirway.classList.remove('on');
+      focusHeart.classList.add('on');
+      setPeepDemo(15);
+      wipeText.textContent = '【Slide 18へ到達！】画面が白く切れず、前のページの肺・心臓にカメラがグッと寄って次のスライドになりました！';
+      tickerText.textContent = 'PEEP変更時は「SpO2の改善」だけでなく必ず「血圧変動」をセットで観察する';
+      stepLabel.textContent = 'Step 3 / 3 (Slide 18)';
+    }
+  }
+
+  function setPeepDemo(peepVal) {
+    const rightLung = document.getElementById('rightLung');
+    const leftLung = document.getElementById('leftLung');
+    const veinSvc = document.getElementById('veinSvc');
+    const veinIvc = document.getElementById('veinIvc');
+    const heartShape = document.getElementById('heartShape');
+
+    if (peepVal === 15) {
+      rightLung.style.transform = 'scale(1.06)';
+      leftLung.style.transform = 'scale(1.06)';
+      veinSvc.setAttribute('stroke-width', '5');
+      veinIvc.setAttribute('stroke-width', '5');
+      heartShape.style.transform = 'scale(0.88)';
+    } else {
+      rightLung.style.transform = 'scale(1.0)';
+      leftLung.style.transform = 'scale(1.0)';
+      veinSvc.setAttribute('stroke-width', '12');
+      veinIvc.setAttribute('stroke-width', '14');
+      heartShape.style.transform = 'scale(1.0)';
+    }
+  }
+
+  function nextStep() {
+    if (currentStep < maxStep) currentStep++;
+    else currentStep = 0;
+    renderStep();
+  }
+  function prevStep() {
+    if (currentStep > 0) currentStep--;
+    renderStep();
+  }
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') nextStep();
+    if (e.key === 'ArrowLeft') prevStep();
+  });
+</script>
+</body>
+</html>

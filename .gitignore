@@ -1,3 +1,6 @@
 node_modules/
 _tmp_slides/
+_video_build/
+/*_動画*.mp4
+assets/_original_mp4_backup/
 *.log
