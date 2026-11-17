@@ -2878,6 +2878,409 @@
     .print-pdf #miniCharNavigator { display: none !important; }
   </style>
   <!-- === WALL_CORKBOARD_CSS_END === -->
+  <!-- === COVER_MARQUEE_CSS_START === -->
+  <style>
+    /* デフォルト：前回の白色ベース（清潔感のあるホワイト＆ブルー） */
+    section[data-slide-num="1"].cover-marquee-slide {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 1280px !important;
+      height: 720px !important;
+      background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 55%, #F0FDFA 100%) !important;
+      overflow: hidden !important;
+      position: relative !important;
+    }
+    .cover-marquee-stage {
+      position: absolute;
+      inset: -160px -220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 22px;
+      transform: perspective(1400px) rotateX(14deg) rotateZ(-12deg) scale(1.16);
+      transform-origin: 50% 50%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .cover-marquee-row {
+      width: 100%;
+      overflow: hidden;
+    }
+    .cover-marquee-track {
+      display: flex;
+      gap: 22px;
+      width: max-content;
+      will-change: transform;
+    }
+    .cover-marquee-track.dir-left {
+      animation: coverMarqueeLeft 52s linear infinite;
+    }
+    .cover-marquee-track.dir-right {
+      animation: coverMarqueeRight 58s linear infinite;
+    }
+    section[data-slide-num="1"].cover-paused .cover-marquee-track {
+      animation-play-state: paused !important;
+    }
+    @keyframes coverMarqueeLeft {
+      0%   { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-50%, 0, 0); }
+    }
+    @keyframes coverMarqueeRight {
+      0%   { transform: translate3d(-50%, 0, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+    .cover-marquee-tile {
+      position: relative;
+      width: 340px;
+      height: 192px;
+      flex: 0 0 auto;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #FFFFFF;
+      border: 1.5px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.10);
+    }
+    .cover-marquee-tile video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #FFFFFF;
+    }
+    .cover-marquee-tile .cover-mini-slide-wrap {
+      width: 1280px;
+      height: 720px;
+      transform: scale(0.265625);
+      transform-origin: 0 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: #FFFFFF;
+    }
+    .cover-marquee-tile .cover-mini-slide-wrap > section {
+      display: block !important;
+      width: 1280px !important;
+      height: 720px !important;
+      position: relative !important;
+      top: 0 !important;
+      left: 0 !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+    }
+    .cover-tile-cap {
+      position: absolute;
+      left: 10px;
+      bottom: 8px;
+      background: rgba(255, 255, 255, 0.90);
+      color: #1E293B;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+      z-index: 4;
+      pointer-events: none;
+    }
+    .cover-vignette-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at center, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.64) 48%, rgba(241, 245, 249, 0.24) 100%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 35%, rgba(255, 255, 255, 0.05) 70%, rgba(248, 250, 252, 0.45) 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .cover-center-hero {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 48px;
+      pointer-events: none;
+    }
+    .cover-hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(239, 246, 255, 0.94);
+      border: 1px solid #BFDBFE;
+      color: #1D4ED8;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.10);
+      backdrop-filter: blur(6px);
+    }
+    .cover-hero-kicker i { color: #2563EB; }
+    .cover-hero-title {
+      font-size: 68px;
+      font-weight: 900;
+      line-height: 1.16;
+      color: #1D4ED8;
+      letter-spacing: 0.04em;
+      text-shadow:
+        0 2px 18px rgba(255, 255, 255, 0.96),
+        0 6px 24px rgba(15, 23, 42, 0.12);
+      margin: 0 0 18px;
+    }
+    .cover-hero-title span.sub-line {
+      display: block;
+      font-size: 74px;
+      color: #0F172A;
+    }
+    .cover-hero-presenter {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 26px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1.5px solid rgba(191, 219, 254, 0.95);
+      color: #0F172A;
+      font-size: 23px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
+      backdrop-filter: blur(8px);
+    }
+    .cover-hero-presenter i { color: #2563EB; }
+    .cover-hero-presenter .dept {
+      font-size: 16px;
+      color: #475569;
+      font-weight: 600;
+    }
+    .cover-hero-presenter .name {
+      color: #0F172A;
+      font-weight: 900;
+    }
+    .cover-bottom-pill {
+      position: absolute;
+      right: 34px;
+      bottom: 30px;
+      z-index: 6;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 22px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      color: #0F172A;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+    .cover-bottom-pill i { color: #2563EB; }
+    .cover-bottom-pill:hover {
+      transform: translateY(-2px);
+      background: #2563EB;
+      color: #FFFFFF;
+      border-color: #2563EB;
+    }
+    .cover-bottom-pill:hover i {
+      color: #FFFFFF !important;
+    }
+
+    /* === 表紙カラーテーマ切替UI === */
+    .cover-theme-switcher {
+      position: absolute;
+      left: 34px;
+      bottom: 30px;
+      z-index: 6;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.90);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10);
+      backdrop-filter: blur(8px);
+    }
+    .cover-theme-switcher-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      margin-right: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .cover-theme-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1.5px solid transparent;
+      background: transparent;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .cover-theme-btn:hover {
+      background: rgba(148, 163, 184, 0.15);
+    }
+    .cover-theme-btn.is-active {
+      background: #FFFFFF;
+      border-color: #2563EB;
+      color: #0F172A;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.16);
+    }
+    .cover-theme-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.22);
+      display: inline-block;
+    }
+
+    /* テーマ2：ウォーム（生成り・ベージュ） */
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm {
+      background: linear-gradient(135deg, #FDFBF7 0%, #F9F2E6 55%, #F4E9D8 100%) !important;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-marquee-tile {
+      background: #FDFBF7;
+      border-color: rgba(180, 154, 124, 0.42);
+      box-shadow: 0 12px 28px rgba(82, 58, 34, 0.12);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-tile-cap {
+      background: rgba(253, 249, 242, 0.92);
+      color: #4A3726;
+      border-color: rgba(180, 154, 124, 0.40);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-vignette-overlay {
+      background:
+        radial-gradient(ellipse at center, rgba(253, 250, 245, 0.90) 0%, rgba(250, 244, 234, 0.66) 48%, rgba(244, 235, 221, 0.28) 100%),
+        linear-gradient(180deg, rgba(253, 250, 245, 0.35) 0%, rgba(253, 250, 245, 0.05) 35%, rgba(253, 250, 245, 0.05) 70%, rgba(244, 235, 221, 0.45) 100%);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-kicker {
+      background: rgba(254, 243, 224, 0.94);
+      border-color: #E6C79C;
+      color: #B45309;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-kicker i { color: #D97706; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-title { color: #B45309; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-title span.sub-line { color: #3E2C1E; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-presenter {
+      background: rgba(255, 252, 247, 0.94);
+      border-color: rgba(214, 185, 148, 0.85);
+      color: #3E2C1E;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-presenter i { color: #C26D47; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-presenter .dept { color: #785D43; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-hero-presenter .name { color: #3E2C1E; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-bottom-pill {
+      background: rgba(255, 252, 247, 0.94);
+      border-color: rgba(180, 154, 124, 0.55);
+      color: #3E2C1E;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-bottom-pill i { color: #C26D47; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-warm .cover-bottom-pill:hover {
+      background: #C26D47;
+      border-color: #C26D47;
+      color: #FFFFFF;
+    }
+
+    /* テーマ3：ミント（爽やかな医療グリーン） */
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint {
+      background: linear-gradient(135deg, #F6FEF9 0%, #ECFDF5 55%, #E6F7F4 100%) !important;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-vignette-overlay {
+      background:
+        radial-gradient(ellipse at center, rgba(246, 254, 249, 0.90) 0%, rgba(236, 253, 245, 0.64) 48%, rgba(230, 247, 244, 0.24) 100%);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-hero-kicker {
+      background: rgba(236, 253, 245, 0.94);
+      border-color: #A7F3D0;
+      color: #047857;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-hero-kicker i { color: #059669; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-hero-title { color: #047857; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-hero-presenter { border-color: #A7F3D0; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-hero-presenter i,
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-bottom-pill i { color: #059669; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-mint .cover-bottom-pill:hover {
+      background: #059669;
+      border-color: #059669;
+      color: #FFFFFF;
+    }
+
+    /* テーマ4：ダーク（シネマティック濃紺） */
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark {
+      background: #080E1C !important;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-marquee-tile {
+      background: #131C31;
+      border-color: rgba(148, 163, 184, 0.28);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-tile-cap {
+      background: rgba(15, 23, 42, 0.80);
+      color: #E2E8F0;
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-vignette-overlay {
+      background:
+        radial-gradient(ellipse at center, rgba(8, 14, 28, 0.74) 0%, rgba(8, 14, 28, 0.48) 52%, rgba(8, 14, 28, 0.84) 100%),
+        linear-gradient(180deg, rgba(8, 14, 28, 0.55) 0%, rgba(8, 14, 28, 0.15) 35%, rgba(8, 14, 28, 0.15) 70%, rgba(8, 14, 28, 0.65) 100%);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-kicker {
+      background: rgba(15, 23, 42, 0.70);
+      border-color: rgba(148, 163, 184, 0.35);
+      color: #93C5FD;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-kicker i { color: #38BDF8; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-title {
+      color: #FFFFFF;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.75), 0 0 42px rgba(56, 189, 248, 0.25);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-title span.sub-line { color: #F8FAFC; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-presenter {
+      background: rgba(15, 23, 42, 0.76);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: #F1F5F9;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-presenter i { color: #38BDF8; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-presenter .dept { color: #94A3B8; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-hero-presenter .name { color: #FFFFFF; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-bottom-pill {
+      background: rgba(15, 23, 42, 0.80);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-bottom-pill i { color: #38BDF8; }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-theme-switcher {
+      background: rgba(15, 23, 42, 0.80);
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-theme-switcher-label,
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-theme-btn {
+      color: #CBD5E1;
+    }
+    section[data-slide-num="1"].cover-marquee-slide.theme-dark .cover-theme-btn.is-active {
+      background: rgba(30, 41, 59, 0.95);
+      color: #FFFFFF;
+      border-color: #38BDF8;
+    }
+    @media print { .cover-theme-switcher { display: none !important; } }
+    .print-pdf .cover-theme-switcher { display: none !important; }
+  </style>
+  <!-- === COVER_MARQUEE_CSS_END === -->
 </head>
 <body>
   <div id="floatingToolbar" class="floating-toolbar">
@@ -3006,71 +3409,50 @@
       <!-- ====================================================================
            【Slide 1】表紙（白ベースデザイン ＋ CE & 看護師）
            ==================================================================== -->
-      <section data-slide-num="1" data-part-id="0" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 OPENING｜感染症センター 人工呼吸器勉強会" data-short-title="🎬 表紙" data-background-color="#FFFFFF" class="light-cover-slide">
-        <!-- 背景装飾：淡いバイタル波形SVG -->
-        <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
-          <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
-                stroke="#38BDF8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <section data-slide-num="1" data-part-id="0" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 OPENING｜感染症センター 人工呼吸器勉強会" data-short-title="🎬 表紙" data-background-color="#F8FAFC" class="cover-marquee-slide">
+        <!-- 斜めに流れるスライド＆キャラクター動画ウォール -->
+        <div class="cover-marquee-stage" id="coverMarqueeStage" aria-hidden="true"></div>
+        <div class="cover-vignette-overlay" aria-hidden="true"></div>
 
-        <div style="display: grid; grid-template-columns: 48% 52%; gap: 16px; align-items: center; z-index: 2; height: 100%;">
-          <!-- 左側：講義情報・演者カード（48%幅で改行崩れなく独立配置） -->
-          <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-weight: 800; font-size: 0.80em; padding: 5px 14px; border-radius: 999px; margin-bottom: 14px; width: fit-content;">
-              <i class="fa-solid fa-lungs" style="color: #2563EB;"></i> 感染症センター院内勉強会
-            </div>
-
-            <!-- メインタイトル：white-space: nowrap で改行崩れ・1文字落ちを完全防止 -->
-            <h1 data-id="tv-title" style="font-size: clamp(2.05rem, 3.1vw, 2.65rem); font-weight: 900; line-height: 1.2; color: #0F172A; margin-bottom: 14px; letter-spacing: -0.01em;">
-              <span style="color: #2563EB; display: block; white-space: nowrap;">感染症センター</span>
-              <span style="display: block; white-space: nowrap;">人工呼吸器勉強会</span>
-            </h1>
-
-            <!-- サブタイトル：1.0remで自然な2行構成 -->
-            <p style="font-size: 0.96rem; color: #475569; line-height: 1.6; margin-bottom: 18px; font-weight: 500;">
-              生体への二面性（メリット・合併症）から、日常・使用中点検、<br>
-              換気モード・実機波形解読、アラーム対応、血液ガス調整まで
-            </p>
-
-            <div style="width: 100px; height: 5px; background: linear-gradient(90deg, #2563EB, #10B981); border-radius: 3px; margin-bottom: 20px;"></div>
-
-            <!-- 演者プレート：width: fit-content で中身にジャストフィット -->
-            <div style="background: #F8FAFC; color: #1E293B; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; display: inline-flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); width: fit-content;">
-              <div style="font-size: 0.88rem; font-weight: 800; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                <i class="fa-solid fa-user-doctor" style="color: #2563EB;"></i>
-                <span>演者：臨床工学・技術部門</span>
-                <span style="font-size: 1.15em; color: #0F172A; font-weight: 900; margin-left: 4px;">中平 大志</span>
-              </div>
-              <div style="background: #FFFFFF; padding: 4px 8px; border-radius: 6px; border: 1px solid #E2E8F0; width: fit-content;">
-                <img src="assets/rgmc_logo.png" alt="りんくう総合医療センター" style="height: 25px; display: block;">
-              </div>
-            </div>
+        <!-- 中央メインタイトル -->
+        <div class="cover-center-hero">
+          <div class="cover-hero-kicker">
+            <i class="fa-solid fa-lungs"></i>
+            <span>INFECTION CENTER SEMINAR</span>
           </div>
-
-          <!-- 右側：キャラクター動画・イラスト枠（52%幅・高さ520pxへ特大化・文字と被らない独立ステージ） -->
-          <div style="height: 520px; display: flex; align-items: flex-end; justify-content: center; position: relative; min-width: 0;" id="videoContainer">
-            <!-- ステージ背景の柔らかな光（スポットライト効果） -->
-            <div style="position: absolute; bottom: 0; width: 100%; height: 92%; background: radial-gradient(ellipse at center 70%, rgba(224, 242, 254, 0.6) 0%, rgba(240, 253, 250, 0.3) 50%, transparent 75%); border-radius: 20px; pointer-events: none; z-index: 1;"></div>
-
-            <!-- 足元の接地面シャドウ -->
-            <div style="position: absolute; bottom: 8px; width: 88%; height: 26px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.28) 0%, rgba(100, 116, 139, 0.10) 50%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
-
-            <!-- 動画要素（自動ループ再生） -->
-            <video autoplay loop muted playsinline preload="auto" style="max-height: 510px; width: 100%; object-fit: contain; mix-blend-mode: multiply; z-index: 3; display: none; cursor: pointer;" id="coverGreetingVideo"
-                   oncanplay="this.style.display='block'; document.getElementById('coverGreetingImg').style.display='none'; var btn=document.getElementById('playOverlayBtn'); if(btn) btn.style.display='none'; this.play().catch(function(){});"
-                   onclick="toggleCoverVideo()">
-              <source src="assets/char_greeting.mp4" type="video/mp4">
-            </video>
-
-            <!-- 静止画フォールバック（動画がない場合用） -->
-            <img id="coverGreetingImg" src="assets/char_cover.png" alt="CEと看護師" style="max-height: 510px; width: 100%; object-fit: contain; mix-blend-mode: multiply; z-index: 3; display: block;">
-
-            <!-- クリック再生オーバーレイバッジ -->
-            <div id="playOverlayBtn" onclick="toggleCoverVideo()" style="display: none; position: absolute; top: 16px; right: 16px; z-index: 10; background: rgba(37, 99, 235, 0.92); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 7px 16px; border-radius: 999px; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-              <i class="fa-solid fa-play" id="playIcon"></i> <span id="playText">クリックして挨拶を再生</span>
-            </div>
+          <h1 data-id="tv-title" class="cover-hero-title">
+            感染症センター
+            <span class="sub-line">人工呼吸器勉強会</span>
+          </h1>
+          <div class="cover-hero-presenter">
+            <i class="fa-solid fa-user-doctor"></i>
+            <span class="name">演者：中平大志</span>
+            <span class="dept">｜ 臨床工学・技術部門</span>
           </div>
         </div>
+
+        <!-- 左下カラーテーマ切替ボタン -->
+        <div class="cover-theme-switcher" id="coverThemeSwitcher" aria-label="表紙カラー切替">
+          <span class="cover-theme-switcher-label"><i class="fa-solid fa-palette"></i> 色切替</span>
+          <button type="button" class="cover-theme-btn is-active" data-cover-theme="light" onclick="setCoverTheme('light')">
+            <span class="cover-theme-dot" style="background:#EFF6FF;"></span>白ベース
+          </button>
+          <button type="button" class="cover-theme-btn" data-cover-theme="warm" onclick="setCoverTheme('warm')">
+            <span class="cover-theme-dot" style="background:#F4E9D8;"></span>ウォーム
+          </button>
+          <button type="button" class="cover-theme-btn" data-cover-theme="mint" onclick="setCoverTheme('mint')">
+            <span class="cover-theme-dot" style="background:#D1FAE5;"></span>ミント
+          </button>
+          <button type="button" class="cover-theme-btn" data-cover-theme="dark" onclick="setCoverTheme('dark')">
+            <span class="cover-theme-dot" style="background:#0F172A;"></span>ダーク
+          </button>
+        </div>
+
+        <!-- 右下スタートガイド -->
+        <button type="button" class="cover-bottom-pill" onclick="if(typeof Reveal!=='undefined'){Reveal.next();}">
+          <i class="fa-solid fa-play"></i>
+          <span>スライドを始める</span>
+        </button>
 
         <aside class="notes">
           <strong>【スライド1：表紙（想定1分）】</strong><br>
@@ -10554,6 +10936,146 @@
         }
       }
 
+      window.setCoverTheme = function(theme) {
+        const sec1 = document.querySelector('.reveal .slides > section[data-slide-num="1"]');
+        if (!sec1) return;
+        const allowed = { light: '#F8FAFC', warm: '#FDFBF7', mint: '#ECFDF5', dark: '#080E1C' };
+        const t = allowed[theme] ? theme : 'light';
+        sec1.classList.remove('theme-light', 'theme-warm', 'theme-mint', 'theme-dark');
+        sec1.classList.add('theme-' + t);
+        sec1.setAttribute('data-background-color', allowed[t]);
+        if (typeof Reveal !== 'undefined' && Reveal.sync) {
+          try { Reveal.sync(); } catch(e) {}
+        }
+        document.querySelectorAll('#coverThemeSwitcher .cover-theme-btn').forEach(function(btn) {
+          btn.classList.toggle('is-active', btn.getAttribute('data-cover-theme') === t);
+        });
+        try { localStorage.setItem('vent_cover_theme', t); } catch(e) {}
+      };
+
+      function initCoverMarqueeWall() {
+        const stage = document.getElementById('coverMarqueeStage');
+        if (!stage || stage.getAttribute('data-built') === '1') return;
+        stage.setAttribute('data-built', '1');
+        try {
+          const savedTheme = localStorage.getItem('vent_cover_theme');
+          if (savedTheme && window.setCoverTheme) window.setCoverTheme(savedTheme);
+        } catch(e) {}
+
+        const rowsConfig = [
+          {
+            dir: 'dir-left',
+            items: [
+              { type: 'video', src: 'assets/char_greeting.mp4', poster: 'assets/char_cover.png', cap: 'OPENING｜ご挨拶' },
+              { type: 'slide', num: 5, cap: 'Slide 5｜良きサポーター' },
+              { type: 'video', src: 'assets/part01_char.mp4', poster: 'assets/part01_char.png', cap: 'PART 01｜二面性と呼吸生理' },
+              { type: 'slide', num: 8, cap: 'Slide 8｜陰圧 vs 陽圧' },
+              { type: 'video', src: 'assets/part02_char.mp4', poster: 'assets/part02_char.png', cap: 'PART 02｜機器安全と点検' },
+              { type: 'slide', num: 11, cap: 'Slide 11｜必須7項目点検' },
+              { type: 'slide', num: 14, cap: 'Slide 14｜カフ圧管理' }
+            ]
+          },
+          {
+            dir: 'dir-right',
+            items: [
+              { type: 'video', src: 'assets/part03_char.mp4', poster: 'assets/part03_char.png', cap: 'PART 03｜換気モードと実機' },
+              { type: 'slide', num: 17, cap: 'Slide 17｜VCV vs PCV' },
+              { type: 'slide', num: 19, cap: 'Slide 19｜A/C の動作原理' },
+              { type: 'video', src: 'assets/part04_char.mp4', poster: 'assets/part04_char.png', cap: 'PART 04｜アラーム対応' },
+              { type: 'slide', num: 27, cap: 'Slide 27｜気道内圧上限アラーム' },
+              { type: 'video', src: 'assets/char_greeting.mp4', poster: 'assets/char_cover.png', cap: 'CLINICAL｜CE × 看護師' },
+              { type: 'slide', num: 30, cap: 'Slide 30｜無呼吸・低換気' }
+            ]
+          },
+          {
+            dir: 'dir-left',
+            items: [
+              { type: 'video', src: 'assets/part05_char.mp4', poster: 'assets/part05_char.png', cap: 'PART 05｜血液ガス・ウィーニング' },
+              { type: 'slide', num: 33, cap: 'Slide 33｜血液ガス基礎' },
+              { type: 'slide', num: 36, cap: 'Slide 36｜SBTと抜管基準' },
+              { type: 'video', src: 'assets/part06_char.mp4', poster: 'assets/part06_char.png', cap: 'PART 06｜総括・実践へ' },
+              { type: 'slide', num: 40, cap: 'Slide 40｜ベッドサイド観察' },
+              { type: 'slide', num: 42, cap: 'Slide 42｜エンディング' },
+              { type: 'slide', num: 6, cap: 'Slide 6｜3大メリット' }
+            ]
+          }
+        ];
+
+        function createCoverTile(item) {
+          const tile = document.createElement('div');
+          tile.className = 'cover-marquee-tile';
+
+          if (item.type === 'video') {
+            const v = document.createElement('video');
+            v.src = item.src;
+            if (item.poster) v.poster = item.poster;
+            v.autoplay = true;
+            v.loop = true;
+            v.muted = true;
+            v.playsInline = true;
+            v.preload = 'metadata';
+            tile.appendChild(v);
+          } else {
+            const origSec = document.querySelector('.reveal .slides > section[data-slide-num="' + item.num + '"]');
+            if (origSec) {
+              const wrap = document.createElement('div');
+              wrap.className = 'cover-mini-slide-wrap';
+              const clone = origSec.cloneNode(true);
+              clone.classList.remove('present', 'past', 'future', 's8-is-zoomed', 'agenda-is-zoomed');
+              clone.querySelectorAll('aside.notes, .notes, video, animate, animateMotion, animateTransform, .part-intro-overview-wrap, .part-outro-overview-wrap, .slide8-cam-triggers').forEach(function(n) {
+                n.remove();
+              });
+              clone.querySelectorAll('[id]').forEach(function(el) {
+                el.removeAttribute('id');
+              });
+              const fb = clone.querySelector('.sketchbook-fallback-img, img[src*="part0"]');
+              if (fb) fb.style.display = 'block';
+              wrap.appendChild(clone);
+              tile.appendChild(wrap);
+            }
+          }
+
+          if (item.cap) {
+            const cap = document.createElement('div');
+            cap.className = 'cover-tile-cap';
+            cap.textContent = item.cap;
+            tile.appendChild(cap);
+          }
+          return tile;
+        }
+
+        rowsConfig.forEach(function(rowCfg) {
+          const rowEl = document.createElement('div');
+          rowEl.className = 'cover-marquee-row';
+          const trackEl = document.createElement('div');
+          trackEl.className = 'cover-marquee-track ' + rowCfg.dir;
+
+          // シームレス無限ループのため2セット追加
+          for (let pass = 0; pass < 2; pass++) {
+            rowCfg.items.forEach(function(item) {
+              trackEl.appendChild(createCoverTile(item));
+            });
+          }
+          rowEl.appendChild(trackEl);
+          stage.appendChild(rowEl);
+        });
+      }
+
+      function syncCoverMarqueePlayback() {
+        const sec1 = document.querySelector('.reveal .slides > section[data-slide-num="1"]');
+        if (!sec1) return;
+        const currIdx = (typeof Reveal !== 'undefined' && Reveal.getIndices) ? (Reveal.getIndices().h || 0) : 0;
+        const isCover = (currIdx === 0);
+        sec1.classList.toggle('cover-paused', !isCover);
+        sec1.querySelectorAll('.cover-marquee-stage video').forEach(function(v) {
+          if (isCover) {
+            try { v.play().catch(function(){}); } catch(e) {}
+          } else {
+            try { v.pause(); } catch(e) {}
+          }
+        });
+      }
+
       function updateMiniCharNavigator() {
         const nav = document.getElementById('miniCharNavigator');
         const vid = document.getElementById('miniGuideCharVideo');
@@ -10625,6 +11147,8 @@
         const initIdx = Reveal.getIndices ? Reveal.getIndices().h : 0;
         prevSlideIdx = initIdx;
         setTimeout(function() {
+          initCoverMarqueeWall();
+          syncCoverMarqueePlayback();
           updateSlide2AgendaCamera();
           updateSlide8Camera();
           updateMiniCharNavigator();
@@ -10667,6 +11191,7 @@
           });
           syncSlideStepCallouts(false);
           updateMiniCharNavigator();
+          syncCoverMarqueePlayback();
         });
 
         Reveal.on('fragmentshown', function() {
