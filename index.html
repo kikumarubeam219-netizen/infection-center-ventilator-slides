@@ -12,7 +12,7 @@
   <!-- Google Fonts (Noto Sans JP & JetBrains Mono) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=M+PLUS+Rounded+1c:wght@700;800;900&family=Noto+Sans+JP:wght@400;500;700;800;900&family=Yomogi&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
 
   <style>
     /* ==========================================================================
@@ -60,6 +60,8 @@
       /* タイポグラフィ */
       --font-sans: system-ui, -apple-system, "Segoe UI", "Noto Sans JP", sans-serif;
       --font-mono: "JetBrains Mono", monospace;
+      --font-tv-telop: "M PLUS Rounded 1c", "Noto Sans JP", sans-serif;
+      --font-crayon: "Zen Maru Gothic", "Yomogi", sans-serif;
     }
 
     * {
@@ -1630,202 +1632,1252 @@
 <!-- === SEAMLESS_STUDIO_CSS_START === -->
   <style>
     /* ==========================================================================
-       クリーン・シームレス遷移エンジン（常駐ヘッダー/フッター固定 ＋ 2画面連続カメラ移動）
+       1. Slide 2（目次）：添付画像1（カード1枚ずつ画面いっぱい）➔ 添付画像2（全体像へズームアウト）
        ========================================================================== */
-
-    /* 非表示スライドは隠し、現在スライド(.present)と退場中スライド(.tv-cam-leaving)のみを同時駆動 */
     .reveal .slides > section:not(.present):not(.tv-cam-leaving) {
       display: none !important;
     }
     .reveal .slides > section.present {
       z-index: 12 !important;
     }
-    .reveal .slides > section.tv-cam-leaving {
-      position: absolute !important;
+
+    section[data-slide-num="2"] .slide-content-layer {
+      position: relative;
+      overflow: visible;
+    }
+    section[data-slide-num="2"] .timeline-bar,
+    section[data-slide-num="2"] .char-callout {
+      transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    /* カード1枚にズームインしている間は上部タイムラインのみフェードアウトし、下部CE講師の吹き出しは常時表示 */
+    section[data-slide-num="2"].agenda-is-zoomed .timeline-bar {
+      opacity: 0 !important;
+      transform: translateY(-20px) scale(0.95);
+      pointer-events: none;
+    }
+    section[data-slide-num="2"] .char-callout {
+      position: relative;
+      z-index: 30;
+    }
+
+    section[data-slide-num="2"] .agenda-grid-6 {
+      transform-origin: 0 0;
+      transition: transform 0.82s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+      position: relative;
+      z-index: 15;
+    }
+    section[data-slide-num="2"] .agenda-spotlight-card {
+      transition: opacity 0.55s ease, box-shadow 0.55s ease, border-color 0.55s ease, filter 0.55s ease !important;
+      background: #FFFFFF;
+    }
+    section[data-slide-num="2"].agenda-is-zoomed .agenda-spotlight-card:not(.cam-active-card) {
+      opacity: 0.12 !important;
+      filter: blur(1px);
+      pointer-events: none;
+    }
+    section[data-slide-num="2"].agenda-is-zoomed .agenda-spotlight-card.cam-active-card {
+      opacity: 1 !important;
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.14), 0 0 0 1.5px rgba(37, 99, 235, 0.22) !important;
+      z-index: 20;
+    }
+
+    /* ==========================================================================
+       2. Slide 8（陰圧 vs 陽圧）：左カード拡大 ➔ 右カード拡大 ➔ 2枚全体像へズームアウト
+       ========================================================================== */
+    section[data-slide-num="8"] .slide-content-layer > div:first-child {
+      transform-origin: 0 0;
+      transition: transform 0.82s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+    section[data-slide-num="8"] [data-s8-card] {
+      transition: opacity 0.55s ease, box-shadow 0.55s ease, filter 0.55s ease !important;
+    }
+    section[data-slide-num="8"].s8-is-zoomed [data-s8-card]:not(.s8-active-card) {
+      opacity: 0.14 !important;
+      filter: blur(1px);
+    }
+    section[data-slide-num="8"].s8-is-zoomed [data-s8-card].s8-active-card {
+      opacity: 1 !important;
+      box-shadow: 0 20px 48px rgba(15, 23, 42, 0.16) !important;
+    }
+
+    /* ==========================================================================
+       3. 第1部（Slide 3〜9）：「大きな1枚のスライド（巨大ボード）」ズームイン・ズームアウト・ステージ
+       ========================================================================== */
+    #part1WorldViewport {
+      position: fixed;
+      inset: 0;
+      z-index: 850;
+      background: #E2E8F0;
+      display: none;
+      overflow: hidden;
+      pointer-events: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #part1WorldViewport.active {
+      display: flex;
+    }
+    #part1WorldViewport.interactive-overview {
+      pointer-events: auto;
+      cursor: default;
+    }
+
+    #part1CameraFrame {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      overflow: visible;
+      flex-shrink: 0;
+    }
+
+    /* 3列×3段の巨大な1枚のボード（4200px × 2420px） */
+    #part1GiantBoard {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4200px;
+      height: 2420px;
+      transform-origin: 0 0;
+      backface-visibility: hidden;
+    }
+
+    .p1-board-header-banner {
+      position: absolute;
+      top: 28px;
+      left: 60px;
+      right: 60px;
+      height: 86px;
+      background: linear-gradient(90deg, #1E3A5F 0%, #2563EB 60%, #0D9488 100%);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 42px;
+      color: #FFFFFF;
+      box-shadow: 0 14px 36px rgba(30, 58, 95, 0.25);
+    }
+    .p1-board-header-title {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .p1-board-header-sub {
+      font-size: 22px;
+      font-weight: 700;
+      color: #E0F2FE;
+    }
+
+    .p1-zone-box {
+      position: absolute;
+      top: 855px;
+      height: 1515px;
+      width: 1320px;
+      border-radius: 32px;
+      pointer-events: none;
+    }
+    .p1-zone-light {
+      left: 40px;
+      background: rgba(239, 246, 255, 0.72);
+      border: 5px dashed #3B82F6;
+    }
+    .p1-zone-shadow {
+      left: 2840px;
+      background: rgba(255, 241, 242, 0.72);
+      border: 5px dashed #F43F5E;
+    }
+    .p1-zone-badge {
+      position: absolute;
+      top: -28px;
+      left: 40px;
+      padding: 8px 28px;
+      border-radius: 999px;
+      font-size: 24px;
+      font-weight: 900;
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    /* 巨大ボード上の各スライドタイル（1280x720の本物のスライド画面） */
+    .p1-slide-tile {
+      position: absolute;
+      width: 1280px;
+      height: 720px;
+      background: #FFFFFF;
+      border-radius: 20px;
+      border: 5px solid #94A3B8;
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.14);
+      overflow: hidden;
+      font-family: var(--font-sans);
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text-main);
+      text-align: left;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease;
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile {
+      cursor: pointer;
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile:hover {
+      border-color: #2563EB;
+      box-shadow: 0 30px 70px rgba(37, 99, 235, 0.36), 0 0 0 8px rgba(37, 99, 235, 0.25);
+      transform: translateY(-8px);
+    }
+    .p1-slide-tile.active-tile {
+      border-color: #2563EB;
+      box-shadow: 0 26px 65px rgba(37, 99, 235, 0.30), 0 0 0 6px rgba(56, 189, 248, 0.55);
+    }
+    .p1-slide-tile > section {
+      display: block !important;
+      width: 1280px !important;
+      height: 720px !important;
+      padding: 18px 36px !important;
+      margin: 0 !important;
+      position: relative !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100% !important;
-      height: 720px !important;
-      display: block !important;
       opacity: 1 !important;
       visibility: visible !important;
-      pointer-events: none !important;
-      z-index: 10 !important;
+      transform: none !important;
+      box-sizing: border-box !important;
+    }
+    .p1-slide-tile > section.sandwich-slide {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+    }
+    .p1-slide-tile > section.light-cover-slide {
+      display: block !important;
+      padding: 0 !important;
+    }
+    .p1-slide-tile > section h1,
+    .p1-slide-tile > section h2,
+    .p1-slide-tile > section h3,
+    .p1-slide-tile > section h4,
+    .p1-slide-tile > section p {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-sans);
+      letter-spacing: -0.01em;
+    }
+    .p1-slide-tile > section .fragment {
+      opacity: 1 !important;
+      visibility: visible !important;
       transform: none !important;
     }
-    .reveal .slides > section.sandwich-slide.tv-cam-leaving {
-      display: flex !important;
+    .p1-slide-tile aside.notes,
+    .p1-slide-tile .notes {
+      display: none !important;
+    }
+    .p1-slide-tile .slide-content-layer > div:first-child {
+      transform: none !important;
     }
 
-    /* パート内遷移時：退場スライドのヘッダー・フッターを隠し、現在スライドのヘッダー・フッターを揺らさず常駐させる */
-    .reveal .slides > section.tv-cam-leaving.tv-keep-studio-frame {
-      background: transparent !important;
-    }
-    .reveal .slides > section.tv-cam-leaving.tv-keep-studio-frame .slide-header-layer,
-    .reveal .slides > section.tv-cam-leaving.tv-keep-studio-frame .slide-footer-layer {
-      opacity: 0 !important;
-      visibility: hidden !important;
-    }
-
-    /* ヘッダーのタイトル文字とピル、フッターの文字だけが滑らかにクロスフェード＆スライド */
-    @keyframes tvHeaderTextSwap {
-      0%   { opacity: 0; transform: translateY(7px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .reveal .slides > section.present.tv-studio-swap .slide-header-layer h2,
-    .reveal .slides > section.present.tv-studio-swap .slide-header-layer .question-pill,
-    .reveal .slides > section.present.tv-studio-swap .slide-header-layer .category-pill,
-    .reveal .slides > section.present.tv-studio-swap .slide-footer-layer span {
-      animation: tvHeaderTextSwap 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    .p1-tile-step-tag {
+      position: absolute;
+      top: 12px;
+      right: 18px;
+      z-index: 50;
+      background: #0F172A;
+      color: #38BDF8;
+      border: 2px solid #38BDF8;
+      border-radius: 999px;
+      padding: 5px 18px;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+      pointer-events: none;
     }
 
-    /* 前後2スライド同時連動カメラワーク（Cross Zoom-In / Continuous Pan / Cross Zoom-Out） */
-    .reveal .slides section .slide-content-layer {
-      will-change: transform, opacity;
-      transform-origin: var(--tv-cam-origin, 50% 50%);
+    .p1-overview-hint {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 900;
+      background: rgba(15, 23, 42, 0.92);
+      color: #FFFFFF;
+      border: 1.5px solid #38BDF8;
+      border-radius: 999px;
+      padding: 7px 22px;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      max-width: 94vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     }
-
-    /* ① ズームイン遷移（前の図解が手前へ拡大して抜け、奥から次の図解が拡大して現れる） */
-    @keyframes tvLeaveZoomIn {
-      0%   { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(1.65); }
-    }
-    @keyframes tvEnterZoomIn {
-      0%   { opacity: 0; transform: scale(0.62); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-    .tv-leave-zoom-in {
-      animation: tvLeaveZoomIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-    }
-    .tv-enter-zoom-in {
-      animation: tvEnterZoomIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) both !important;
-    }
-
-    /* ② 右パン遷移（前の図解が左へ流れ、右隣から次の図解が切れ目なく滑り込む） */
-    @keyframes tvLeavePanRight {
-      0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-      100% { opacity: 0; transform: translate3d(-96%, 0, 0) scale(0.95); }
-    }
-    @keyframes tvEnterPanRight {
-      0%   { opacity: 0; transform: translate3d(96%, 0, 0) scale(0.95); }
-      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-    }
-    .tv-leave-pan-right {
-      animation: tvLeavePanRight 0.70s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-    }
-    .tv-enter-pan-right {
-      animation: tvEnterPanRight 0.70s cubic-bezier(0.22, 1, 0.36, 1) both !important;
-    }
-
-    /* ③ 左パン遷移（戻る操作時） */
-    @keyframes tvLeavePanLeft {
-      0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-      100% { opacity: 0; transform: translate3d(96%, 0, 0) scale(0.95); }
-    }
-    @keyframes tvEnterPanLeft {
-      0%   { opacity: 0; transform: translate3d(-96%, 0, 0) scale(0.95); }
-      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-    }
-    .tv-leave-pan-left {
-      animation: tvLeavePanLeft 0.70s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-    }
-    .tv-enter-pan-left {
-      animation: tvEnterPanLeft 0.70s cubic-bezier(0.22, 1, 0.36, 1) both !important;
-    }
-
-    /* ④ ズームアウト遷移（詳細図解が中央へ縮小し、外側から全体まとめ図が引いて現れる） */
-    @keyframes tvLeaveZoomOut {
-      0%   { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(0.55); }
-    }
-    @keyframes tvEnterZoomOut {
-      0%   { opacity: 0; transform: scale(1.55); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-    .tv-leave-zoom-out {
-      animation: tvLeaveZoomOut 0.74s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-    }
-    .tv-enter-zoom-out {
-      animation: tvEnterZoomOut 0.74s cubic-bezier(0.22, 1, 0.36, 1) both !important;
-    }
-
-    /* ⑤ 中扉 ➔ パート本編突入時のスタジオ枠展開 */
-    @keyframes tvDividerEnter {
-      0%   { opacity: 0; transform: scale(1.08); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-    @keyframes tvStudioFrameSlideDown {
-      0%   { opacity: 0; transform: translateY(-22px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes tvStudioFooterSlideUp {
-      0%   { opacity: 0; transform: translateY(20px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .reveal .slides > section.present.tv-part-opening .slide-header-layer {
-      animation: tvStudioFrameSlideDown 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-    .reveal .slides > section.present.tv-part-opening .slide-footer-layer {
-      animation: tvStudioFooterSlideUp 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-    .reveal .slides > section.present.tv-divider-opening {
-      animation: tvDividerEnter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-
-    /* ⑥ スライド内ステップ進行（.fragment）の滑らかなフリップ移動＆控えめなフォーカス */
-    .reveal .slides section .fragment.fade-up {
-      transform: translate3d(32px, 10px, 0) scale(0.96);
-      transition: opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1),
-                  transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
-                  box-shadow 0.38s ease !important;
-    }
-    .reveal .slides section .fragment.fade-up.visible {
-      transform: translate3d(0, 0, 0) scale(1);
-    }
-    .reveal .slides section .info-panel.fragment.current-fragment {
-      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.16), 0 0 0 2px rgba(37, 99, 235, 0.35) !important;
-    }
-
-    /* Slide 2（目次）のステップ進行中スポットライト */
-    .agenda-grid-6.has-active-spotlight .agenda-spotlight-card:not(.current-fragment) {
-      opacity: 0.55 !important;
-      transform: scale(0.975) !important;
-    }
-    .agenda-grid-6.has-active-spotlight .agenda-spotlight-card.current-fragment {
-      opacity: 1 !important;
-      transform: translateY(-4px) scale(1.03) !important;
-      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22), 0 0 0 2.5px #2563EB !important;
-      z-index: 10;
+    #part1WorldViewport.interactive-overview + .p1-overview-hint {
+      display: inline-flex;
     }
 
     @media print {
-      .tv-leave-zoom-in, .tv-enter-zoom-in,
-      .tv-leave-pan-right, .tv-enter-pan-right,
-      .tv-leave-pan-left, .tv-enter-pan-left,
-      .tv-leave-zoom-out, .tv-enter-zoom-out {
-        animation: none !important;
+      #part1WorldViewport, .p1-overview-hint {
+        display: none !important;
+      }
+      section[data-slide-num="2"] .agenda-grid-6,
+      section[data-slide-num="8"] .slide-content-layer > div:first-child {
         transform: none !important;
       }
-    }
-
-    /* ⑦ 2カラム比較のダイナミック・ステージング（最初は主役が中央に大きく表示され、次へで左へ移動＋右から比較パネルが滑り込む） */
-    .reveal .slides section:not(.tv-cam-leaving) .slide-content-layer > div:has(> .info-panel:first-child + .info-panel.fragment:last-child) > .info-panel:first-child {
-      transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.62s ease !important;
-    }
-    .reveal .slides section:not(.tv-cam-leaving) .slide-content-layer > div:has(> .info-panel:first-child + .info-panel.fragment:not(.visible):last-child) > .info-panel:first-child {
-      transform: translate3d(51%, 0, 0) scale(1.02) !important;
-      z-index: 8;
-      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14) !important;
-    }
-    html.print-pdf .reveal .slides section .slide-content-layer > div > .info-panel:first-child,
-    @media print {
-      .reveal .slides section .slide-content-layer > div > .info-panel:first-child {
-        transform: none !important;
+      section[data-slide-num="2"] .timeline-bar,
+      section[data-slide-num="2"] .char-callout,
+      section[data-slide-num="2"] .agenda-spotlight-card,
+      section[data-slide-num="8"] [data-s8-card] {
+        opacity: 1 !important;
+        filter: none !important;
       }
     }
-
   </style>
   <!-- === SEAMLESS_STUDIO_CSS_END === -->
+<!-- === SKETCHBOOK_TV_STYLE_START === -->
+  <style>
+    /* ==========================================================================
+       1. 中扉スライド：白紙スケッチブックめくり動画 ＋ HTMLクレヨン文字オーバーレイ
+       ========================================================================== */
+    .sketchbook-divider-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #FFFFFF;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sketchbook-turn-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      mix-blend-mode: multiply;
+      z-index: 2;
+      cursor: pointer;
+    }
+    .sketchbook-fallback-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      mix-blend-mode: multiply;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* スケッチブックの開かれた白紙エリア（中央）にピタッと収まるオーバーレイ枠 */
+    .sketchbook-paper-overlay {
+      position: absolute;
+      left: 27.5%;
+      width: 46.5%;
+      top: 23.5%;
+      height: 55.5%;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 14px 24px;
+      font-family: var(--font-crayon);
+      pointer-events: none;
+    }
+
+    @keyframes ink-appear {
+      0% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+        filter: blur(2px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+      }
+    }
+
+    .reveal .slides section.present .sketchbook-paper-overlay {
+      animation: ink-appear 0.65s cubic-bezier(0.22, 1, 0.36, 1) 1.05s both;
+    }
+    /* 俯瞰ボード内のクローンでは遅延なしで常時表示 */
+    .p1-slide-tile .sketchbook-paper-overlay {
+      opacity: 1 !important;
+      animation: none !important;
+    }
+
+    .sketchbook-part-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--part-pill-bg, #EFF6FF);
+      color: var(--part-accent, #2563EB);
+      border: 2.5px dashed var(--part-pill-border, #93C5FD);
+      font-family: var(--font-tv-telop);
+      font-weight: 900;
+      font-size: 0.78em;
+      padding: 4px 18px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 0 rgba(15, 23, 42, 0.06);
+    }
+
+    .sketchbook-part-title {
+      font-family: var(--font-crayon) !important;
+      font-size: 2.15em !important;
+      font-weight: 900 !important;
+      color: #1E293B !important;
+      line-height: 1.2 !important;
+      margin-bottom: 6px !important;
+      text-shadow: 2px 2px 0 #FFFFFF, 0 3px 8px rgba(15, 23, 42, 0.08);
+    }
+
+    .sketchbook-part-subtitle {
+      font-family: var(--font-crayon) !important;
+      font-size: 0.92em !important;
+      font-weight: 700 !important;
+      color: #475569 !important;
+      margin-bottom: 10px !important;
+    }
+
+    .sketchbook-crayon-line {
+      width: 180px;
+      height: 6px;
+      background: var(--part-accent, #2563EB);
+      border-radius: 999px;
+      margin-bottom: 12px;
+      opacity: 0.85;
+      transform: rotate(-0.6deg);
+    }
+
+    .sketchbook-points-box {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.82);
+      border: 2.5px dashed var(--part-pill-border, #93C5FD);
+      border-left: 7px solid var(--part-accent, #2563EB);
+      border-radius: 22px 10px 24px 12px / 12px 24px 10px 22px;
+      padding: 10px 18px;
+      text-align: left;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .sketchbook-points-heading {
+      font-family: var(--font-tv-telop);
+      font-size: 0.72em;
+      font-weight: 900;
+      color: var(--part-accent, #2563EB);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sketchbook-points-list {
+      font-family: var(--font-crayon);
+      font-size: 0.74em;
+      font-weight: 700;
+      color: #1E293B;
+      line-height: 1.62;
+      margin: 0;
+      padding-left: 1.2em;
+    }
+
+    .sketchbook-watermark-num {
+      position: absolute;
+      right: 18px;
+      bottom: 6px;
+      font-family: var(--font-tv-telop);
+      font-size: 3.6em;
+      font-weight: 900;
+      color: var(--part-accent, #2563EB);
+      opacity: 0.12;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       2. 巨大俯瞰キャンバス（#part1WorldViewport / #part1GiantBoard）の「机の上の画用紙＆クレヨン」化
+       ========================================================================== */
+    #part1WorldViewport {
+      background:
+        url('assets/bg_desk_crayon.png') center/cover no-repeat,
+        radial-gradient(circle at 50% 50%, #F3E5AB 0%, #DFC39D 62%, #C8A27A 100%) !important;
+    }
+
+    #part1GiantBoard {
+      background-color: #FFFDF9 !important;
+      /* 軽量・GPU安定のキャンパスノート風横罫線 */
+      background-image:
+        repeating-linear-gradient(180deg, transparent 0px, transparent 54px, rgba(59, 130, 246, 0.11) 54px, rgba(59, 130, 246, 0.11) 56px) !important;
+      background-size: 100% 56px !important;
+      border: 14px solid #C2A378 !important;
+      outline: 4px solid #8C6A43 !important;
+      border-radius: 24px 24px 32px 32px !important;
+      box-shadow: 0 28px 64px rgba(60, 40, 20, 0.28) !important;
+      overflow: visible !important;
+    }
+
+    /* キャンパスノート上端の金属スパイラルリング＆パンチ穴（軽量描画） */
+    .campus-notebook-rings {
+      position: absolute;
+      top: -42px;
+      left: 70px;
+      right: 70px;
+      height: 68px;
+      pointer-events: none;
+      z-index: 30;
+      background-image:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          transparent 44px,
+          #475569 44px,
+          #CBD5E1 48px,
+          #F8FAFC 53px,
+          #64748B 58px,
+          #1E293B 62px,
+          transparent 62px,
+          transparent 110px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          transparent 40px,
+          rgba(71, 85, 105, 0.72) 40px,
+          rgba(71, 85, 105, 0.72) 66px,
+          transparent 66px,
+          transparent 110px
+        );
+      background-size: 110px 44px, 110px 22px;
+      background-position: 0 0, 0 42px;
+      background-repeat: repeat-x;
+    }
+
+    /* ノート本体の上端を少し下げてリングが見えるように調整 */
+    .p1-board-header-banner {
+      top: 38px !important;
+    }
+
+    /* 画用紙上部に半透明マスキングテープで貼られた手書き風タイトル見出し */
+    .p1-board-header-banner {
+      background: rgba(254, 249, 195, 0.92) !important;
+      color: #1E293B !important;
+      border: 4px dashed #D97706 !important;
+      border-radius: 18px 42px 16px 38px / 32px 16px 38px 18px !important;
+      box-shadow: 0 10px 24px rgba(120, 53, 15, 0.14) !important;
+      font-family: var(--font-crayon) !important;
+      position: relative;
+    }
+    .p1-board-header-banner::before,
+    .p1-board-header-banner::after {
+      content: "";
+      position: absolute;
+      top: -18px;
+      width: 140px;
+      height: 38px;
+      background: rgba(253, 224, 71, 0.65);
+      border: 1.5px dashed rgba(180, 83, 9, 0.35);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    }
+    .p1-board-header-banner::before {
+      left: 80px;
+      transform: rotate(-6deg);
+    }
+    .p1-board-header-banner::after {
+      right: 80px;
+      transform: rotate(5deg);
+    }
+    .p1-board-header-title {
+      color: #0F172A !important;
+      font-family: var(--font-crayon) !important;
+    }
+    .p1-board-header-sub {
+      color: #B45309 !important;
+      font-family: var(--font-tv-telop) !important;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 6px 20px;
+      border-radius: 999px;
+      border: 2px solid #FCD34D;
+    }
+
+    /* 光の側面・影の側面のクレヨン手描き風不規則丸枠 */
+    .p1-zone-light,
+    .p1-zone-shadow {
+      border-radius: 45px 180px 40px 190px / 180px 40px 190px 45px !important;
+      border-width: 6px !important;
+    }
+    .p1-zone-badge {
+      font-family: var(--font-tv-telop) !important;
+    }
+
+    /* スライドタイルの脱・四角い枠 ＆ GPU再描画負荷の完全遮断（チカチカ防止） */
+    .p1-slide-tile {
+      background: #FFFDF9 !important;
+      border: 3px dashed rgba(148, 163, 184, 0.42) !important;
+      border-radius: 28px !important;
+      box-shadow: 0 12px 28px rgba(60, 40, 20, 0.10) !important;
+      contain: layout style paint;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                  border-color 0.25s ease,
+                  box-shadow 0.25s ease !important;
+    }
+    .p1-slide-tile *,
+    .p1-slide-tile *::before,
+    .p1-slide-tile *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile:nth-child(odd) {
+      transform: rotate(-0.8deg);
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile:nth-child(even) {
+      transform: rotate(0.8deg);
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile:hover,
+    .p1-slide-tile.active-tile {
+      transform: rotate(0deg) !important;
+      border: 4px solid #2563EB !important;
+      box-shadow: 0 20px 45px rgba(37, 99, 235, 0.22) !important;
+    }
+    .crayon-route-path {
+      animation: none !important;
+    }
+
+    /* ==========================================================================
+       3. 各スライドの上下サンドイッチ帯を「TV番組コーナーバッジ＆YouTube字幕テロップ」へ刷新
+       ========================================================================== */
+    @keyframes telop-pop {
+      0%   { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+    @keyframes footer-telop-pop {
+      0%   { opacity: 0; transform: translateY(10px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    /* ① 上部ヘッダー（.slide-header-layer）：TV番組の左上コーナーワイプバッジ化 */
+    .reveal .slides section .slide-header-layer,
+    .p1-slide-tile section .slide-header-layer {
+      background: rgba(255, 255, 255, 0.96) !important;
+      color: #0F172A !important;
+      border: 3px solid #2563EB !important;
+      border-left: 11px solid #1E3A5F !important;
+      border-radius: 999px !important;
+      padding: 6px 24px 6px 12px !important;
+      margin-bottom: 10px !important;
+      width: fit-content !important;
+      max-width: 100% !important;
+      box-shadow:
+        0 5px 0 rgba(30, 58, 95, 0.14),
+        0 10px 22px rgba(15, 23, 42, 0.10) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+    }
+
+    .reveal .slides section.present .slide-header-layer {
+      animation: telop-pop 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .reveal .slides section .slide-header-layer .question-pill,
+    .p1-slide-tile section .slide-header-layer .question-pill {
+      background: linear-gradient(135deg, #1E3A5F 0%, #2563EB 100%) !important;
+      color: #FFFFFF !important;
+      border: none !important;
+      font-family: var(--font-tv-telop) !important;
+      font-weight: 900 !important;
+      font-size: 0.66em !important;
+      padding: 5px 14px !important;
+      border-radius: 999px !important;
+      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.28) !important;
+    }
+
+    .reveal .slides section .slide-header-layer .category-pill,
+    .p1-slide-tile section .slide-header-layer .category-pill {
+      font-family: var(--font-tv-telop) !important;
+      font-weight: 900 !important;
+      padding: 5px 14px !important;
+      border-radius: 999px !important;
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18) !important;
+    }
+
+    .reveal .slides section .slide-header-layer h2,
+    .p1-slide-tile section .slide-header-layer h2 {
+      font-family: var(--font-tv-telop) !important;
+      font-weight: 900 !important;
+      font-size: 1.18em !important;
+      color: #0F172A !important;
+      text-shadow: 1px 1px 0 #FFFFFF, 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+      letter-spacing: 0.01em !important;
+    }
+
+    /* ② 下部フッター（.slide-footer-layer）：YouTube解説動画風の白フチ袋文字テロップ化 */
+    .reveal .slides section .slide-footer-layer,
+    .p1-slide-tile section .slide-footer-layer {
+      background: rgba(255, 255, 255, 0.94) !important;
+      color: #0F172A !important;
+      border: 2.5px solid #CBD5E1 !important;
+      border-radius: 999px !important;
+      padding: 6px 22px 6px 10px !important;
+      margin: 8px auto 0 auto !important;
+      width: fit-content !important;
+      max-width: 98% !important;
+      box-shadow:
+        0 6px 20px rgba(15, 23, 42, 0.12),
+        0 3px 0 rgba(148, 163, 184, 0.28) !important;
+      font-family: var(--font-tv-telop) !important;
+      font-weight: 900 !important;
+      font-size: 0.82em !important;
+      text-shadow:
+        2px 2px 0 #FFFFFF,
+        -2px -2px 0 #FFFFFF,
+        2px -2px 0 #FFFFFF,
+        -2px 2px 0 #FFFFFF,
+        0 4px 12px rgba(15, 23, 42, 0.14) !important;
+    }
+    .reveal .slides section .slide-footer-layer.green,
+    .p1-slide-tile section .slide-footer-layer.green {
+      border-color: #4ADE80 !important;
+      background: rgba(240, 253, 244, 0.96) !important;
+    }
+    .reveal .slides section .slide-footer-layer.blue,
+    .p1-slide-tile section .slide-footer-layer.blue {
+      border-color: #60A5FA !important;
+      background: rgba(239, 246, 255, 0.96) !important;
+    }
+    .reveal .slides section .slide-footer-layer.orange,
+    .p1-slide-tile section .slide-footer-layer.orange {
+      border-color: #FBBF24 !important;
+      background: rgba(255, 251, 235, 0.96) !important;
+    }
+    .reveal .slides section .slide-footer-layer.red,
+    .p1-slide-tile section .slide-footer-layer.red {
+      border-color: #FB7185 !important;
+      background: rgba(255, 241, 242, 0.96) !important;
+      color: #9F1239 !important;
+    }
+
+    .reveal .slides section.present .slide-footer-layer {
+      animation: footer-telop-pop 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
+    }
+
+    .reveal .slides section .slide-footer-layer .footer-badge,
+    .p1-slide-tile section .slide-footer-layer .footer-badge {
+      background: #1E293B !important;
+      color: #FFFFFF !important;
+      text-shadow: none !important;
+      border-radius: 999px !important;
+      padding: 4px 12px !important;
+      font-family: var(--font-tv-telop) !important;
+      font-weight: 900 !important;
+      font-size: 0.82em !important;
+    }
+    .slide-footer-layer.green .footer-badge  { background: #16A34A !important; }
+    .slide-footer-layer.blue .footer-badge   { background: #2563EB !important; }
+    .slide-footer-layer.orange .footer-badge { background: #D97706 !important; }
+    .slide-footer-layer.red .footer-badge    { background: #E11D48 !important; }
+
+    /* ③ キャラクター吹き出し（.char-callout）のYouTubeワイプ化 ＆ 常時アイドリングアニメーション */
+    @keyframes char-bob {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50%      { transform: translateY(-3.5px) rotate(1.8deg); }
+    }
+
+    .reveal .slides section .char-callout {
+      border-radius: 999px !important;
+      padding: 6px 20px 6px 8px !important;
+      background: rgba(255, 255, 255, 0.97) !important;
+      border: 2.5px solid #93C5FD !important;
+      box-shadow: 0 8px 22px rgba(37, 99, 235, 0.14) !important;
+    }
+    .reveal .slides section .char-callout .char-avatar {
+      width: 64px !important;
+      height: 64px !important;
+      border: 3px solid #2563EB !important;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22) !important;
+      animation: char-bob 3.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .reveal .slides section .char-callout .char-bubble-text {
+      font-family: var(--font-tv-telop) !important;
+      font-weight: 800 !important;
+    }
+
+    /* 印刷・PDF出力時はすべてのアニメーションを停止し、崩れなく出力 */
+    html.print-pdf .sketchbook-paper-overlay,
+    html.print-pdf .slide-header-layer,
+    html.print-pdf .slide-footer-layer,
+    html.print-pdf .char-avatar,
+    html.print-pdf .crayon-route-path,
+    @media print {
+      .sketchbook-paper-overlay,
+      .slide-header-layer,
+      .slide-footer-layer,
+      .char-avatar,
+      .crayon-route-path {
+        animation: none !important;
+        opacity: 1 !important;
+      }
+      .p1-slide-tile {
+        transform: none !important;
+      }
+    }
+  </style>
+  <!-- === SKETCHBOOK_TV_STYLE_END === -->
+<!-- === WALL_CORKBOARD_CSS_START === -->
+  <style>
+    /* 壁背景：温かみのあるオフホワイトの壁 */
+    #part1WorldViewport {
+      background: linear-gradient(180deg, #FAF7F2 0%, #EFEAE0 100%) !important;
+    }
+
+    /* 縦縞リブフェルトボード本体（GPU負荷を抑えた32px周期の立体縦ストライプ・木枠撤去） */
+    #part1GiantBoard {
+      background-color: #D2C3B2 !important;
+      background-image: repeating-linear-gradient(
+        90deg,
+        #DDD0C1 0px,
+        #E4D9CB 12px,
+        #D5C6B5 22px,
+        #B5A390 27px,
+        #9E8B78 29px,
+        #C5B5A3 32px
+      ) !important;
+      border: 4px solid rgba(145, 128, 108, 0.34) !important;
+      outline: none !important;
+      border-radius: 10px !important;
+      box-shadow:
+        inset 0 2px 10px rgba(255, 255, 255, 0.38),
+        inset 0 -8px 24px rgba(68, 52, 36, 0.14),
+        0 28px 68px rgba(58, 44, 30, 0.22) !important;
+      overflow: visible !important;
+    }
+
+    /* 上端キャンパスリングは撤去 */
+    .campus-notebook-rings {
+      display: none !important;
+    }
+
+    /* ボード上部のクラフト紙タイトルラベル（半透明マスキングテープ留め） */
+    .p1-board-header-banner {
+      top: 26px !important;
+      background: linear-gradient(180deg, #EFE0C8 0%, #E5D1B2 100%) !important;
+      color: #3E3022 !important;
+      border: 1.5px solid rgba(138, 114, 88, 0.48) !important;
+      border-radius: 4px !important;
+      box-shadow:
+        0 8px 20px rgba(58, 44, 30, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+      font-family: var(--font-crayon) !important;
+      position: relative;
+      padding: 16px 46px !important;
+    }
+    .p1-board-header-banner::before,
+    .p1-board-header-banner::after {
+      content: "";
+      position: absolute;
+      top: -18px;
+      width: 128px;
+      height: 36px;
+      border: none;
+      border-radius: 2px;
+      box-shadow: 0 2px 5px rgba(58, 44, 30, 0.14);
+      pointer-events: none;
+    }
+    .p1-board-header-banner::before {
+      left: 56px;
+      background: rgba(245, 219, 152, 0.78);
+      transform: rotate(-12deg);
+    }
+    .p1-board-header-banner::after {
+      right: 56px;
+      background: rgba(186, 214, 198, 0.76);
+      transform: rotate(11deg);
+    }
+    .p1-board-header-title {
+      color: #3B2D1F !important;
+      font-family: var(--font-crayon) !important;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+    /* ピル型をやめ、クラフト木片スタンプ風サブタグに */
+    .p1-board-header-sub {
+      color: #4A3928 !important;
+      font-family: var(--font-tv-telop) !important;
+      background: rgba(253, 251, 247, 0.78) !important;
+      padding: 6px 18px !important;
+      border-radius: 3px !important;
+      border: 1px dashed rgba(138, 114, 88, 0.55) !important;
+      box-shadow: 0 2px 4px rgba(58, 44, 30, 0.08) !important;
+    }
+
+    /* ゾーン枠（縦縞リブが透ける控えめな区切り） */
+    .p1-zone-box {
+      border-radius: 22px !important;
+      border-width: 3px !important;
+      background: rgba(253, 251, 247, 0.24) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    }
+    /* ゾーン見出し：マスキングテープ上に書いた手書き風ラベル */
+    .p1-zone-badge {
+      font-family: var(--font-crayon) !important;
+      color: #3A2C1E !important;
+      border: none !important;
+      border-radius: 3px !important;
+      padding: 10px 26px !important;
+      box-shadow: 0 4px 10px rgba(58, 44, 30, 0.14) !important;
+      transform: rotate(-0.8deg);
+      letter-spacing: 0.03em;
+    }
+
+    /* カード左上の番号タグも小さなクラフト紙風に */
+    .p1-tile-step-tag {
+      background: rgba(239, 224, 200, 0.94) !important;
+      color: #423324 !important;
+      border: 1px solid rgba(138, 114, 88, 0.45) !important;
+      border-radius: 3px !important;
+      box-shadow: 0 2px 6px rgba(58, 44, 30, 0.14) !important;
+      font-family: var(--font-crayon) !important;
+    }
+
+    /* ファインペーパーのポスターカード質感（厚みのあるマット紙 #fdfbf7） */
+    .p1-slide-tile {
+      box-sizing: content-box !important;
+      background: #FDFBF7 !important;
+      border: 14px solid #FDFBF7 !important;
+      outline: 1.5px solid rgba(154, 137, 118, 0.42) !important;
+      border-radius: 3px !important;
+      box-shadow:
+        0 12px 26px rgba(50, 38, 25, 0.17),
+        0 3px 8px rgba(50, 38, 25, 0.10) !important;
+      overflow: visible !important;
+      contain: layout style;
+    }
+    .p1-slide-tile > section {
+      border-radius: 2px !important;
+      overflow: hidden !important;
+      background-color: #FDFBF7;
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile:nth-child(odd) {
+      transform: rotate(-0.85deg);
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile:nth-child(even) {
+      transform: rotate(0.75deg);
+    }
+    #part1WorldViewport.interactive-overview .p1-slide-tile:hover,
+    .p1-slide-tile.active-tile {
+      transform: rotate(0deg) translateY(-4px) !important;
+      border-color: #FDFBF7 !important;
+      outline: 4px solid #3B82F6 !important;
+      box-shadow: 0 22px 48px rgba(37, 99, 235, 0.24) !important;
+    }
+
+    /* カード上部中央の固定具（押しピン・シルバークリップ・半透明マステ） */
+    .photo-pin-decor {
+      position: absolute;
+      top: -36px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 5px rgba(48, 36, 24, 0.26));
+    }
+    .photo-washi-center {
+      position: absolute;
+      top: -26px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      width: 144px;
+      height: 36px;
+      border: none;
+      border-radius: 2px;
+      z-index: 59;
+      pointer-events: none;
+      box-shadow: 0 2px 5px rgba(48, 36, 24, 0.14);
+    }
+    .photo-tape-left,
+    .photo-tape-right {
+      position: absolute;
+      top: -22px;
+      width: 96px;
+      height: 32px;
+      border: none;
+      border-radius: 2px;
+      z-index: 58;
+      pointer-events: none;
+      box-shadow: 0 2px 5px rgba(48, 36, 24, 0.13);
+    }
+    .photo-tape-left  { left: 26px;  transform: rotate(-20deg); }
+    .photo-tape-right { right: 26px; transform: rotate(20deg); }
+
+    /* ステッカー（白フチ・四角い箱感なしの自然なダイカットシャドウ） */
+    .board-sticker-item {
+      position: absolute;
+      z-index: 25;
+      pointer-events: none;
+      filter: drop-shadow(0 8px 14px rgba(52, 40, 28, 0.22));
+      user-select: none;
+      opacity: 0.96;
+    }
+
+    /* CSS雑貨あしらい：クラフト紙メモ */
+    .craft-kraft-memo {
+      position: absolute;
+      z-index: 24;
+      pointer-events: none;
+      width: 240px;
+      padding: 26px 22px 22px;
+      background: linear-gradient(165deg, #DFC49F 0%, #D3B389 100%);
+      border: 1px solid rgba(126, 98, 66, 0.35);
+      border-radius: 3px;
+      box-shadow: 0 10px 20px rgba(50, 38, 25, 0.18);
+      color: #463423;
+      font-family: var(--font-crayon);
+      font-size: 22px;
+      line-height: 1.5;
+    }
+    .craft-kraft-memo::before {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-3deg);
+      width: 84px;
+      height: 24px;
+      background: rgba(244, 214, 146, 0.78);
+      box-shadow: 0 2px 4px rgba(50, 38, 25, 0.12);
+    }
+
+    /* CSS雑貨あしらい：パステル付箋 */
+    .craft-sticky-note {
+      position: absolute;
+      z-index: 24;
+      pointer-events: none;
+      width: 210px;
+      min-height: 170px;
+      padding: 22px 18px;
+      background: linear-gradient(180deg, #FBF2D5 0%, #F5E6B8 100%);
+      border-radius: 2px 2px 14px 2px;
+      box-shadow: 0 8px 16px rgba(50, 38, 25, 0.15);
+      color: #4A3B28;
+      font-family: var(--font-crayon);
+      font-size: 21px;
+      line-height: 1.45;
+    }
+    .craft-sticky-note.sage {
+      background: linear-gradient(180deg, #E2EDE3 0%, #D2E3D4 100%);
+    }
+    .craft-sticky-note.blush {
+      background: linear-gradient(180deg, #F9E3E0 0%, #F2D2CE 100%);
+    }
+
+    /* CSS雑貨あしらい：パステルドットシールシート */
+    .craft-dot-sheet {
+      position: absolute;
+      z-index: 23;
+      pointer-events: none;
+      width: 220px;
+      padding: 20px 18px 22px;
+      background: #FAF8F4;
+      border: 1px solid rgba(160, 145, 128, 0.35);
+      border-radius: 4px;
+      box-shadow: 0 10px 22px rgba(50, 38, 25, 0.16);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .craft-dot-sheet::before {
+      content: "";
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #9CA3AF, #6B7280);
+      box-shadow: 0 3px 5px rgba(40, 30, 20, 0.25);
+    }
+    .craft-dot-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* CSS雑貨あしらい：カラフル立体ブロック文字 */
+    .craft-block-letters {
+      position: absolute;
+      z-index: 26;
+      pointer-events: none;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .craft-block-letters span {
+      display: inline-block;
+      font-family: var(--font-crayon);
+      font-weight: 900;
+      font-size: 58px;
+      line-height: 1;
+      text-shadow:
+        0 3px 0 rgba(58, 44, 30, 0.22),
+        0 6px 10px rgba(58, 44, 30, 0.16);
+    }
+
+    /* === 案1：俯瞰ボード上のポラロイド風ミニ動画カード === */
+    .board-polaroid-video-card {
+      position: absolute;
+      z-index: 27;
+      pointer-events: auto;
+      cursor: pointer;
+      background: #FDFBF7;
+      padding: 18px 18px 46px;
+      border-radius: 4px;
+      border: 1.5px solid rgba(154, 137, 118, 0.45);
+      box-shadow:
+        0 14px 28px rgba(50, 38, 25, 0.22),
+        0 4px 10px rgba(50, 38, 25, 0.12);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .board-polaroid-video-card:hover {
+      box-shadow:
+        0 22px 44px rgba(37, 99, 235, 0.24),
+        0 0 0 4px rgba(59, 130, 246, 0.55);
+    }
+    .board-polaroid-video-card::before {
+      content: "";
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-3deg);
+      width: 112px;
+      height: 30px;
+      background: rgba(245, 219, 152, 0.80);
+      border-radius: 2px;
+      box-shadow: 0 2px 5px rgba(48, 36, 24, 0.14);
+      pointer-events: none;
+    }
+    .board-polaroid-video-card video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 2px;
+      background: #F4EFE6;
+    }
+    .board-polaroid-caption {
+      margin-top: 14px;
+      text-align: center;
+      font-family: var(--font-crayon);
+      font-size: 24px;
+      color: #463423;
+      letter-spacing: 0.03em;
+    }
+
+    /* === 案3：画面右下のミニガイド・ナビゲーター === */
+    #miniCharNavigator {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 950;
+      width: 136px;
+      background: #FDFBF7;
+      border: 1.5px solid rgba(154, 137, 118, 0.55);
+      border-radius: 12px;
+      padding: 7px 7px 8px;
+      box-shadow: 0 10px 26px rgba(45, 34, 22, 0.22);
+      cursor: pointer;
+      transition: transform 0.22s ease, opacity 0.25s ease, box-shadow 0.22s ease;
+      user-select: none;
+    }
+    #miniCharNavigator:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 32px rgba(37, 99, 235, 0.24);
+    }
+    #miniCharNavigator.is-hidden-in-overview {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+    }
+    #miniCharNavigator.is-minimized {
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #miniCharNavigator.is-minimized .mini-nav-body,
+    #miniCharNavigator.is-minimized .mini-nav-label {
+      display: none;
+    }
+    #miniCharNavigator .mini-nav-restore {
+      display: none;
+      font-size: 20px;
+      color: #4A3928;
+    }
+    #miniCharNavigator.is-minimized .mini-nav-restore {
+      display: inline-flex;
+    }
+    .mini-nav-toggle-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid rgba(138, 118, 96, 0.5);
+      background: #EFE0C8;
+      color: #463423;
+      font-size: 12px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.14);
+    }
+    .mini-nav-body {
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #F4EFE6;
+    }
+    .mini-nav-body video {
+      display: block;
+      width: 100%;
+      height: 70px;
+      object-fit: cover;
+    }
+    .mini-nav-label {
+      margin-top: 5px;
+      font-family: var(--font-crayon);
+      font-size: 11px;
+      font-weight: 700;
+      color: #463423;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media print {
+      #miniCharNavigator { display: none !important; }
+    }
+    .print-pdf #miniCharNavigator { display: none !important; }
+  </style>
+  <!-- === WALL_CORKBOARD_CSS_END === -->
 </head>
 <body>
   <div id="floatingToolbar" class="floating-toolbar">
@@ -1911,6 +2963,39 @@
     </div>
     <iframe id="simIframe" class="sim-modal-frame" title="人工呼吸器 波形・3D解剖動態シミュレーター"></iframe>
   </div>
+  <!-- === SEAMLESS_STUDIO_HUD_START === -->
+  <div id="part1WorldViewport" aria-hidden="true">
+    <div id="part1CameraFrame">
+      <div id="part1GiantBoard">
+        <div class="campus-notebook-rings"></div>
+        <div class="p1-board-header-banner">
+          <div class="p1-board-header-title" id="boardBannerTitle">
+            <i class="fa-solid fa-lungs"></i>
+            <span>PART 01｜人工呼吸器の二面性と呼吸生理（Slide 3〜9 全体キャンバス）</span>
+          </div>
+          <div class="p1-board-header-sub">1枚の巨大ボードをズームイン・ズームアウトして進行します</div>
+        </div>
+        <div id="boardZonesContainer"></div>
+        <svg id="boardRoutesSvg" class="p1-crayon-routes-svg" viewBox="0 0 4200 2420" width="4200" height="2420" style="position:absolute; inset:0; pointer-events:none; z-index:2;"></svg>
+        <div id="boardStickersContainer" style="position:absolute; inset:0; pointer-events:none; z-index:22;"></div>
+        <div id="part1TilesContainer" style="position:absolute; inset:0; z-index:5;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="p1-overview-hint" id="boardOverviewHint">
+    <span id="boardOverviewHintTitle">🗺️ 全体ボード俯瞰ビュー</span>
+    <span style="color:#93C5FD;">｜ 各スライドをクリックしてズームイン、または「→」キーで次へ進みます</span>
+  </div>
+  <!-- 案3：画面右下のミニガイド・ナビゲーター -->
+  <div id="miniCharNavigator" title="クリックで現在の部の全体ボード俯瞰へ移動">
+    <button type="button" class="mini-nav-toggle-btn" id="miniNavToggleBtn" title="最小化／表示">−</button>
+    <div class="mini-nav-body">
+      <video id="miniGuideCharVideo" src="assets/part01_char.mp4" poster="assets/part01_char.png" autoplay loop muted playsinline></video>
+    </div>
+    <div class="mini-nav-label" id="miniNavLabel">PART 01 俯瞰ボードへ</div>
+    <span class="mini-nav-restore" title="ガイドを表示"><i class="fa-solid fa-film"></i></span>
+  </div>
+  <!-- === SEAMLESS_STUDIO_HUD_END === -->
   <canvas id="drawCanvas"></canvas>
   <div id="laserDot"></div>
 
@@ -2014,32 +3099,32 @@
           </div>
 
           <div class="agenda-grid-6">
-            <div data-id="part01-entry-morph" data-agenda-idx="1" class="info-panel blue agenda-spotlight-card" onclick="jumpToSlide(2)" style="cursor: pointer;" title="クリックして第1部へ移動">
+            <div data-agenda-idx="1" data-id="part01-entry-morph" class="info-panel blue agenda-spotlight-card" onclick="jumpToSlide(2)" style="cursor: pointer;" title="クリックして第1部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-blue);">PART 01｜導入・呼吸生理</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">人工呼吸器の二面性と呼吸生理</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">良い側面（メリット）と悪い側面（合併症）、自然呼吸（陰圧）と人工呼吸（陽圧）の決定的な違い</p>
             </div>
-            <div data-agenda-idx="2" class="info-panel green fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(9)" style="cursor: pointer;" title="クリックして第2部へ移動">
+            <div data-agenda-idx="2" class="info-panel green agenda-spotlight-card" onclick="jumpToSlide(9)" style="cursor: pointer;" title="クリックして第2部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-green);">PART 02｜機器安全・使用中点検</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">日常・使用中点検の実践</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">必須7項目、非常用電源・ガス配管、人工鼻の仕様（死腔85mL）、カフ圧（25〜30）、画面トリプルチェック</p>
             </div>
-            <div data-agenda-idx="3" class="info-panel blue fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(15)" style="cursor: pointer;" title="クリックして第3部へ移動">
+            <div data-agenda-idx="3" class="info-panel blue agenda-spotlight-card" onclick="jumpToSlide(15)" style="cursor: pointer;" title="クリックして第3部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-blue);">PART 03｜換気様式・モード解読 ★重点</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">VCV/PCVと換気モード・実機画面</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">VCV vs PCV、PEEPの光と影、A/C・CPAP・PSV・アプニア換気、Savina 300実機波形の読み解き</p>
             </div>
-            <div data-agenda-idx="4" class="info-panel red fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(25)" style="cursor: pointer;" title="クリックして第4部へ移動">
+            <div data-agenda-idx="4" class="info-panel red agenda-spotlight-card" onclick="jumpToSlide(25)" style="cursor: pointer;" title="クリックして第4部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--alert-red);">PART 04｜アラーム対応 ★重点</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">デュアル・アセスメントと対応</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">「患者」と「回路」の同時評価、分時換気量・気道内圧・無呼吸/頻呼吸アラームの特定と早見表</p>
             </div>
-            <div data-agenda-idx="5" class="info-panel orange fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(31)" style="cursor: pointer;" title="クリックして第5部へ移動">
+            <div data-agenda-idx="5" class="info-panel orange agenda-spotlight-card" onclick="jumpToSlide(31)" style="cursor: pointer;" title="クリックして第5部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-orange);">PART 05｜データ統合・血ガス調整</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">酸素化（P/F比）と酸塩基平衡（pH）</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">P/F比とFiO2・PEEP調整、pHシーソーモデル、PaCO2を目標とした分時換気量（VT×RR）調整</p>
             </div>
-            <div data-agenda-idx="6" class="info-panel green fragment fade-up  agenda-spotlight-card" onclick="jumpToSlide(38)" style="cursor: pointer;" title="クリックして第6部へ移動">
+            <div data-agenda-idx="6" class="info-panel green agenda-spotlight-card" onclick="jumpToSlide(38)" style="cursor: pointer;" title="クリックして第6部へ移動">
               <div style="font-size:0.68em; font-weight:800; color:var(--mute-green);">PART 06｜総括・付録リファレンス</div>
               <h4 style="font-size:0.88em; font-weight:800; margin:4px 0 6px;">まとめ＆アンケート・基準値早見表</h4>
               <p style="font-size:0.68em; color:var(--text-muted); line-height:1.45;">全体のまとめ、受講後アンケートQRコード、基本設定パラメータ基準値、肺力学・離脱指標（RSB）</p>
@@ -2054,6 +3139,15 @@
           </div>
         </div>
 
+        
+        <div class="agenda-cam-triggers" style="display:none;">
+          <span class="fragment agenda-cam-step" data-cam-step="1"></span>
+          <span class="fragment agenda-cam-step" data-cam-step="2"></span>
+          <span class="fragment agenda-cam-step" data-cam-step="3"></span>
+          <span class="fragment agenda-cam-step" data-cam-step="4"></span>
+          <span class="fragment agenda-cam-step" data-cam-step="5"></span>
+          <span class="fragment agenda-cam-step" data-cam-step="6"></span>
+        </div>
         <div class="slide-footer-layer blue" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge">ROADMAP</span>
           <span>基礎生理から点検・波形・アラーム・血液ガスまで、ベッドサイドの思考プロセスを一本の線で繋ぎます。</span>
@@ -2069,107 +3163,46 @@
            【Slide 3】中扉①：第1部 導入・人工呼吸器の二面性と呼吸生理 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
       <section data-slide-num="3" data-part-id="1" data-camera-mode="divider" data-camera-origin="25% 50%" data-camera-badge="🎬 PART 01 START｜二面性と呼吸生理" data-short-title="扉：第1部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
-        <!-- 背景装飾：淡いバイタル波形SVG -->
-        <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
-          <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
-                stroke="#38BDF8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <!-- 白紙スケッチブックめくり動画ステージ ＋ HTMLクレヨン文字オーバーレイ -->
+        <div class="sketchbook-divider-stage">
+          <!-- 1. 背景：2人のキャラクターが白紙スケッチブックをめくる共通動画 ＆ 静止画フォールバック -->
+          <video class="sketchbook-turn-video" autoplay muted playsinline preload="auto"
+                 onloadeddata="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';"
+                 ontimeupdate="if(this.currentTime >= 9.6){ this.currentTime = 3.25; this.play().catch(function(){}); }"
+                 onclick="this.currentTime=1.1; this.playbackRate=1.5; this.play().catch(function(){});"
+                 title="クリックでページめくりを再生">
+            <source src="assets/part_turn_page.mp4" type="video/mp4">
+            <source src="assets/part01_char.mp4" type="video/mp4">
+          </video>
+          <img src="assets/frame_sketchbook_chars.png" alt="スケッチブックを開くCEと看護師" class="sketchbook-fallback-img">
 
-        <div style="display: grid; grid-template-columns: 44% 56%; height: 100%; position: relative; z-index: 2;">
-          
-          <!-- 左側：セクションタイトル情報（白ベース） -->
-          <div data-id="part01-entry-morph" style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
-              <i class="fa-solid fa-lungs" style="color: #2563EB;"></i> PART 01｜INTRODUCTION
+          <!-- 2. 白紙スケッチブック紙面エリア（中央）の上に浮かび上がるHTMLクレヨン文字 -->
+          <div class="sketchbook-paper-overlay" style="--part-accent: #2563EB; --part-pill-bg: #EFF6FF; --part-pill-border: #93C5FD;">
+            <div class="sketchbook-part-pill">
+              <i class="fa-solid fa-lungs"></i> PART 01｜INTRODUCTION
             </div>
 
-            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
-              二面性と呼吸生理
-            </h2>
+            <h2 class="sketchbook-part-title">二面性と呼吸生理</h2>
 
-            <p style="font-size: 1.05em; color: #475569; line-height: 1.5; margin-bottom: 18px; font-weight: 700;">
-              「命を救う力」と「生体に与える害」
-            </p>
+            <p class="sketchbook-part-subtitle">「命を救う力」と「生体に与える害」</p>
 
-            <!-- アクセントライン -->
-            <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #2563EB, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
+            <div class="sketchbook-crayon-line"></div>
 
-            <!-- パート概要（白ベースカード） -->
-            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
-              <div style="font-size: 0.72em; font-weight: 800; color: #2563EB; margin-bottom: 6px;">
-                <i class="fa-solid fa-check-double"></i> このパートのポイント
+            <div class="sketchbook-points-box">
+              <div class="sketchbook-points-heading">
+                <i class="fa-solid fa-pencil"></i> このパートのポイント
               </div>
-              <ul style="font-size: 0.76em; color: #1E293B; line-height: 1.75; margin: 0; padding-left: 1.2em; font-weight: 600;">
+              <ul class="sketchbook-points-list">
                 <li>生体への3大メリット（ガス交換・呼吸仕事量軽減）</li>
                 <li>警戒すべき4大合併症（VALI・VAP・循環抑制）</li>
                 <li>自然呼吸（陰圧）vs 人工呼吸（陽圧）の決定的な違い</li>
               </ul>
             </div>
-          </div>
 
-          <!-- 右側：2人のキャラクターステージ（動画・画像・背景完全融合ステージ） -->
-          <div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 36px 24px 12px;">
-            <!-- ステージ背景：動画の白背景と完全融合するよう中央を純白(#FFFFFF)にし外周に淡いオーラを配置 -->
-            <div style="position: absolute; inset: 16px 20px 16px 4px; background: radial-gradient(ellipse at center 55%, #FFFFFF 0%, #FFFFFF 62%, #EFF6FF 88%, transparent 100%); border-radius: 32px; z-index: 1; pointer-events: none;"></div>
-
-            <!-- 足元の接地シャドウ -->
-            <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
-
-            <!-- 1. 動画（assets/part01_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part01Video" class="part-char-video" autoplay loop muted playsinline preload="none"
-                   style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
-                   onloadedmetadata="activatePartVideo('part01')"
-                   onloadeddata="activatePartVideo('part01')"
-                   oncanplay="activatePartVideo('part01')"
-                   onclick="togglePartVideo('part01')">
-              <source src="assets/part01_char.mp4" type="video/mp4">
-              <source src="assets/part01 char.mp4" type="video/mp4">
-              <source src="assets/part01_char.mp4.mp4" type="video/mp4">
-              <source src="assets/part01 char.mp4.mp4" type="video/mp4">
-            </video>
-
-            <!-- クリック再生オーバーレイボタン -->
-            <div id="part01PlayBtn" onclick="togglePartVideo('part01')"
-                 style="display: none; position: absolute; top: 44px; right: 52px; z-index: 10; background: rgba(37, 99, 235, 0.94); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 18px; border-radius: 999px; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.32); transition: all 0.2s;">
-              <i class="fa-solid fa-play" id="part01PlayIcon"></i> <span id="part01PlayText">クリックして再生</span>
-            </div>
-
-            <!-- 2. 静止画（assets/part01_char.png がある場合） -->
-            <img id="part01Img" src="assets/part01_char.png" alt="Part 1 CEと看護師"
-                 style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 3; display: none;"
-                 onload="var vid=document.getElementById('part01Video'); if(!vid || vid.readyState===0){ this.style.display='block'; var fb=document.getElementById('part01Fallback'); if(fb) fb.style.display='none'; }">
-
-            <!-- 3. 初期表示ステージ（動画・画像を配置する前でも2人のキャラが表示される） -->
-            <div id="part01Fallback" style="z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 88%; padding: 20px;">
-              <!-- テーマアイコン＆吹き出し -->
-              <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <div style="background: #FFFFFF; border: 2px solid #93C5FD; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);">
-                  <img src="assets/icon ns.png" alt="看護師" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #0284C7; font-size: 0.88em; display: block; margin-bottom: 2px;">看護師</span>
-                    「人工呼吸器って命を救う機械なのに、どうして合併症が起きるの？」
-                  </div>
-                </div>
-                <div style="background: #FFFFFF; border: 2px solid #5EEAD4; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(13, 148, 136, 0.08);">
-                  <img src="assets/icon ce.png" alt="CE" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #0D9488; font-size: 0.88em; display: block; margin-bottom: 2px;">臨床工学技士（CE）</span>
-                    「鍵は『陰圧呼吸』と『陽圧換気』の違い！肺と心臓への影響を一緒に見よう！」
-                  </div>
-                </div>
-              </div>
-              <div class="part-asset-hint" style="font-size: 0.65em; color: #64748B; background: rgba(255,255,255,0.85); padding: 4px 12px; border-radius: 999px; border: 1px dashed #CBD5E1;">
-                💡 <code>assets/part01_char.mp4</code>（動画）または <code>part01_char.png</code>（画像）で自動差替
-              </div>
-            </div>
-
-            <!-- 右下の明るい透かしナンバー「01」 -->
-            <div style="position: absolute; right: 48px; bottom: 18px; font-size: 8.5em; font-weight: 900; color: rgba(37, 99, 235, 0.08); font-family: var(--font-mono); line-height: 0.85; z-index: 2; pointer-events: none; user-select: none; letter-spacing: -0.05em;">
-              01
-            </div>
+            <div class="sketchbook-watermark-num">01</div>
           </div>
         </div>
-
+        <div class="part-intro-overview-wrap" style="display:none;"><span class="fragment part-intro-overview-step" data-part-overview="intro" data-part-id="1"></span></div>
         <aside class="notes">
           <strong>【スライド3：第1部 中扉】</strong><br>
           「それでは第1部、『二面性と呼吸生理』からスタートしましょう。人工呼吸器は命を救うサポーターであると同時に、生体に害をもたらす両刃の剣でもあります。まずは最初の問いかけから入っていきます。」
@@ -2513,7 +3546,7 @@
         <div class="slide-content-layer">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
             <!-- 左：自然呼吸のメカニズム -->
-            <div data-id="tv-stage-1" class="info-panel blue" style="background: #F0F9FF; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
+            <div data-s8-card="1" data-id="tv-stage-1" class="info-panel blue" style="background: #F0F9FF; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-size: 0.95em; font-weight: 900; color: #0369A1;">自然呼吸のメカニズム</h3>
                 <span style="background: #0284C7; color: #FFF; font-size: 0.68em; font-weight: 800; padding: 3px 10px; border-radius: 999px;">
@@ -2662,7 +3695,7 @@
             </div>
 
             <!-- 右：人工呼吸のメカニズム -->
-            <div data-id="tv-card-1" class="info-panel red fragment fade-up" style="background: #FFF7ED; border-left-color: #EA580C; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
+            <div data-s8-card="2" data-id="tv-card-1" class="info-panel red " style="background: #FFF7ED; border-left-color: #EA580C; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-size: 0.95em; font-weight: 900; color: #C2410C;">人工呼吸のメカニズム</h3>
                 <span style="background: #EA580C; color: #FFF; font-size: 0.68em; font-weight: 800; padding: 3px 10px; border-radius: 999px;">
@@ -2803,6 +3836,11 @@
           </div>
         </div>
 
+        
+        <div class="slide8-cam-triggers" style="display:none;">
+          <span class="fragment slide8-cam-step" data-s8-step="1"></span>
+          <span class="fragment slide8-cam-step" data-s8-step="2"></span>
+        </div>
         <div class="slide-footer-layer orange" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge">PHYSIOLOGY</span>
           <span>「人工呼吸器をつけると血圧が下がりやすい」のは、胸腔内陽圧による静脈還流の阻害が根本原因です。</span>
@@ -2875,6 +3913,8 @@
           </div>
         </div>
 
+        
+        <div class="part-outro-overview-wrap" style="display:none;"><span class="fragment part-outro-overview-step" data-part-overview="outro" data-part-id="1"></span></div>
         <div class="slide-footer-layer green" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge">PART 1 SUMMARY</span>
           <span>漫然と初期設定のまま放置せず、患者の病態変化に合わせて設定を最適化し続けることが不可欠です。</span>
@@ -2890,106 +3930,47 @@
            【Slide 10】中扉②：第2部 機器安全と日常・使用中点検の実践 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
       <section data-slide-num="10" data-part-id="2" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 02 START｜機器安全と使用中点検" data-short-title="扉：第2部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
-        <!-- 背景装飾：淡いバイタル波形SVG -->
-        <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
-          <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
-                stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <!-- 白紙スケッチブックめくり動画ステージ ＋ HTMLクレヨン文字オーバーレイ -->
+        <div class="sketchbook-divider-stage">
+          <!-- 1. 背景：2人のキャラクターが白紙スケッチブックをめくる共通動画 ＆ 静止画フォールバック -->
+          <video class="sketchbook-turn-video" autoplay muted playsinline preload="auto"
+                 onloadeddata="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';"
+                 ontimeupdate="if(this.currentTime >= 9.6){ this.currentTime = 3.25; this.play().catch(function(){}); }"
+                 onclick="this.currentTime=1.1; this.playbackRate=1.5; this.play().catch(function(){});"
+                 title="クリックでページめくりを再生">
+            <source src="assets/part_turn_page.mp4" type="video/mp4">
+            <source src="assets/part02_char.mp4" type="video/mp4">
+          </video>
+          <img src="assets/frame_sketchbook_chars.png" alt="スケッチブックを開くCEと看護師" class="sketchbook-fallback-img">
 
-        <div style="display: grid; grid-template-columns: 44% 56%; height: 100%; position: relative; z-index: 2;">
-          
-          <!-- 左側：セクションタイトル情報（白ベース） -->
-          <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
-              <i class="fa-solid fa-clipboard-check" style="color: #059669;"></i> PART 02｜SAFETY CHECK
+          <!-- 2. 白紙スケッチブック紙面エリア（中央）の上に浮かび上がるHTMLクレヨン文字 -->
+          <div class="sketchbook-paper-overlay" style="--part-accent: #059669; --part-pill-bg: #ECFDF5; --part-pill-border: #6EE7B7;">
+            <div class="sketchbook-part-pill">
+              <i class="fa-solid fa-clipboard-check"></i> PART 02｜SAFETY CHECK
             </div>
 
-            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
-              機器安全と使用中点検
-            </h2>
+            <h2 class="sketchbook-part-title">機器安全と使用中点検</h2>
 
-            <p style="font-size: 1.05em; color: #475569; line-height: 1.5; margin-bottom: 18px; font-weight: 700;">
-              「7大必須チェック」と安全管理の実践
-            </p>
+            <p class="sketchbook-part-subtitle">「7大必須チェック」と安全管理の実践</p>
 
-            <!-- アクセントライン -->
-            <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #059669, #34D399); border-radius: 3px; margin-bottom: 22px;"></div>
+            <div class="sketchbook-crayon-line"></div>
 
-            <!-- パート概要（白ベースカード） -->
-            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #059669; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
-              <div style="font-size: 0.72em; font-weight: 800; color: #059669; margin-bottom: 6px;">
-                <i class="fa-solid fa-check-double"></i> このパートのポイント
+            <div class="sketchbook-points-box">
+              <div class="sketchbook-points-heading">
+                <i class="fa-solid fa-pencil"></i> このパートのポイント
               </div>
-              <ul style="font-size: 0.76em; color: #1E293B; line-height: 1.75; margin: 0; padding-left: 1.2em; font-weight: 600;">
+              <ul class="sketchbook-points-list">
                 <li>電源（赤・緑コンセント）と医療ガス配管の安全</li>
                 <li>感染症センター回路＆人工鼻（死腔85mL・交換基準）</li>
                 <li>カフ圧管理（25〜30 cmH₂O）＆画面トリプルチェック</li>
               </ul>
             </div>
-          </div>
 
-          <!-- 右側：2人のキャラクターステージ（動画・画像・背景完全融合ステージ） -->
-          <div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 36px 24px 12px;">
-            <!-- ステージ背景：動画の白背景と完全融合するよう中央を純白(#FFFFFF)にし外周に淡いオーラを配置 -->
-            <div style="position: absolute; inset: 16px 20px 16px 4px; background: radial-gradient(ellipse at center 55%, #FFFFFF 0%, #FFFFFF 62%, #ECFDF5 88%, transparent 100%); border-radius: 32px; z-index: 1; pointer-events: none;"></div>
-
-            <!-- 足元の接地シャドウ -->
-            <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
-
-            <!-- 1. 動画（assets/part02_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part02Video" class="part-char-video" autoplay loop muted playsinline preload="none"
-                   style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
-                   onloadedmetadata="activatePartVideo('part02')"
-                   onloadeddata="activatePartVideo('part02')"
-                   oncanplay="activatePartVideo('part02')"
-                   onclick="togglePartVideo('part02')">
-              <source src="assets/part02_char.mp4" type="video/mp4">
-              <source src="assets/part02 char.mp4" type="video/mp4">
-              <source src="assets/part02_char.mp4.mp4" type="video/mp4">
-              <source src="assets/part02 char.mp4.mp4" type="video/mp4">
-            </video>
-
-            <!-- クリック再生オーバーレイボタン -->
-            <div id="part02PlayBtn" onclick="togglePartVideo('part02')"
-                 style="display: none; position: absolute; top: 44px; right: 52px; z-index: 10; background: rgba(5, 150, 105, 0.94); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 18px; border-radius: 999px; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.32); transition: all 0.2s;">
-              <i class="fa-solid fa-play" id="part02PlayIcon"></i> <span id="part02PlayText">クリックして再生</span>
-            </div>
-
-            <!-- 2. 静止画（assets/part02_char.png がある場合） -->
-            <img id="part02Img" src="assets/part02_char.png" alt="Part 2 CEと看護師"
-                 style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 3; display: none;"
-                 onload="var vid=document.getElementById('part02Video'); if(!vid || vid.readyState===0){ this.style.display='block'; var fb=document.getElementById('part02Fallback'); if(fb) fb.style.display='none'; }">
-
-            <!-- 3. 初期表示ステージ -->
-            <div id="part02Fallback" style="z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 88%; padding: 20px;">
-              <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <div style="background: #FFFFFF; border: 2px solid #6EE7B7; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(5, 150, 105, 0.08);">
-                  <img src="assets/icon ns.png" alt="看護師" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #059669; font-size: 0.88em; display: block; margin-bottom: 2px;">看護師</span>
-                    「勤務交代のラウンド、何から順番にチェックすれば安心かな？」
-                  </div>
-                </div>
-                <div style="background: #FFFFFF; border: 2px solid #93C5FD; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);">
-                  <img src="assets/icon ce.png" alt="CE" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #2563EB; font-size: 0.88em; display: block; margin-bottom: 2px;">臨床工学技士（CE）</span>
-                    「電源・配管・人工鼻・カフ圧・画面の『必須7項目』を一緒に指差し確認しよう！」
-                  </div>
-                </div>
-              </div>
-              <div class="part-asset-hint" style="font-size: 0.65em; color: #64748B; background: rgba(255,255,255,0.85); padding: 4px 12px; border-radius: 999px; border: 1px dashed #CBD5E1;">
-                💡 <code>assets/part02_char.mp4</code>（動画）または <code>part02_char.png</code>（画像）で自動差替
-              </div>
-            </div>
-
-            <!-- 右下の明るい透かしナンバー「02」 -->
-            <div style="position: absolute; right: 48px; bottom: 18px; font-size: 8.5em; font-weight: 900; color: rgba(5, 150, 105, 0.08); font-family: var(--font-mono); line-height: 0.85; z-index: 2; pointer-events: none; user-select: none; letter-spacing: -0.05em;">
-              02
-            </div>
+            <div class="sketchbook-watermark-num">02</div>
           </div>
         </div>
-
+        
+        <div class="part-intro-overview-wrap" style="display:none;"><span class="fragment part-intro-overview-step" data-part-overview="intro" data-part-id="2"></span></div>
         <aside class="notes">
           <strong>【スライド10：第2部 中扉】</strong><br>
           「続いて第2部、『機器安全と日常・使用中点検の実践』に移ります。どれほど高度な設定を学んでも、電源抜けや配管不良、カフ圧の異常があれば患者さんの命は守れません。毎勤務帯で必ず行う7大点検項目を整理していきましょう。」
@@ -3622,6 +4603,7 @@
           </div>
         </div>
 
+        <div class="part-outro-overview-wrap" style="display:none;"><span class="fragment part-outro-overview-step" data-part-overview="outro" data-part-id="2"></span></div>
         <div class="slide-footer-layer blue" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge" style="background:#0284C7;">TRIPLE CHECK</span>
           <span>毎回の訪室時に「①指示照合 → ②実測値確認 → ③アラーム閾値確認」へ視線を動かす習慣をつけます。</span>
@@ -3638,106 +4620,47 @@
            【Slide 16】中扉③：第3部 換気様式（VCV/PCV）と換気モードの解読 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
       <section data-slide-num="16" data-part-id="3" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 03 START｜換気モードと実機画面" data-short-title="扉：第3部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
-        <!-- 背景装飾：淡いバイタル波形SVG -->
-        <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
-          <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
-                stroke="#6366F1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <!-- 白紙スケッチブックめくり動画ステージ ＋ HTMLクレヨン文字オーバーレイ -->
+        <div class="sketchbook-divider-stage">
+          <!-- 1. 背景：2人のキャラクターが白紙スケッチブックをめくる共通動画 ＆ 静止画フォールバック -->
+          <video class="sketchbook-turn-video" autoplay muted playsinline preload="auto"
+                 onloadeddata="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';"
+                 ontimeupdate="if(this.currentTime >= 9.6){ this.currentTime = 3.25; this.play().catch(function(){}); }"
+                 onclick="this.currentTime=1.1; this.playbackRate=1.5; this.play().catch(function(){});"
+                 title="クリックでページめくりを再生">
+            <source src="assets/part_turn_page.mp4" type="video/mp4">
+            <source src="assets/part03_char.mp4" type="video/mp4">
+          </video>
+          <img src="assets/frame_sketchbook_chars.png" alt="スケッチブックを開くCEと看護師" class="sketchbook-fallback-img">
 
-        <div style="display: grid; grid-template-columns: 44% 56%; height: 100%; position: relative; z-index: 2;">
-          
-          <!-- 左側：セクションタイトル情報（白ベース） -->
-          <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
-              <i class="fa-solid fa-wave-square" style="color: #4F46E5;"></i> PART 03｜MODES &amp; WAVEFORMS
+          <!-- 2. 白紙スケッチブック紙面エリア（中央）の上に浮かび上がるHTMLクレヨン文字 -->
+          <div class="sketchbook-paper-overlay" style="--part-accent: #4F46E5; --part-pill-bg: #EEF2FF; --part-pill-border: #A5B4FC;">
+            <div class="sketchbook-part-pill">
+              <i class="fa-solid fa-wave-square"></i> PART 03｜MODES & WAVEFORMS
             </div>
 
-            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
-              換気モードと実機画面
-            </h2>
+            <h2 class="sketchbook-part-title">換気モードと実機画面</h2>
 
-            <p style="font-size: 1.05em; color: #475569; line-height: 1.5; margin-bottom: 18px; font-weight: 700;">
-              「VCV / PCV」とグラフィックモニターの完全解読
-            </p>
+            <p class="sketchbook-part-subtitle">「VCV / PCV」とグラフィックモニターの完全解読</p>
 
-            <!-- アクセントライン -->
-            <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #4F46E5, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
+            <div class="sketchbook-crayon-line"></div>
 
-            <!-- パート概要（白ベースカード） -->
-            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #4F46E5; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
-              <div style="font-size: 0.72em; font-weight: 800; color: #4F46E5; margin-bottom: 6px;">
-                <i class="fa-solid fa-check-double"></i> このパートのポイント
+            <div class="sketchbook-points-box">
+              <div class="sketchbook-points-heading">
+                <i class="fa-solid fa-pencil"></i> このパートのポイント
               </div>
-              <ul style="font-size: 0.76em; color: #1E293B; line-height: 1.75; margin: 0; padding-left: 1.2em; font-weight: 600;">
+              <ul class="sketchbook-points-list">
                 <li>従量式（VCV：注射器）vs 従圧式（PCV：送風機）</li>
                 <li>全モードに付加される「PEEP」の光と影</li>
                 <li>A/C・CPAP・PSV・アプニア換気と実機画面解読</li>
               </ul>
             </div>
-          </div>
 
-          <!-- 右側：2人のキャラクターステージ（動画・画像・背景完全融合ステージ） -->
-          <div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 36px 24px 12px;">
-            <!-- ステージ背景：動画の白背景と完全融合するよう中央を純白(#FFFFFF)にし外周に淡いオーラを配置 -->
-            <div style="position: absolute; inset: 16px 20px 16px 4px; background: radial-gradient(ellipse at center 55%, #FFFFFF 0%, #FFFFFF 62%, #EEF2FF 88%, transparent 100%); border-radius: 32px; z-index: 1; pointer-events: none;"></div>
-
-            <!-- 足元の接地シャドウ -->
-            <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
-
-            <!-- 1. 動画（assets/part03_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part03Video" class="part-char-video" autoplay loop muted playsinline preload="none"
-                   style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
-                   onloadedmetadata="activatePartVideo('part03')"
-                   onloadeddata="activatePartVideo('part03')"
-                   oncanplay="activatePartVideo('part03')"
-                   onclick="togglePartVideo('part03')">
-              <source src="assets/part03_char.mp4" type="video/mp4">
-              <source src="assets/part03 char.mp4" type="video/mp4">
-              <source src="assets/part03_char.mp4.mp4" type="video/mp4">
-              <source src="assets/part03 char.mp4.mp4" type="video/mp4">
-            </video>
-
-            <!-- クリック再生オーバーレイボタン -->
-            <div id="part03PlayBtn" onclick="togglePartVideo('part03')"
-                 style="display: none; position: absolute; top: 44px; right: 52px; z-index: 10; background: rgba(79, 70, 229, 0.94); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 18px; border-radius: 999px; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(79, 70, 229, 0.32); transition: all 0.2s;">
-              <i class="fa-solid fa-play" id="part03PlayIcon"></i> <span id="part03PlayText">クリックして再生</span>
-            </div>
-
-            <!-- 2. 静止画（assets/part03_char.png がある場合） -->
-            <img id="part03Img" src="assets/part03_char.png" alt="Part 3 CEと看護師"
-                 style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 3; display: none;"
-                 onload="var vid=document.getElementById('part03Video'); if(!vid || vid.readyState===0){ this.style.display='block'; var fb=document.getElementById('part03Fallback'); if(fb) fb.style.display='none'; }">
-
-            <!-- 3. 初期表示ステージ -->
-            <div id="part03Fallback" style="z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 88%; padding: 20px;">
-              <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <div style="background: #FFFFFF; border: 2px solid #A5B4FC; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);">
-                  <img src="assets/icon ns.png" alt="看護師" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #4F46E5; font-size: 0.88em; display: block; margin-bottom: 2px;">看護師</span>
-                    「VCVとかPCVとか、モニターの波形や英語がいっぱいで難しそう…」
-                  </div>
-                </div>
-                <div style="background: #FFFFFF; border: 2px solid #93C5FD; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);">
-                  <img src="assets/icon ce.png" alt="CE" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #2563EB; font-size: 0.88em; display: block; margin-bottom: 2px;">臨床工学技士（CE）</span>
-                    「VCVは『注射器』、PCVは『うちわ・送風機』とイメージすれば一発でわかるよ！」
-                  </div>
-                </div>
-              </div>
-              <div class="part-asset-hint" style="font-size: 0.65em; color: #64748B; background: rgba(255,255,255,0.85); padding: 4px 12px; border-radius: 999px; border: 1px dashed #CBD5E1;">
-                💡 <code>assets/part03_char.mp4</code>（動画）または <code>part03_char.png</code>（画像）で自動差替
-              </div>
-            </div>
-
-            <!-- 右下の明るい透かしナンバー「03」 -->
-            <div style="position: absolute; right: 48px; bottom: 18px; font-size: 8.5em; font-weight: 900; color: rgba(79, 70, 229, 0.08); font-family: var(--font-mono); line-height: 0.85; z-index: 2; pointer-events: none; user-select: none; letter-spacing: -0.05em;">
-              03
-            </div>
+            <div class="sketchbook-watermark-num">03</div>
           </div>
         </div>
-
+        
+        <div class="part-intro-overview-wrap" style="display:none;"><span class="fragment part-intro-overview-step" data-part-overview="intro" data-part-id="3"></span></div>
         <aside class="notes">
           <strong>【スライド16：第3部 中扉】</strong><br>
           「ここからは第3部、人工呼吸器がどうやってガスを送り出しているのか、換気様式とモードの仕組みに入っていきます。すべての基本となるVCVとPCVの違いから紐解いていきましょう。」
@@ -5254,6 +6177,7 @@
           </div>
         </div>
 
+        <div class="part-outro-overview-wrap" style="display:none;"><span class="fragment part-outro-overview-step" data-part-overview="outro" data-part-id="3"></span></div>
         <div class="slide-footer-layer blue" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge">BACKUP SAFETY</span>
           <span>自発呼吸モード（CPAP/PSV）選択時は、必ずアプニア換気がON（適切なVT・RR設定）になっていることを確認します。</span>
@@ -5269,106 +6193,47 @@
            【Slide 26】中扉④：第4部 アラーム対応の原則とトラブルシューティング ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
       <section data-slide-num="26" data-part-id="4" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 04 START｜アラーム対応の原則" data-short-title="扉：第4部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
-        <!-- 背景装飾：淡いバイタル波形SVG -->
-        <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
-          <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
-                stroke="#F43F5E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <!-- 白紙スケッチブックめくり動画ステージ ＋ HTMLクレヨン文字オーバーレイ -->
+        <div class="sketchbook-divider-stage">
+          <!-- 1. 背景：2人のキャラクターが白紙スケッチブックをめくる共通動画 ＆ 静止画フォールバック -->
+          <video class="sketchbook-turn-video" autoplay muted playsinline preload="auto"
+                 onloadeddata="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';"
+                 ontimeupdate="if(this.currentTime >= 9.6){ this.currentTime = 3.25; this.play().catch(function(){}); }"
+                 onclick="this.currentTime=1.1; this.playbackRate=1.5; this.play().catch(function(){});"
+                 title="クリックでページめくりを再生">
+            <source src="assets/part_turn_page.mp4" type="video/mp4">
+            <source src="assets/part04_char.mp4" type="video/mp4">
+          </video>
+          <img src="assets/frame_sketchbook_chars.png" alt="スケッチブックを開くCEと看護師" class="sketchbook-fallback-img">
 
-        <div style="display: grid; grid-template-columns: 44% 56%; height: 100%; position: relative; z-index: 2;">
-          
-          <!-- 左側：セクションタイトル情報（白ベース） -->
-          <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #FFF1F2; color: #BE123C; border: 1.5px solid #FECDD3; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
-              <i class="fa-solid fa-bell" style="color: #E11D48;"></i> PART 04｜ALARM RESPONSE
+          <!-- 2. 白紙スケッチブック紙面エリア（中央）の上に浮かび上がるHTMLクレヨン文字 -->
+          <div class="sketchbook-paper-overlay" style="--part-accent: #E11D48; --part-pill-bg: #FFF1F2; --part-pill-border: #FDA4AF;">
+            <div class="sketchbook-part-pill">
+              <i class="fa-solid fa-bell"></i> PART 04｜ALARM RESPONSE
             </div>
 
-            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
-              アラーム対応の原則
-            </h2>
+            <h2 class="sketchbook-part-title">アラーム対応の原則</h2>
 
-            <p style="font-size: 1.05em; color: #475569; line-height: 1.5; margin-bottom: 18px; font-weight: 700;">
-              「患者」と「回路」のデュアル・アセスメント
-            </p>
+            <p class="sketchbook-part-subtitle">「患者」と「回路」のデュアル・アセスメント</p>
 
-            <!-- アクセントライン -->
-            <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #E11D48, #F59E0B); border-radius: 3px; margin-bottom: 22px;"></div>
+            <div class="sketchbook-crayon-line"></div>
 
-            <!-- パート概要（白ベースカード） -->
-            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #E11D48; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
-              <div style="font-size: 0.72em; font-weight: 800; color: #E11D48; margin-bottom: 6px;">
-                <i class="fa-solid fa-check-double"></i> このパートのポイント
+            <div class="sketchbook-points-box">
+              <div class="sketchbook-points-heading">
+                <i class="fa-solid fa-pencil"></i> このパートのポイント
               </div>
-              <ul style="font-size: 0.76em; color: #1E293B; line-height: 1.75; margin: 0; padding-left: 1.2em; font-weight: 600;">
+              <ul class="sketchbook-points-list">
                 <li>大原則：消音より先に「患者と回路」の同時評価</li>
                 <li>分時換気量（MV）・気道内圧アラームの特定と対応</li>
                 <li>無呼吸・頻呼吸（ミストリガー）とアクション早見表</li>
               </ul>
             </div>
-          </div>
 
-          <!-- 右側：2人のキャラクターステージ（動画・画像・背景完全融合ステージ） -->
-          <div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 36px 24px 12px;">
-            <!-- ステージ背景：動画の白背景と完全融合するよう中央を純白(#FFFFFF)にし外周に淡いオーラを配置 -->
-            <div style="position: absolute; inset: 16px 20px 16px 4px; background: radial-gradient(ellipse at center 55%, #FFFFFF 0%, #FFFFFF 62%, #FFF1F2 88%, transparent 100%); border-radius: 32px; z-index: 1; pointer-events: none;"></div>
-
-            <!-- 足元の接地シャドウ -->
-            <div style="position: absolute; bottom: 44px; width: 76%; height: 24px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.18) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 75%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
-
-            <!-- 1. 動画（assets/part04_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part04Video" class="part-char-video" autoplay loop muted playsinline preload="none"
-                   style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
-                   onloadedmetadata="activatePartVideo('part04')"
-                   onloadeddata="activatePartVideo('part04')"
-                   oncanplay="activatePartVideo('part04')"
-                   onclick="togglePartVideo('part04')">
-              <source src="assets/part04_char.mp4" type="video/mp4">
-              <source src="assets/part04 char.mp4" type="video/mp4">
-              <source src="assets/part04_char.mp4.mp4" type="video/mp4">
-              <source src="assets/part04 char.mp4.mp4" type="video/mp4">
-            </video>
-
-            <!-- クリック再生オーバーレイボタン -->
-            <div id="part04PlayBtn" onclick="togglePartVideo('part04')"
-                 style="display: none; position: absolute; top: 44px; right: 52px; z-index: 10; background: rgba(225, 29, 72, 0.94); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 18px; border-radius: 999px; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(225, 29, 72, 0.32); transition: all 0.2s;">
-              <i class="fa-solid fa-play" id="part04PlayIcon"></i> <span id="part04PlayText">クリックして再生</span>
-            </div>
-
-            <!-- 2. 静止画（assets/part04_char.png がある場合） -->
-            <img id="part04Img" src="assets/part04_char.png" alt="Part 4 CEと看護師"
-                 style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 3; display: none;"
-                 onload="var vid=document.getElementById('part04Video'); if(!vid || vid.readyState===0){ this.style.display='block'; var fb=document.getElementById('part04Fallback'); if(fb) fb.style.display='none'; }">
-
-            <!-- 3. 初期表示ステージ -->
-            <div id="part04Fallback" style="z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 88%; padding: 20px;">
-              <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <div style="background: #FFFFFF; border: 2px solid #FDA4AF; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(225, 29, 72, 0.08);">
-                  <img src="assets/icon ns.png" alt="看護師" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #E11D48; font-size: 0.88em; display: block; margin-bottom: 2px;">看護師</span>
-                    「ピピピッ！急にアラームが鳴り出したら、まず消音ボタンを押せばいい？」
-                  </div>
-                </div>
-                <div style="background: #FFFFFF; border: 2px solid #93C5FD; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);">
-                  <img src="assets/icon ce.png" alt="CE" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #2563EB; font-size: 0.88em; display: block; margin-bottom: 2px;">臨床工学技士（CE）</span>
-                    「まずは患者さんの胸の上がりと回路を同時に見る『デュアル・アセスメント』だよ！」
-                  </div>
-                </div>
-              </div>
-              <div class="part-asset-hint" style="font-size: 0.65em; color: #64748B; background: rgba(255,255,255,0.85); padding: 4px 12px; border-radius: 999px; border: 1px dashed #CBD5E1;">
-                💡 <code>assets/part04_char.mp4</code>（動画）または <code>part04_char.png</code>（画像）で自動差替
-              </div>
-            </div>
-
-            <!-- 右下の明るい透かしナンバー「04」 -->
-            <div style="position: absolute; right: 48px; bottom: 18px; font-size: 8.5em; font-weight: 900; color: rgba(225, 29, 72, 0.08); font-family: var(--font-mono); line-height: 0.85; z-index: 2; pointer-events: none; user-select: none; letter-spacing: -0.05em;">
-              04
-            </div>
+            <div class="sketchbook-watermark-num">04</div>
           </div>
         </div>
-
+        
+        <div class="part-intro-overview-wrap" style="display:none;"><span class="fragment part-intro-overview-step" data-part-overview="intro" data-part-id="4"></span></div>
         <aside class="notes">
           <strong>【スライド26：第4部 中扉】</strong><br>
           「ここからは第4部、皆さんが一番ドキッとする『アラーム対応』の原則と実践に入ります。アラームが鳴った時は、消音ボタンではなく『患者』と『回路』の両面から原因を突き止めるデュアル・アセスメントを実践していきましょう。」
@@ -5861,6 +6726,7 @@
           </div>
         </div>
 
+        <div class="part-outro-overview-wrap" style="display:none;"><span class="fragment part-outro-overview-step" data-part-overview="outro" data-part-id="4"></span></div>
         <div class="slide-footer-layer green" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge">CHEAT SHEET</span>
           <span>必ず「患者・回路の確認」を先に行った上で、医師や臨床工学技士と「設定の検討」を行います。</span>
@@ -5877,106 +6743,47 @@
            【Slide 32】中扉⑤：第5部 データ統合・血液ガスとパラメータ調整 ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
       <section data-slide-num="32" data-part-id="5" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 05 START｜血液ガスと設定調整" data-short-title="扉：第5部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
-        <!-- 背景装飾：淡いバイタル波形SVG -->
-        <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
-          <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
-                stroke="#F59E0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <!-- 白紙スケッチブックめくり動画ステージ ＋ HTMLクレヨン文字オーバーレイ -->
+        <div class="sketchbook-divider-stage">
+          <!-- 1. 背景：2人のキャラクターが白紙スケッチブックをめくる共通動画 ＆ 静止画フォールバック -->
+          <video class="sketchbook-turn-video" autoplay muted playsinline preload="auto"
+                 onloadeddata="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';"
+                 ontimeupdate="if(this.currentTime >= 9.6){ this.currentTime = 3.25; this.play().catch(function(){}); }"
+                 onclick="this.currentTime=1.1; this.playbackRate=1.5; this.play().catch(function(){});"
+                 title="クリックでページめくりを再生">
+            <source src="assets/part_turn_page.mp4" type="video/mp4">
+            <source src="assets/part05_char.mp4" type="video/mp4">
+          </video>
+          <img src="assets/frame_sketchbook_chars.png" alt="スケッチブックを開くCEと看護師" class="sketchbook-fallback-img">
 
-        <div style="display: grid; grid-template-columns: 44% 56%; height: 100%; position: relative; z-index: 2;">
-          
-          <!-- 左側：セクションタイトル情報（白ベース） -->
-          <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #FFFBEB; color: #B45309; border: 1.5px solid #FDE68A; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
-              <i class="fa-solid fa-scale-balanced" style="color: #D97706;"></i> PART 05｜BLOOD GAS &amp; TUNING
+          <!-- 2. 白紙スケッチブック紙面エリア（中央）の上に浮かび上がるHTMLクレヨン文字 -->
+          <div class="sketchbook-paper-overlay" style="--part-accent: #D97706; --part-pill-bg: #FFFBEB; --part-pill-border: #FCD34D;">
+            <div class="sketchbook-part-pill">
+              <i class="fa-solid fa-scale-balanced"></i> PART 05｜BLOOD GAS & TUNING
             </div>
 
-            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
-              血液ガスと設定調整
-            </h2>
+            <h2 class="sketchbook-part-title">血液ガスと設定調整</h2>
 
-            <p style="font-size: 1.05em; color: #475569; line-height: 1.5; margin-bottom: 18px; font-weight: 700;">
-              酸素化（P/F比）と換気（pH・PaCO₂）の2軸ロジック
-            </p>
+            <p class="sketchbook-part-subtitle">酸素化（P/F比）と換気（pH・PaCO₂）の2軸ロジック</p>
 
-            <!-- アクセントライン -->
-            <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #D97706, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
+            <div class="sketchbook-crayon-line"></div>
 
-            <!-- パート概要（白ベースカード） -->
-            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #D97706; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
-              <div style="font-size: 0.72em; font-weight: 800; color: #D97706; margin-bottom: 6px;">
-                <i class="fa-solid fa-check-double"></i> このパートのポイント
+            <div class="sketchbook-points-box">
+              <div class="sketchbook-points-heading">
+                <i class="fa-solid fa-pencil"></i> このパートのポイント
               </div>
-              <ul style="font-size: 0.76em; color: #1E293B; line-height: 1.75; margin: 0; padding-left: 1.2em; font-weight: 600;">
+              <ul class="sketchbook-points-list">
                 <li>フィジカルから検査データへの統合的アセスメント</li>
                 <li>P/F比（PaO₂ / FiO₂）の評価と PEEP・FiO₂ 調整</li>
                 <li>pHシーソーモデルと PaCO₂ 目標の分時換気量調整</li>
               </ul>
             </div>
-          </div>
 
-          <!-- 右側：2人のキャラクターステージ（背景と完全融合・境界線ゼロ） -->
-          <div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 36px 24px 12px;">
-            <!-- ステージ背景：動画の純白背景（multiply）と完全同化するシームレス・スポットライト -->
-            <div style="position: absolute; inset: 12px 16px 12px 0; background: radial-gradient(ellipse 72% 72% at 50% 52%, #FFFFFF 0%, #FFFFFF 62%, rgba(255, 251, 235, 0.55) 85%, transparent 100%); border: none; border-radius: 32px; z-index: 1; pointer-events: none;"></div>
-
-            <!-- 足元の接地シャドウ -->
-            <div style="position: absolute; bottom: 44px; width: 70%; height: 22px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.16) 0%, rgba(100, 116, 139, 0.05) 55%, transparent 78%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
-
-            <!-- 1. 動画（assets/part05_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part05Video" class="part-char-video" autoplay loop muted playsinline preload="none"
-                   style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
-                   onloadedmetadata="activatePartVideo('part05')"
-                   onloadeddata="activatePartVideo('part05')"
-                   oncanplay="activatePartVideo('part05')"
-                   onclick="togglePartVideo('part05')">
-              <source src="assets/part05_char.mp4" type="video/mp4">
-              <source src="assets/part05 char.mp4" type="video/mp4">
-              <source src="assets/part05_char.mp4.mp4" type="video/mp4">
-              <source src="assets/part05 char.mp4.mp4" type="video/mp4">
-            </video>
-
-            <!-- クリック再生オーバーレイボタン -->
-            <div id="part05PlayBtn" onclick="togglePartVideo('part05')"
-                 style="display: none; position: absolute; top: 44px; right: 52px; z-index: 10; background: rgba(217, 119, 6, 0.94); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 18px; border-radius: 999px; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(217, 119, 6, 0.32); transition: all 0.2s;">
-              <i class="fa-solid fa-play" id="part05PlayIcon"></i> <span id="part05PlayText">クリックして再生</span>
-            </div>
-
-            <!-- 2. 静止画（assets/part05_char.png がある場合） -->
-            <img id="part05Img" src="assets/part05_char.png" alt="Part 5 CEと看護師"
-                 style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 3; display: none;"
-                 onload="var vid=document.getElementById('part05Video'); if(!vid || vid.readyState===0){ this.style.display='block'; var fb=document.getElementById('part05Fallback'); if(fb) fb.style.display='none'; }">
-
-            <!-- 3. 初期表示ステージ -->
-            <div id="part05Fallback" style="z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 88%; padding: 20px;">
-              <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <div style="background: #FFFFFF; border: 2px solid #FCD34D; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(217, 119, 6, 0.08);">
-                  <img src="assets/icon ns.png" alt="看護師" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #D97706; font-size: 0.88em; display: block; margin-bottom: 2px;">看護師</span>
-                    「血ガス結果が出たとき、先生がどの数値をみて設定を変えるのか予測したいな！」
-                  </div>
-                </div>
-                <div style="background: #FFFFFF; border: 2px solid #93C5FD; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);">
-                  <img src="assets/icon ce.png" alt="CE" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #2563EB; font-size: 0.88em; display: block; margin-bottom: 2px;">臨床工学技士（CE）</span>
-                    「『酸素化（PEEP・FiO₂）』と『換気（pHシーソー・MV）』の2軸に分けるとスッキリ読めるよ！」
-                  </div>
-                </div>
-              </div>
-              <div class="part-asset-hint" style="font-size: 0.65em; color: #64748B; background: rgba(255,255,255,0.85); padding: 4px 12px; border-radius: 999px; border: 1px dashed #CBD5E1;">
-                💡 <code>assets/part05_char.mp4</code>（動画）または <code>part05_char.png</code>（画像）で自動差替
-              </div>
-            </div>
-
-            <!-- 右下の明るい透かしナンバー「05」 -->
-            <div style="position: absolute; right: 48px; bottom: 18px; font-size: 8.5em; font-weight: 900; color: rgba(217, 119, 6, 0.08); font-family: var(--font-mono); line-height: 0.85; z-index: 2; pointer-events: none; user-select: none; letter-spacing: -0.05em;">
-              05
-            </div>
+            <div class="sketchbook-watermark-num">05</div>
           </div>
         </div>
-
+        
+        <div class="part-intro-overview-wrap" style="display:none;"><span class="fragment part-intro-overview-step" data-part-overview="intro" data-part-id="5"></span></div>
         <aside class="notes">
           <strong>【スライド32：第5部 中扉】</strong><br>
           「アラームを解決したその先、患者さんの呼吸状態をどう評価し設定を調整していくか、第5部に入ります。酸素化（P/F比）と換気（pH・PaCO₂）の2つの軸で設定を最適化するロジックを見ていきましょう。」
@@ -6807,6 +7614,7 @@
           </div>
         </div>
 
+        <div class="part-outro-overview-wrap" style="display:none;"><span class="fragment part-outro-overview-step" data-part-overview="outro" data-part-id="5"></span></div>
         <div class="slide-footer-layer green" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge">CORE PILLARS</span>
           <span>この3本の柱が、これからのベッドサイド人工呼吸器管理における揺るぎない羅針盤になります。</span>
@@ -6822,106 +7630,47 @@
            【Slide 39】中扉⑥：第6部 総括・アンケート・付録（基準値リファレンス） ★白ベース＋2キャラ（動画/画像対応）
            ==================================================================== -->
       <section data-slide-num="39" data-part-id="6" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 PART 06 START｜総括・付録リファレンス" data-short-title="扉：第6部" data-background-color="#FFFFFF" class="light-cover-slide light-divider-slide" style="padding: 0 !important; overflow: hidden; height: 100%;">
-        <!-- 背景装飾：淡いバイタル波形SVG -->
-        <svg class="bg-wave-svg light" viewBox="0 0 400 200" fill="none">
-          <path class="scanning-wave" d="M 0 100 L 70 100 L 85 55 L 105 160 L 125 30 L 145 120 L 160 100 L 235 100 L 250 55 L 270 160 L 290 30 L 310 120 L 325 100 L 400 100"
-                stroke="#0D9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <!-- 白紙スケッチブックめくり動画ステージ ＋ HTMLクレヨン文字オーバーレイ -->
+        <div class="sketchbook-divider-stage">
+          <!-- 1. 背景：2人のキャラクターが白紙スケッチブックをめくる共通動画 ＆ 静止画フォールバック -->
+          <video class="sketchbook-turn-video" autoplay muted playsinline preload="auto"
+                 onloadeddata="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';"
+                 ontimeupdate="if(this.currentTime >= 9.6){ this.currentTime = 3.25; this.play().catch(function(){}); }"
+                 onclick="this.currentTime=1.1; this.playbackRate=1.5; this.play().catch(function(){});"
+                 title="クリックでページめくりを再生">
+            <source src="assets/part_turn_page.mp4" type="video/mp4">
+            <source src="assets/part06_char.mp4" type="video/mp4">
+          </video>
+          <img src="assets/frame_sketchbook_chars.png" alt="スケッチブックを開くCEと看護師" class="sketchbook-fallback-img">
 
-        <div style="display: grid; grid-template-columns: 44% 56%; height: 100%; position: relative; z-index: 2;">
-          
-          <!-- 左側：セクションタイトル情報（白ベース） -->
-          <div style="display: flex; flex-direction: column; justify-content: center; padding: 44px 28px 44px 56px; z-index: 3;">
-            <div data-id="tv-pill" style="display: inline-flex; align-items: center; gap: 8px; background: #F0FDFA; color: #0F766E; border: 1.5px solid #99F6E4; font-weight: 800; font-size: 0.82em; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px; width: fit-content; font-family: var(--font-mono);">
-              <i class="fa-solid fa-book-medical" style="color: #0D9488;"></i> PART 06｜SUMMARY &amp; APPENDIX
+          <!-- 2. 白紙スケッチブック紙面エリア（中央）の上に浮かび上がるHTMLクレヨン文字 -->
+          <div class="sketchbook-paper-overlay" style="--part-accent: #0D9488; --part-pill-bg: #F0FDFA; --part-pill-border: #5EEAD4;">
+            <div class="sketchbook-part-pill">
+              <i class="fa-solid fa-book-medical"></i> PART 06｜SUMMARY & APPENDIX
             </div>
 
-            <h2 data-id="tv-title" style="font-size: 2.35em; font-weight: 900; color: #0F172A; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.01em;">
-              総括・付録リファレンス
-            </h2>
+            <h2 class="sketchbook-part-title">総括・付録リファレンス</h2>
 
-            <p style="font-size: 1.05em; color: #475569; line-height: 1.5; margin-bottom: 18px; font-weight: 700;">
-              明日のベッドサイドで活かす臨床基準値ガイド
-            </p>
+            <p class="sketchbook-part-subtitle">明日のベッドサイドで活かす臨床基準値ガイド</p>
 
-            <!-- アクセントライン -->
-            <div style="width: 120px; height: 5px; background: linear-gradient(90deg, #0D9488, #38BDF8); border-radius: 3px; margin-bottom: 22px;"></div>
+            <div class="sketchbook-crayon-line"></div>
 
-            <!-- パート概要（白ベースカード） -->
-            <div data-id="tv-stage-1" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #0D9488; border-radius: 12px; padding: 14px 18px; max-width: 410px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
-              <div style="font-size: 0.72em; font-weight: 800; color: #0D9488; margin-bottom: 6px;">
-                <i class="fa-solid fa-check-double"></i> このパートのポイント
+            <div class="sketchbook-points-box">
+              <div class="sketchbook-points-heading">
+                <i class="fa-solid fa-pencil"></i> このパートのポイント
               </div>
-              <ul style="font-size: 0.76em; color: #1E293B; line-height: 1.75; margin: 0; padding-left: 1.2em; font-weight: 600;">
+              <ul class="sketchbook-points-list">
                 <li>本日の総まとめ ＆ 受講後アンケート（QRコード）</li>
                 <li>付録①：圧・換気量・リークパラメータの臨床基準値</li>
                 <li>付録②：肺力学（Raw / Cst / 時定数）と離脱指標（RSB）</li>
               </ul>
             </div>
-          </div>
 
-          <!-- 右側：2人のキャラクターステージ（背景と完全融合・境界線ゼロ） -->
-          <div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 36px 24px 12px;">
-            <!-- ステージ背景：動画の純白背景（multiply）と完全同化するシームレス・スポットライト -->
-            <div style="position: absolute; inset: 12px 16px 12px 0; background: radial-gradient(ellipse 72% 72% at 50% 52%, #FFFFFF 0%, #FFFFFF 62%, rgba(240, 253, 250, 0.55) 85%, transparent 100%); border: none; border-radius: 32px; z-index: 1; pointer-events: none;"></div>
-
-            <!-- 足元の接地シャドウ -->
-            <div style="position: absolute; bottom: 44px; width: 70%; height: 22px; background: radial-gradient(ellipse at center, rgba(100, 116, 139, 0.16) 0%, rgba(100, 116, 139, 0.05) 55%, transparent 78%); border-radius: 50%; pointer-events: none; z-index: 2;"></div>
-
-            <!-- 1. 動画（assets/part06_char.mp4 がある場合：自動ループ再生） -->
-            <video id="part06Video" class="part-char-video" autoplay loop muted playsinline preload="none"
-                   style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 4; display: none; cursor: pointer;"
-                   onloadedmetadata="activatePartVideo('part06')"
-                   onloadeddata="activatePartVideo('part06')"
-                   oncanplay="activatePartVideo('part06')"
-                   onclick="togglePartVideo('part06')">
-              <source src="assets/part06_char.mp4" type="video/mp4">
-              <source src="assets/part06 char.mp4" type="video/mp4">
-              <source src="assets/part06_char.mp4.mp4" type="video/mp4">
-              <source src="assets/part06 char.mp4.mp4" type="video/mp4">
-            </video>
-
-            <!-- クリック再生オーバーレイボタン -->
-            <div id="part06PlayBtn" onclick="togglePartVideo('part06')"
-                 style="display: none; position: absolute; top: 44px; right: 52px; z-index: 10; background: rgba(13, 148, 136, 0.94); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 18px; border-radius: 999px; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(13, 148, 136, 0.32); transition: all 0.2s;">
-              <i class="fa-solid fa-play" id="part06PlayIcon"></i> <span id="part06PlayText">クリックして再生</span>
-            </div>
-
-            <!-- 2. 静止画（assets/part06_char.png がある場合） -->
-            <img id="part06Img" src="assets/part06_char.png" alt="Part 6 CEと看護師"
-                 style="max-height: 490px; max-width: 92%; object-fit: contain; mix-blend-mode: multiply; border-radius: 20px; z-index: 3; display: none;"
-                 onload="var vid=document.getElementById('part06Video'); if(!vid || vid.readyState===0){ this.style.display='block'; var fb=document.getElementById('part06Fallback'); if(fb) fb.style.display='none'; }">
-
-            <!-- 3. 初期表示ステージ -->
-            <div id="part06Fallback" style="z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 88%; padding: 20px;">
-              <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <div style="background: #FFFFFF; border: 2px solid #5EEAD4; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(13, 148, 136, 0.08);">
-                  <img src="assets/icon ns.png" alt="看護師" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #0D9488; font-size: 0.88em; display: block; margin-bottom: 2px;">看護師</span>
-                    「基礎からアラーム対応、血ガスまでつながって、明日から自信を持って看られそう！」
-                  </div>
-                </div>
-                <div style="background: #FFFFFF; border: 2px solid #93C5FD; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);">
-                  <img src="assets/icon ce.png" alt="CE" style="width: 68px; height: 68px; object-fit: contain; flex-shrink: 0;">
-                  <div style="font-size: 0.78em; color: #1E293B; line-height: 1.5; font-weight: 700;">
-                    <span style="color: #2563EB; font-size: 0.88em; display: block; margin-bottom: 2px;">臨床工学技士（CE）</span>
-                    「最後に『基準値ガイド』をまとめました！困った時はいつでもCEに相談してね！」
-                  </div>
-                </div>
-              </div>
-              <div class="part-asset-hint" style="font-size: 0.65em; color: #64748B; background: rgba(255,255,255,0.85); padding: 4px 12px; border-radius: 999px; border: 1px dashed #CBD5E1;">
-                💡 <code>assets/part06_char.mp4</code>（動画）または <code>part06_char.png</code>（画像）で自動差替
-              </div>
-            </div>
-
-            <!-- 右下の明るい透かしナンバー「06」 -->
-            <div style="position: absolute; right: 48px; bottom: 18px; font-size: 8.5em; font-weight: 900; color: rgba(13, 148, 136, 0.08); font-family: var(--font-mono); line-height: 0.85; z-index: 2; pointer-events: none; user-select: none; letter-spacing: -0.05em;">
-              06
-            </div>
+            <div class="sketchbook-watermark-num">06</div>
           </div>
         </div>
-
+        
+        <div class="part-intro-overview-wrap" style="display:none;"><span class="fragment part-intro-overview-step" data-part-overview="intro" data-part-id="6"></span></div>
         <aside class="notes">
           <strong>【スライド39：第6部 中扉】</strong><br>
           「最後に第6部、本日の総まとめとアンケートのお願い、および明日からのベッドサイドですぐに使える付録の基準値リファレンスをご紹介します。」
@@ -7238,6 +7987,7 @@
           </div>
         </div>
 
+        <div class="part-outro-overview-wrap" style="display:none;"><span class="fragment part-outro-overview-step" data-part-overview="outro" data-part-id="6"></span></div>
         <div class="slide-footer-layer green" data-id="tv-footer">
           <span class="footer-badge" data-id="tv-footer-badge">REFERENCE 02</span>
           <span>気道抵抗（R：通りにくさ）、コンプライアンス（C：肺の柔らかさ）、RSB（＜105回/L：離脱指標）をベッドサイド評価に活用します。</span>
@@ -8635,173 +9385,1311 @@
       }
     }, true);
   /* === SEAMLESS_STUDIO_JS_START === */
-    (function initTvSeamlessDirector() {
-      const SLIDE_DIRECTOR = {"1":{"part":0,"mode":"divider","origin":"50% 50%"},"2":{"part":0,"mode":"zoom-in","origin":"50% 35%"},"3":{"part":1,"mode":"divider","origin":"25% 50%"},"4":{"part":1,"mode":"part-enter","origin":"50% 50%"},"5":{"part":1,"mode":"zoom-in","origin":"25% 50%"},"6":{"part":1,"mode":"pan-right","origin":"70% 50%"},"7":{"part":1,"mode":"pan-right","origin":"80% 50%"},"8":{"part":1,"mode":"zoom-in","origin":"50% 55%"},"9":{"part":1,"mode":"zoom-out","origin":"50% 50%"},"10":{"part":2,"mode":"divider","origin":"50% 50%"},"11":{"part":2,"mode":"part-enter","origin":"50% 50%"},"12":{"part":2,"mode":"zoom-in","origin":"28% 52%"},"13":{"part":2,"mode":"pan-right","origin":"60% 50%"},"14":{"part":2,"mode":"zoom-in","origin":"32% 52%"},"15":{"part":2,"mode":"zoom-out","origin":"50% 48%"},"16":{"part":3,"mode":"divider","origin":"50% 50%"},"17":{"part":3,"mode":"part-enter","origin":"50% 50%"},"18":{"part":3,"mode":"zoom-in","origin":"62% 55%"},"19":{"part":3,"mode":"pan-right","origin":"50% 48%"},"20":{"part":3,"mode":"zoom-in","origin":"50% 50%"},"21":{"part":3,"mode":"zoom-in","origin":"35% 58%"},"22":{"part":3,"mode":"pan-right","origin":"50% 45%"},"23":{"part":3,"mode":"zoom-in","origin":"60% 52%"},"24":{"part":3,"mode":"zoom-out","origin":"50% 50%"},"25":{"part":3,"mode":"zoom-in","origin":"55% 50%"},"26":{"part":4,"mode":"divider","origin":"50% 50%"},"27":{"part":4,"mode":"part-enter","origin":"50% 50%"},"28":{"part":4,"mode":"zoom-in","origin":"35% 55%"},"29":{"part":4,"mode":"pan-right","origin":"65% 55%"},"30":{"part":4,"mode":"pan-right","origin":"55% 55%"},"31":{"part":4,"mode":"zoom-out","origin":"50% 50%"},"32":{"part":5,"mode":"divider","origin":"50% 50%"},"33":{"part":5,"mode":"part-enter","origin":"50% 50%"},"34":{"part":5,"mode":"zoom-in","origin":"30% 50%"},"35":{"part":5,"mode":"pan-right","origin":"68% 50%"},"36":{"part":5,"mode":"zoom-in","origin":"50% 55%"},"37":{"part":5,"mode":"zoom-in","origin":"28% 55%"},"38":{"part":5,"mode":"zoom-out","origin":"50% 50%"},"39":{"part":6,"mode":"divider","origin":"50% 50%"},"40":{"part":6,"mode":"part-enter","origin":"50% 50%"},"41":{"part":6,"mode":"pan-right","origin":"50% 50%"},"42":{"part":6,"mode":"pan-right","origin":"65% 50%"}};
-      const DIVIDER_SLIDES = [1, 2, 3, 10, 16, 26, 32, 39];
+    (function initCanvasZoomDirector() {
+      const PART_BOARDS = {
+              "1": {
+                      "title": "PART 01｜人工呼吸器の二面性と呼吸生理（Slide 3〜9 全体キャンバス）",
+                      "hint": "🗺️ 第1部（Slide 3〜9）全体ボード俯瞰ビュー",
+                      "icon": "fa-lungs",
+                      "width": 5200,
+                      "height": 3100,
+                      "start": 3,
+                      "end": 9,
+                      "zones": [
+                              {
+                                      "x": 140,
+                                      "y": 1120,
+                                      "w": 1440,
+                                      "h": 1840,
+                                      "bg": "rgba(239, 246, 255, 0.55)",
+                                      "border": "#3B82F6",
+                                      "badgeBg": "#2563EB",
+                                      "icon": "fa-circle-plus",
+                                      "text": "光の側面：サポーター＆メリット（Slide 5・6）"
+                              },
+                              {
+                                      "x": 3620,
+                                      "y": 1120,
+                                      "w": 1440,
+                                      "h": 1840,
+                                      "bg": "rgba(255, 241, 242, 0.55)",
+                                      "border": "#F43F5E",
+                                      "badgeBg": "#E11D48",
+                                      "icon": "fa-triangle-exclamation",
+                                      "text": "影の側面：合併症＆循環抑制（Slide 7・8）"
+                              }
+                      ],
+                      "slides": {
+                              "3": {
+                                      "x": 1960,
+                                      "y": 230,
+                                      "label": "Slide 3｜第1部 中扉"
+                              },
+                              "4": {
+                                      "x": 1960,
+                                      "y": 1200,
+                                      "label": "Slide 4｜問いかけ：良いもの？悪いもの？"
+                              },
+                              "5": {
+                                      "x": 220,
+                                      "y": 1200,
+                                      "label": "Slide 5｜良きサポーターの役割"
+                              },
+                              "6": {
+                                      "x": 220,
+                                      "y": 2160,
+                                      "label": "Slide 6｜生体への3大メリット"
+                              },
+                              "7": {
+                                      "x": 3700,
+                                      "y": 1200,
+                                      "label": "Slide 7｜4大合併症・デメリット"
+                              },
+                              "8": {
+                                      "x": 3700,
+                                      "y": 2160,
+                                      "label": "Slide 8｜自然呼吸(陰圧) vs 人工呼吸(陽圧)"
+                              },
+                              "9": {
+                                      "x": 1960,
+                                      "y": 2160,
+                                      "label": "Slide 9｜第1部まとめ（天秤の結論）"
+                              }
+                      },
+                      "routes": [
+                              {
+                                      "d": "M 2600 960 L 2600 1190",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 1950 1560 L 1510 1560",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 860 1930 L 860 2150",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 3250 1560 L 3690 1560",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 4340 1930 L 4340 2150",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 1510 2520 L 1950 2520",
+                                      "color": "green"
+                              },
+                              {
+                                      "d": "M 3690 2520 L 3250 2520",
+                                      "color": "green"
+                              }
+                      ]
+              },
+              "2": {
+                      "title": "PART 02｜機器安全と使用中点検（Slide 10〜15 全体キャンバス）",
+                      "hint": "🗺️ 第2部（Slide 10〜15）全体ボード俯瞰ビュー",
+                      "icon": "fa-clipboard-check",
+                      "width": 5200,
+                      "height": 2260,
+                      "start": 10,
+                      "end": 15,
+                      "zones": [
+                              {
+                                      "x": 140,
+                                      "y": 220,
+                                      "w": 4920,
+                                      "h": 860,
+                                      "bg": "rgba(236, 253, 245, 0.55)",
+                                      "border": "#10B981",
+                                      "badgeBg": "#059669",
+                                      "icon": "fa-plug",
+                                      "text": "始業・ハードウェア安全：必須7項目 ＆ 電源・ガス配管（Slide 10〜12）"
+                              },
+                              {
+                                      "x": 140,
+                                      "y": 1200,
+                                      "w": 4920,
+                                      "h": 860,
+                                      "bg": "rgba(239, 246, 255, 0.55)",
+                                      "border": "#3B82F6",
+                                      "badgeBg": "#2563EB",
+                                      "icon": "fa-stethoscope",
+                                      "text": "ベッドサイド実機点検：回路・人工鼻 ➔ カフ圧 ➔ 画面3点確認（Slide 13〜15）"
+                              }
+                      ],
+                      "slides": {
+                              "10": {
+                                      "x": 220,
+                                      "y": 290,
+                                      "label": "Slide 10｜第2部 中扉"
+                              },
+                              "11": {
+                                      "x": 1960,
+                                      "y": 290,
+                                      "label": "Slide 11｜必須7項目チェックリスト"
+                              },
+                              "12": {
+                                      "x": 3700,
+                                      "y": 290,
+                                      "label": "Slide 12｜①電源（赤・緑）とガス配管"
+                              },
+                              "13": {
+                                      "x": 220,
+                                      "y": 1270,
+                                      "label": "Slide 13｜②-A 回路構造と人工鼻（85mL）"
+                              },
+                              "14": {
+                                      "x": 1960,
+                                      "y": 1270,
+                                      "label": "Slide 14｜②-B カフ圧管理（25〜30）"
+                              },
+                              "15": {
+                                      "x": 3700,
+                                      "y": 1270,
+                                      "label": "Slide 15｜③画面トリプルチェック"
+                              }
+                      },
+                      "routes": [
+                              {
+                                      "d": "M 1510 650 L 1950 650",
+                                      "color": "green"
+                              },
+                              {
+                                      "d": "M 3250 650 L 3690 650",
+                                      "color": "green"
+                              },
+                              {
+                                      "d": "M 4340 1020 L 4340 1140 L 860 1140 L 860 1260",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 1510 1630 L 1950 1630",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 3250 1630 L 3690 1630",
+                                      "color": "blue"
+                              }
+                      ]
+              },
+              "3": {
+                      "title": "PART 03｜換気モードと実機画面（Slide 16〜25 全体キャンバス）",
+                      "hint": "🗺️ 第3部（Slide 16〜25）全体ボード俯瞰ビュー",
+                      "icon": "fa-wave-square",
+                      "width": 6800,
+                      "height": 3140,
+                      "start": 16,
+                      "end": 25,
+                      "zones": [
+                              {
+                                      "x": 140,
+                                      "y": 220,
+                                      "w": 6520,
+                                      "h": 860,
+                                      "bg": "rgba(238, 242, 255, 0.52)",
+                                      "border": "#6366F1",
+                                      "badgeBg": "#4F46E5",
+                                      "icon": "fa-sliders",
+                                      "text": "送気規定・基本モード：VCV vs PCV ➔ PEEP光と影 ➔ A/C原理（Slide 16〜19）"
+                              },
+                              {
+                                      "x": 140,
+                                      "y": 1180,
+                                      "w": 6520,
+                                      "h": 1810,
+                                      "bg": "rgba(239, 246, 255, 0.52)",
+                                      "border": "#2563EB",
+                                      "badgeBg": "#1D4ED8",
+                                      "icon": "fa-display",
+                                      "text": "Savina 300 実機グラフィック解読 ＆ 自発呼吸モード（CPAP・PSV・無呼吸バックアップ）（Slide 20〜25）"
+                              }
+                      ],
+                      "slides": {
+                              "16": {
+                                      "x": 220,
+                                      "y": 290,
+                                      "label": "Slide 16｜第3部 中扉"
+                              },
+                              "17": {
+                                      "x": 1920,
+                                      "y": 290,
+                                      "label": "Slide 17｜従量式(VCV) vs 従圧式(PCV)"
+                              },
+                              "18": {
+                                      "x": 3620,
+                                      "y": 290,
+                                      "label": "Slide 18｜PEEPの光と影"
+                              },
+                              "19": {
+                                      "x": 5320,
+                                      "y": 290,
+                                      "label": "Slide 19｜A/C（CMV vs AV）の波形"
+                              },
+                              "20": {
+                                      "x": 220,
+                                      "y": 1250,
+                                      "label": "Slide 20｜Savina 300：PC-AC全体"
+                              },
+                              "21": {
+                                      "x": 1920,
+                                      "y": 1250,
+                                      "label": "Slide 21｜PC-AC 実機画面解読"
+                              },
+                              "22": {
+                                      "x": 3620,
+                                      "y": 1250,
+                                      "label": "Slide 22｜CPAP（持続気道陽圧）"
+                              },
+                              "23": {
+                                      "x": 5320,
+                                      "y": 1250,
+                                      "label": "Slide 23｜PSV＆終了基準（25%）"
+                              },
+                              "24": {
+                                      "x": 1920,
+                                      "y": 2210,
+                                      "label": "Slide 24｜Savina 300：SPN-CPAP/PS"
+                              },
+                              "25": {
+                                      "x": 3620,
+                                      "y": 2210,
+                                      "label": "Slide 25｜アプニア換気（無呼吸対策）"
+                              }
+                      },
+                      "routes": [
+                              {
+                                      "d": "M 1510 650 L 1910 650",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 3210 650 L 3610 650",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 4910 650 L 5310 650",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 5960 1020 L 5960 1130 L 860 1130 L 860 1240",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 1510 1610 L 1910 1610",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 3210 1610 L 3610 1610",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 4910 1610 L 5310 1610",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 5960 1980 L 5960 2090 L 2560 2090 L 2560 2200",
+                                      "color": "green"
+                              },
+                              {
+                                      "d": "M 3210 2570 L 3610 2570",
+                                      "color": "red"
+                              }
+                      ]
+              },
+              "4": {
+                      "title": "PART 04｜アラーム対応の原則（Slide 26〜31 全体キャンバス）",
+                      "hint": "🗺️ 第4部（Slide 26〜31）全体ボード俯瞰ビュー",
+                      "icon": "fa-bell",
+                      "width": 5200,
+                      "height": 2260,
+                      "start": 26,
+                      "end": 31,
+                      "zones": [
+                              {
+                                      "x": 140,
+                                      "y": 220,
+                                      "w": 4920,
+                                      "h": 860,
+                                      "bg": "rgba(255, 241, 242, 0.55)",
+                                      "border": "#F43F5E",
+                                      "badgeBg": "#E11D48",
+                                      "icon": "fa-arrows-left-right",
+                                      "text": "原則：消音より先に「患者」と「回路」を同時評価（Slide 26〜28）"
+                              },
+                              {
+                                      "x": 140,
+                                      "y": 1200,
+                                      "w": 4920,
+                                      "h": 860,
+                                      "bg": "rgba(255, 247, 237, 0.55)",
+                                      "border": "#F97316",
+                                      "badgeBg": "#EA580C",
+                                      "icon": "fa-list-check",
+                                      "text": "主要アラームの原因特定 ＆ アクション早見マトリックス（Slide 29〜31）"
+                              }
+                      ],
+                      "slides": {
+                              "26": {
+                                      "x": 220,
+                                      "y": 290,
+                                      "label": "Slide 26｜第4部 中扉"
+                              },
+                              "27": {
+                                      "x": 1960,
+                                      "y": 290,
+                                      "label": "Slide 27｜デュアル・アセスメント"
+                              },
+                              "28": {
+                                      "x": 3700,
+                                      "y": 290,
+                                      "label": "Slide 28｜分時換気量(MV)アラーム"
+                              },
+                              "29": {
+                                      "x": 220,
+                                      "y": 1270,
+                                      "label": "Slide 29｜気道内圧アラーム"
+                              },
+                              "30": {
+                                      "x": 1960,
+                                      "y": 1270,
+                                      "label": "Slide 30｜無呼吸・頻呼吸アラーム"
+                              },
+                              "31": {
+                                      "x": 3700,
+                                      "y": 1270,
+                                      "label": "Slide 31｜全アラーム早見マトリックス"
+                              }
+                      },
+                      "routes": [
+                              {
+                                      "d": "M 1510 650 L 1950 650",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 3250 650 L 3690 650",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 4340 1020 L 4340 1140 L 860 1140 L 860 1260",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 1510 1630 L 1950 1630",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 3250 1630 L 3690 1630",
+                                      "color": "green"
+                              }
+                      ]
+              },
+              "5": {
+                      "title": "PART 05｜血液ガスと設定調整（Slide 32〜38 全体キャンバス）",
+                      "hint": "🗺️ 第5部（Slide 32〜38）全体ボード俯瞰ビュー",
+                      "icon": "fa-scale-balanced",
+                      "width": 5200,
+                      "height": 3100,
+                      "start": 32,
+                      "end": 38,
+                      "zones": [
+                              {
+                                      "x": 140,
+                                      "y": 1120,
+                                      "w": 3160,
+                                      "h": 860,
+                                      "bg": "rgba(239, 246, 255, 0.55)",
+                                      "border": "#3B82F6",
+                                      "badgeBg": "#2563EB",
+                                      "icon": "fa-lungs",
+                                      "text": "酸素化軸：フィジカル統合 ➔ P/F比 ＆ PEEP/FiO₂調整（Slide 33・34）"
+                              },
+                              {
+                                      "x": 140,
+                                      "y": 2080,
+                                      "w": 4920,
+                                      "h": 880,
+                                      "bg": "rgba(255, 251, 235, 0.55)",
+                                      "border": "#F59E0B",
+                                      "badgeBg": "#D97706",
+                                      "icon": "fa-scale-balanced",
+                                      "text": "換気・酸塩基軸：pHシーソーモデル ➔ PaCO₂目標設定（Slide 35〜38）"
+                              }
+                      ],
+                      "slides": {
+                              "32": {
+                                      "x": 1960,
+                                      "y": 230,
+                                      "label": "Slide 32｜第5部 中扉"
+                              },
+                              "33": {
+                                      "x": 220,
+                                      "y": 1200,
+                                      "label": "Slide 33｜フィジカル×データ統合評価"
+                              },
+                              "34": {
+                                      "x": 1960,
+                                      "y": 1200,
+                                      "label": "Slide 34｜P/F比とPEEP・FiO₂調整"
+                              },
+                              "35": {
+                                      "x": 3700,
+                                      "y": 1200,
+                                      "label": "Slide 35｜血液ガスとpHバランス"
+                              },
+                              "36": {
+                                      "x": 220,
+                                      "y": 2160,
+                                      "label": "Slide 36｜pHシーソーモデル（シミュレーター）"
+                              },
+                              "37": {
+                                      "x": 1960,
+                                      "y": 2160,
+                                      "label": "Slide 37｜PaCO₂目標の換気量調整"
+                              },
+                              "38": {
+                                      "x": 3700,
+                                      "y": 2160,
+                                      "label": "Slide 38｜Key Takeaways（3大鉄則）"
+                              }
+                      },
+                      "routes": [
+                              {
+                                      "d": "M 1950 590 L 860 590 L 860 1190",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 1510 1560 L 1950 1560",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 3250 1560 L 3690 1560",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 4340 1930 L 4340 2040 L 860 2040 L 860 2150",
+                                      "color": "red"
+                              },
+                              {
+                                      "d": "M 1510 2520 L 1950 2520",
+                                      "color": "green"
+                              },
+                              {
+                                      "d": "M 3250 2520 L 3690 2520",
+                                      "color": "green"
+                              }
+                      ]
+              },
+              "6": {
+                      "title": "PART 06｜総括・付録リファレンス（Slide 39〜42 全体キャンバス）",
+                      "hint": "🗺️ 第6部（Slide 39〜42）全体ボード俯瞰ビュー",
+                      "icon": "fa-book-medical",
+                      "width": 3600,
+                      "height": 2260,
+                      "start": 39,
+                      "end": 42,
+                      "zones": [
+                              {
+                                      "x": 140,
+                                      "y": 220,
+                                      "w": 3320,
+                                      "h": 860,
+                                      "bg": "rgba(240, 253, 250, 0.55)",
+                                      "border": "#14B8A6",
+                                      "badgeBg": "#0D9488",
+                                      "icon": "fa-award",
+                                      "text": "勉強会総括 ＆ 受講後アンケート（Slide 39・40）"
+                              },
+                              {
+                                      "x": 140,
+                                      "y": 1200,
+                                      "w": 3320,
+                                      "h": 860,
+                                      "bg": "rgba(239, 246, 255, 0.55)",
+                                      "border": "#3B82F6",
+                                      "badgeBg": "#2563EB",
+                                      "icon": "fa-calculator",
+                                      "text": "ベッドサイド実用計算機 ＆ 臨床基準値リファレンス（Slide 41・42）"
+                              }
+                      ],
+                      "slides": {
+                              "39": {
+                                      "x": 240,
+                                      "y": 290,
+                                      "label": "Slide 39｜第6部 中扉"
+                              },
+                              "40": {
+                                      "x": 2080,
+                                      "y": 290,
+                                      "label": "Slide 40｜まとめ＆アンケートQR"
+                              },
+                              "41": {
+                                      "x": 240,
+                                      "y": 1270,
+                                      "label": "Slide 41｜基本設定基準値＆PBW計算機"
+                              },
+                              "42": {
+                                      "x": 2080,
+                                      "y": 1270,
+                                      "label": "Slide 42｜肺力学・離脱指標＆RSB計算機"
+                              }
+                      },
+                      "routes": [
+                              {
+                                      "d": "M 1530 650 L 2070 650",
+                                      "color": "green"
+                              },
+                              {
+                                      "d": "M 2720 1020 L 2720 1140 L 880 1140 L 880 1260",
+                                      "color": "blue"
+                              },
+                              {
+                                      "d": "M 1530 1630 L 2070 1630",
+                                      "color": "blue"
+                              }
+                      ]
+              }
+      };
 
       let prevSlideIdx = 0;
-      let leaveCleanupTimer = null;
+      let currentBuiltPart = null;
+      let activeBoardPart = null;
+      let flightAnim = null;
+      let flightTimer = null;
 
-      function clearCameraClasses(slideEl) {
-        if (!slideEl) return;
-        slideEl.classList.remove(
-          'tv-cam-leaving',
-          'tv-keep-studio-frame',
-          'tv-studio-swap',
-          'tv-part-opening',
-          'tv-divider-opening'
-        );
-        const layer = slideEl.querySelector('.slide-content-layer');
-        if (layer) {
-          layer.classList.remove(
-            'tv-leave-zoom-in', 'tv-enter-zoom-in',
-            'tv-leave-pan-right', 'tv-enter-pan-right',
-            'tv-leave-pan-left', 'tv-enter-pan-left',
-            'tv-leave-zoom-out', 'tv-enter-zoom-out'
-          );
+      function getPartBySlideNum(sNum) {
+        for (const pKey of Object.keys(PART_BOARDS)) {
+          const cfg = PART_BOARDS[pKey];
+          if (sNum >= cfg.start && sNum <= cfg.end) return Number(pKey);
+        }
+        return 0;
+      }
+
+      function syncCameraFrameScale() {
+        const frame = document.getElementById('part1CameraFrame');
+        const slidesEl = document.querySelector('.reveal .slides');
+        if (!frame) return;
+        if (slidesEl) {
+          const rect = slidesEl.getBoundingClientRect();
+          if (rect.width > 0) {
+            const s = rect.width / 1280;
+            frame.style.transform = 'scale(' + s.toFixed(5) + ')';
+            return;
+          }
+        }
+        const scaleX = (window.innerWidth * 0.94) / 1280;
+        const scaleY = (window.innerHeight * 0.94) / 720;
+        const s = Math.min(scaleX, scaleY);
+        frame.style.transform = 'scale(' + s + ')';
+      }
+
+      // 指定パート（1〜6）の巨大画用紙ボードを動的に構築
+      function buildPartGiantBoard(partId) {
+        const cfg = PART_BOARDS[partId];
+        if (!cfg) return;
+        if (currentBuiltPart === partId) return;
+
+        const board = document.getElementById('part1GiantBoard');
+        const bannerTitle = document.getElementById('boardBannerTitle');
+        const zonesWrap = document.getElementById('boardZonesContainer');
+        const routesSvg = document.getElementById('boardRoutesSvg');
+        const container = document.getElementById('part1TilesContainer');
+        const hintTitle = document.getElementById('boardOverviewHintTitle');
+        if (!board || !zonesWrap || !routesSvg || !container) return;
+
+        board.style.width = cfg.width + 'px';
+        board.style.height = cfg.height + 'px';
+
+        if (bannerTitle) {
+          bannerTitle.innerHTML = '<i class="fa-solid ' + cfg.icon + '"></i><span>' + cfg.title + '</span>';
+        }
+        if (hintTitle) {
+          hintTitle.textContent = cfg.hint;
+        }
+
+        // ゾーン枠を描画（縦縞フェルトが透ける控えめな囲み＋マステ風ラベル）
+        zonesWrap.innerHTML = '';
+        const softBorderMap = {
+          '#3B82F6': 'rgba(118, 146, 178, 0.55)',
+          '#F43F5E': 'rgba(196, 128, 128, 0.55)',
+          '#10B981': 'rgba(116, 158, 134, 0.55)',
+          '#F59E0B': 'rgba(198, 160, 102, 0.55)',
+          '#8B5CF6': 'rgba(150, 134, 176, 0.55)'
+        };
+        const washiBadgeMap = {
+          '#2563EB': 'rgba(186, 212, 232, 0.86)',
+          '#E11D48': 'rgba(242, 198, 196, 0.86)',
+          '#059669': 'rgba(188, 222, 200, 0.86)',
+          '#D97706': 'rgba(246, 224, 174, 0.86)',
+          '#7C3AED': 'rgba(214, 202, 234, 0.86)'
+        };
+        (cfg.zones || []).forEach(function(z) {
+          const zDiv = document.createElement('div');
+          zDiv.className = 'p1-zone-box';
+          zDiv.style.left = z.x + 'px';
+          zDiv.style.top = z.y + 'px';
+          zDiv.style.width = z.w + 'px';
+          zDiv.style.height = z.h + 'px';
+          zDiv.style.background = 'rgba(253, 251, 247, 0.22)';
+          zDiv.style.border = '3px dashed ' + (softBorderMap[z.border] || 'rgba(138, 118, 96, 0.48)');
+          zDiv.style.borderRadius = '24px';
+
+          const badge = document.createElement('span');
+          badge.className = 'p1-zone-badge';
+          badge.style.background = washiBadgeMap[z.badgeBg] || 'rgba(242, 228, 198, 0.88)';
+          badge.innerHTML = '<i class="fa-solid ' + z.icon + '" style="opacity:0.78; margin-right:6px;"></i> ' + z.text;
+          zDiv.appendChild(badge);
+          zonesWrap.appendChild(zDiv);
+        });
+
+        // 細く柔らかな手書き風破線（麻紐・ストリング風コネクタ）を描画
+        routesSvg.setAttribute('viewBox', '0 0 ' + cfg.width + ' ' + cfg.height);
+        routesSvg.setAttribute('width', String(cfg.width));
+        routesSvg.setAttribute('height', String(cfg.height));
+
+        const colorMap = {
+          blue:  { stroke: '#7C6D5D', marker: 'p1BoardArrowTaupe' },
+          red:   { stroke: '#A86E62', marker: 'p1BoardArrowTerracotta' },
+          green: { stroke: '#6A8773', marker: 'p1BoardArrowSage' }
+        };
+        const pathsHtml = (cfg.routes || []).map(function(rt) {
+          const c = colorMap[rt.color] || colorMap.blue;
+          return '<path class="crayon-route-path" d="' + rt.d + '" fill="none" stroke="' + c.stroke + '" stroke-width="4.5" stroke-opacity="0.62" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 10" marker-end="url(#' + c.marker + ')"/>';
+        }).join('');
+
+        routesSvg.innerHTML =
+          '<defs>' +
+            '<marker id="p1BoardArrowTaupe" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M1,1 L7,4 L1,7" fill="none" stroke="#7C6D5D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>' +
+            '<marker id="p1BoardArrowTerracotta" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M1,1 L7,4 L1,7" fill="none" stroke="#A86E62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>' +
+            '<marker id="p1BoardArrowSage" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M1,1 L7,4 L1,7" fill="none" stroke="#6A8773" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>' +
+          '</defs>' + pathsHtml;
+
+        // クラフト雑貨あしらい＋案1：ポラロイド風ミニ動画カード（1パートにつき1枚）
+        const CRAFT_PROPS_BY_PART = {
+          "1": { dot:{x:860,y:250,rot:-4}, memo:{x:1150,y:330,rot:5,text:"POINT!<br>陽圧と陰圧の<br>バランスを見る"}, sticky:{x:3820,y:280,rot:-4,cls:"sage",text:"確認メモ：<br>メリットと合併症"}, letters:{x:880,y:700,rot:-2,word:[["C","#E5989B"],["A","#E9C46A"],["R","#84A98C"],["E","#8FA8C8"]]} },
+          "2": { dot:{x:4780,y:1060,rot:4}, memo:{x:120,y:1060,rot:-4,text:"始業点検<br>7項目を確実に"}, sticky:null, letters:null },
+          "3": { dot:{x:940,y:2360,rot:-3}, memo:{x:5060,y:2380,rot:4,text:"モードの理解：<br>量規定 vs 圧規定"}, sticky:{x:1240,y:2660,rot:3,cls:"blush",text:"画面波形も<br>チェック！"}, letters:{x:960,y:2810,rot:-2,word:[["F","#E5989B"],["L","#E9C46A"],["O","#84A98C"],["W","#8FA8C8"]]} },
+          "4": { dot:{x:4780,y:1060,rot:3}, memo:{x:120,y:1060,rot:-3,text:"アラームは<br>患者からのサイン"}, sticky:null, letters:null },
+          "5": { dot:{x:860,y:260,rot:-4}, memo:{x:1150,y:340,rot:4,text:"人工呼吸器からの<br>卒業を見極める"}, sticky:{x:3820,y:290,rot:-4,cls:"",text:"SBT・抜管基準<br>を確認"}, letters:{x:880,y:710,rot:-2,word:[["S","#E5989B"],["A","#E9C46A"],["F","#84A98C"],["E","#8FA8C8"]]} },
+          "6": { dot:{x:160,y:940,rot:-5}, memo:{x:3160,y:960,rot:4,text:"今日の学びを<br>ベッドサイドへ"}, sticky:null, letters:null }
+        };
+        const POLAROID_VIDEO_BY_PART = {
+          "1": { x: 240,  y: 250,  w: 540, rot: -3.5, video: "assets/part01_char.mp4", poster: "assets/part01_char.png", caption: "PART 01｜二面性と呼吸生理" },
+          "2": { x: 1535, y: 380,  w: 390, rot: 2.8,  video: "assets/part02_char.mp4", poster: "assets/part02_char.png", caption: "PART 02｜機器安全と点検" },
+          "3": { x: 280,  y: 2260, w: 540, rot: -2.8, video: "assets/part03_char.mp4", poster: "assets/part03_char.png", caption: "PART 03｜換気モードと実機" },
+          "4": { x: 1535, y: 380,  w: 390, rot: -2.5, video: "assets/part04_char.mp4", poster: "assets/part04_char.png", caption: "PART 04｜アラーム対応" },
+          "5": { x: 240,  y: 250,  w: 540, rot: -3.2, video: "assets/part05_char.mp4", poster: "assets/part05_char.png", caption: "PART 05｜ウィーニング" },
+          "6": { x: 1580, y: 360,  w: 440, rot: 2.5,  video: "assets/part06_char.mp4", poster: "assets/part06_char.png", caption: "PART 06｜まとめ・実践へ" }
+        };
+        const stickersWrap = document.getElementById('boardStickersContainer');
+        if (stickersWrap) {
+          stickersWrap.innerHTML = '';
+          const cp = CRAFT_PROPS_BY_PART[partId];
+          if (cp && cp.dot) {
+            const dotEl = document.createElement('div');
+            dotEl.className = 'craft-dot-sheet';
+            dotEl.style.left = cp.dot.x + 'px';
+            dotEl.style.top = cp.dot.y + 'px';
+            dotEl.style.transform = 'rotate(' + cp.dot.rot + 'deg)';
+            const dotColors = ['#D8CFC4','#C9B8A6','#B5C4B1','#9BB1BD','#D9B4AD','#E3C99F','#C3BAC8','#A9BDB2','#E0CFC3','#B8C2CC','#C8C4B6','#D4B5B0'];
+            dotEl.innerHTML = dotColors.map(function(dc) {
+              return '<span class="craft-dot-circle" style="background:' + dc + ';"></span>';
+            }).join('');
+            stickersWrap.appendChild(dotEl);
+          }
+          if (cp && cp.memo) {
+            const memoEl = document.createElement('div');
+            memoEl.className = 'craft-kraft-memo';
+            memoEl.style.left = cp.memo.x + 'px';
+            memoEl.style.top = cp.memo.y + 'px';
+            memoEl.style.transform = 'rotate(' + cp.memo.rot + 'deg)';
+            memoEl.innerHTML = cp.memo.text;
+            stickersWrap.appendChild(memoEl);
+          }
+          if (cp && cp.sticky) {
+            const stEl = document.createElement('div');
+            stEl.className = 'craft-sticky-note ' + (cp.sticky.cls || '');
+            stEl.style.left = cp.sticky.x + 'px';
+            stEl.style.top = cp.sticky.y + 'px';
+            stEl.style.transform = 'rotate(' + cp.sticky.rot + 'deg)';
+            stEl.innerHTML = cp.sticky.text;
+            stickersWrap.appendChild(stEl);
+          }
+          if (cp && cp.letters) {
+            const letEl = document.createElement('div');
+            letEl.className = 'craft-block-letters';
+            letEl.style.left = cp.letters.x + 'px';
+            letEl.style.top = cp.letters.y + 'px';
+            letEl.style.transform = 'rotate(' + cp.letters.rot + 'deg)';
+            letEl.innerHTML = cp.letters.word.map(function(pair) {
+              return '<span style="color:' + pair[1] + ';">' + pair[0] + '</span>';
+            }).join('');
+            stickersWrap.appendChild(letEl);
+          }
+          const pv = POLAROID_VIDEO_BY_PART[partId];
+          if (pv) {
+            const pCard = document.createElement('div');
+            pCard.className = 'board-polaroid-video-card';
+            pCard.style.left = pv.x + 'px';
+            pCard.style.top = pv.y + 'px';
+            pCard.style.width = pv.w + 'px';
+            pCard.style.transform = 'rotate(' + pv.rot + 'deg)';
+            pCard.title = 'クリックしてこの部の中扉へズームイン';
+
+            const vid = document.createElement('video');
+            vid.src = pv.video;
+            vid.poster = pv.poster;
+            vid.autoplay = true;
+            vid.loop = true;
+            vid.muted = true;
+            vid.playsInline = true;
+            pCard.appendChild(vid);
+
+            const cap = document.createElement('div');
+            cap.className = 'board-polaroid-caption';
+            cap.textContent = pv.caption;
+            pCard.appendChild(cap);
+
+            pCard.addEventListener('click', function() {
+              const vp = document.getElementById('part1WorldViewport');
+              if (!vp || !vp.classList.contains('interactive-overview')) return;
+              zoomFromOverviewToSlide(partId, cfg.start);
+            });
+            stickersWrap.appendChild(pCard);
+          }
+        }
+
+        // 各スライドを1280x720のファインペーパー・ポスターカードとして配置
+        let tileOrderIdx = 0;
+        container.innerHTML = '';
+        Object.keys(cfg.slides).forEach(function(key) {
+          const sNum = Number(key);
+          const pos = cfg.slides[sNum];
+          const origSec = document.querySelector('.reveal .slides > section[data-slide-num="' + sNum + '"]');
+          if (!origSec) return;
+
+          const tile = document.createElement('div');
+          tile.className = 'p1-slide-tile';
+          tile.setAttribute('data-tile-slide', String(sNum));
+          tile.style.left = pos.x + 'px';
+          tile.style.top = pos.y + 'px';
+
+          tileOrderIdx++;
+          const pinKind = tileOrderIdx % 3;
+          if (pinKind === 1) {
+            // カラフルな丸い押しピン（画鋲）
+            const pinPalettes = [
+              { top: '#E8998D', body: '#C96D60' },
+              { top: '#94B8A3', body: '#668E77' },
+              { top: '#E7C873', body: '#C4A042' },
+              { top: '#8FB2CE', body: '#5D84A3' }
+            ];
+            const pp = pinPalettes[tileOrderIdx % pinPalettes.length];
+            const pinSvg = document.createElement('div');
+            pinSvg.className = 'photo-pin-decor';
+            pinSvg.innerHTML = '<svg width="46" height="50" viewBox="0 0 46 50"><ellipse cx="23" cy="43" rx="6" ry="3" fill="rgba(45,32,20,0.28)"/><line x1="23" y1="27" x2="23" y2="42" stroke="#9CA3AF" stroke-width="3" stroke-linecap="round"/><circle cx="23" cy="18" r="14" fill="' + pp.body + '"/><circle cx="22" cy="15" r="11" fill="' + pp.top + '"/><ellipse cx="18" cy="11" rx="4.5" ry="2.2" fill="rgba(255,255,255,0.58)" transform="rotate(-20 18 11)"/></svg>';
+            tile.appendChild(pinSvg);
+          } else if (pinKind === 2) {
+            // シルバーのゼムクリップ（上部中央）
+            const clipSvg = document.createElement('div');
+            clipSvg.className = 'photo-pin-decor';
+            clipSvg.innerHTML = '<svg width="40" height="66" viewBox="0 0 40 66"><path d="M13,52 L13,18 C13,9 27,9 27,18 L27,46 C27,52 17,52 17,46 L17,22 C17,18 23,18 23,22 L23,44" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/><path d="M13,52 L13,18 C13,9 27,9 27,18 L27,46 C27,52 17,52 17,46 L17,22" fill="none" stroke="#E2E8F0" stroke-width="1.6" stroke-linecap="round"/></svg>';
+            tile.appendChild(clipSvg);
+          } else {
+            // 半透明のマスキングテープ（上部中央）
+            const washiColors = [
+              'rgba(245, 219, 152, 0.78)',
+              'rgba(186, 214, 198, 0.78)',
+              'rgba(242, 198, 196, 0.78)',
+              'rgba(191, 214, 232, 0.78)'
+            ];
+            const wTape = document.createElement('div');
+            wTape.className = 'photo-washi-center';
+            wTape.style.background = washiColors[tileOrderIdx % washiColors.length];
+            tile.appendChild(wTape);
+          }
+          const tag = document.createElement('div');
+          tag.className = 'p1-tile-step-tag';
+          tag.textContent = pos.label;
+          tile.appendChild(tag);
+
+          const clonedSec = origSec.cloneNode(true);
+          clonedSec.classList.remove('s8-is-zoomed', 'agenda-is-zoomed', 'present', 'past', 'future');
+          clonedSec.querySelectorAll('aside.notes, .notes, .part-intro-overview-wrap, .part-outro-overview-wrap, .slide8-cam-triggers').forEach(function(n) {
+            n.remove();
+          });
+          clonedSec.querySelectorAll('.s8-active-card, .cam-active-card').forEach(function(el) {
+            el.classList.remove('s8-active-card', 'cam-active-card');
+          });
+          const contentFirst = clonedSec.querySelector('.slide-content-layer > div:first-child');
+          if (contentFirst) contentFirst.style.transform = 'none';
+          clonedSec.querySelectorAll('[id]').forEach(function(el) {
+            el.removeAttribute('id');
+          });
+          clonedSec.querySelectorAll('video, animate, animateMotion, animateTransform').forEach(function(v) {
+            v.remove();
+          });
+          const fallbackImg = clonedSec.querySelector('.sketchbook-fallback-img, img[src*="part0"]');
+          if (fallbackImg) fallbackImg.style.display = 'block';
+
+          tile.appendChild(clonedSec);
+
+          tile.addEventListener('click', function() {
+            const vp = document.getElementById('part1WorldViewport');
+            if (!vp || !vp.classList.contains('interactive-overview')) return;
+            zoomFromOverviewToSlide(partId, sNum);
+          });
+
+          container.appendChild(tile);
+        });
+
+        currentBuiltPart = partId;
+      }
+
+      function getTileCameraTransform(partId, sNum, scale) {
+        const cfg = PART_BOARDS[partId];
+        const pos = cfg && cfg.slides[sNum];
+        if (!pos) return 'translate3d(0px, 0px, 0px) scale(1)';
+        const sc = (typeof scale === 'number') ? scale : 1;
+        const cx = pos.x + 640;
+        const cy = pos.y + 360;
+        const tx = 640 - cx * sc;
+        const ty = 360 - cy * sc;
+        return 'translate3d(' + tx.toFixed(1) + 'px, ' + ty.toFixed(1) + 'px, 0px) scale(' + sc.toFixed(4) + ')';
+      }
+
+      function getFullBoardOverviewTransform(partId) {
+        const cfg = PART_BOARDS[partId];
+        if (!cfg) return 'translate3d(0px, 0px, 0px) scale(0.3)';
+        const sc = Math.min(1190 / cfg.width, 660 / cfg.height);
+        const tx = (1280 - cfg.width * sc) / 2;
+        const ty = (720 - cfg.height * sc) / 2 + 8;
+        return 'translate3d(' + tx.toFixed(1) + 'px, ' + ty.toFixed(1) + 'px, 0px) scale(' + sc.toFixed(4) + ')';
+      }
+
+      function highlightActiveTile(sNum) {
+        document.querySelectorAll('#part1TilesContainer .p1-slide-tile').forEach(function(t) {
+          t.classList.toggle('active-tile', Number(t.getAttribute('data-tile-slide')) === sNum);
+        });
+      }
+
+      // 同一パート内の移動：前のスライド(100%) ➔ 巨大画用紙の中間俯瞰へズームアウト移動 ➔ 次のスライド(100%)へズームイン！
+      function playPartCameraFlight(partId, fromNum, toNum, wasOverview) {
+        buildPartGiantBoard(partId);
+        syncCameraFrameScale();
+
+        const vp = document.getElementById('part1WorldViewport');
+        const board = document.getElementById('part1GiantBoard');
+        const cfg = PART_BOARDS[partId];
+        if (!vp || !board || !cfg) return;
+
+        if (flightAnim) { flightAnim.cancel(); flightAnim = null; }
+        if (flightTimer) { clearTimeout(flightTimer); flightTimer = null; }
+
+        activeBoardPart = partId;
+        vp.classList.remove('interactive-overview');
+        vp.classList.add('active');
+        highlightActiveTile(toNum);
+
+        if (wasOverview) {
+          const kfStart = getFullBoardOverviewTransform(partId);
+          const kfEnd   = getTileCameraTransform(partId, toNum, 1.0);
+          board.style.transform = kfStart;
+          flightAnim = board.animate([
+            { transform: kfStart },
+            { transform: kfEnd }
+          ], {
+            duration: 920,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            fill: 'forwards'
+          });
+          flightTimer = setTimeout(function() {
+            vp.classList.remove('active');
+            if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
+          }, 940);
+          return;
+        }
+
+        const posA = cfg.slides[fromNum];
+        const posB = cfg.slides[toNum];
+        if (!posA || !posB) {
+          vp.classList.remove('active');
+          if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
+          return;
+        }
+        const dist = Math.hypot((posB.x - posA.x), (posB.y - posA.y));
+        const baseOverviewScale = Math.min(1200 / cfg.width, 675 / cfg.height);
+        const midScale = dist > 2000 ? Math.max(baseOverviewScale * 1.08, 0.25) : Math.max(baseOverviewScale * 1.42, 0.40);
+        const midCx = (posA.x + posB.x) / 2 + 640;
+        const midCy = (posA.y + posB.y) / 2 + 360;
+        const midTx = 640 - midCx * midScale;
+        const midTy = 360 - midCy * midScale;
+
+        const kfStart = getTileCameraTransform(partId, fromNum, 1.0);
+        const kfMid   = 'translate3d(' + midTx.toFixed(1) + 'px, ' + midTy.toFixed(1) + 'px, 0px) scale(' + midScale.toFixed(4) + ')';
+        const kfEnd   = getTileCameraTransform(partId, toNum, 1.0);
+
+        board.style.transform = kfStart;
+        flightAnim = board.animate([
+          { transform: kfStart, offset: 0 },
+          { transform: kfMid,   offset: 0.46 },
+          { transform: kfEnd,   offset: 1 }
+        ], {
+          duration: 1120,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          fill: 'forwards'
+        });
+
+        flightTimer = setTimeout(function() {
+          vp.classList.remove('active');
+          if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
+        }, 1140);
+      }
+
+      function zoomOutToPartFullBoard(partId, fromNum) {
+        buildPartGiantBoard(partId);
+        syncCameraFrameScale();
+
+        const vp = document.getElementById('part1WorldViewport');
+        const board = document.getElementById('part1GiantBoard');
+        if (!vp || !board) return;
+
+        if (flightAnim) flightAnim.cancel();
+        if (flightTimer) clearTimeout(flightTimer);
+
+        activeBoardPart = partId;
+        highlightActiveTile(fromNum || 0);
+        vp.classList.add('active', 'interactive-overview');
+        if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
+
+        const kfStart = getTileCameraTransform(partId, fromNum, 1.0);
+        const kfEnd   = getFullBoardOverviewTransform(partId);
+
+        board.style.transform = kfStart;
+        flightAnim = board.animate([
+          { transform: kfStart },
+          { transform: kfEnd }
+        ], {
+          duration: 960,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          fill: 'forwards'
+        });
+      }
+
+      function zoomFromOverviewToSlide(partId, targetSlideNum) {
+        const vp = document.getElementById('part1WorldViewport');
+        const board = document.getElementById('part1GiantBoard');
+        if (!vp || !board) return;
+
+        if (flightAnim) flightAnim.cancel();
+        if (flightTimer) clearTimeout(flightTimer);
+
+        vp.classList.remove('interactive-overview');
+        highlightActiveTile(targetSlideNum);
+
+        const kfStart = getFullBoardOverviewTransform(partId);
+        const kfEnd   = getTileCameraTransform(partId, targetSlideNum, 1.0);
+
+        if (typeof Reveal !== 'undefined') {
+          Reveal.slide(targetSlideNum - 1);
+        }
+
+        flightAnim = board.animate([
+          { transform: kfStart },
+          { transform: kfEnd }
+        ], {
+          duration: 880,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          fill: 'forwards'
+        });
+
+        flightTimer = setTimeout(function() {
+          vp.classList.remove('active');
+          if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
+        }, 900);
+      }
+
+      // Slide 2（目次・アジェンダ）：カード1枚ずつ画面いっぱい ➔ 全体像へズームアウト
+      function updateSlide2AgendaCamera() {
+        const sec2 = document.querySelector('.reveal .slides > section[data-slide-num="2"]');
+        if (!sec2) return;
+        const grid = sec2.querySelector('.agenda-grid-6');
+        const layer = sec2.querySelector('.slide-content-layer');
+        if (!grid || !layer) return;
+
+        const visibleSteps = sec2.querySelectorAll('.agenda-cam-step.fragment.visible').length;
+        const cards = grid.querySelectorAll('.agenda-spotlight-card');
+
+        if (visibleSteps < 6) {
+          const targetIdx = visibleSteps + 1;
+          const targetCard = grid.querySelector('[data-agenda-idx="' + targetIdx + '"]');
+          if (!targetCard) return;
+
+          sec2.classList.add('agenda-is-zoomed');
+          cards.forEach(function(c) {
+            c.classList.toggle('cam-active-card', Number(c.getAttribute('data-agenda-idx')) === targetIdx);
+          });
+
+          const scale = 2.04;
+          const layerW = layer.clientWidth || 1208;
+          const layerH = layer.clientHeight || 540;
+          const gridLeft = grid.offsetLeft || 0;
+          const gridTop  = grid.offsetTop || 0;
+
+          let cardCenterX = targetCard.offsetLeft + targetCard.offsetWidth / 2;
+          let cardCenterY = targetCard.offsetTop  + targetCard.offsetHeight / 2;
+          if (!targetCard.offsetWidth) {
+            const col = (targetIdx - 1) % 3;
+            const row = Math.floor((targetIdx - 1) / 3);
+            cardCenterX = (col + 0.5) * (layerW / 3);
+            cardCenterY = (row + 0.5) * 160;
+          }
+
+          const tx = (layerW / 2) - gridLeft - cardCenterX * scale;
+          const ty = (layerH * 0.40) - gridTop  - cardCenterY * scale;
+
+          grid.style.transform = 'translate3d(' + tx.toFixed(1) + 'px, ' + ty.toFixed(1) + 'px, 0px) scale(' + scale + ')';
+
+          const callout = sec2.querySelector('.char-callout[data-step-texts]');
+          const bubble = sec2.querySelector('.char-bubble-text');
+          if (callout && bubble) {
+            const steps = (callout.getAttribute('data-step-texts') || '').split('||').map(function(s) { return s.trim(); }).filter(Boolean);
+            if (steps[targetIdx]) {
+              bubble.innerHTML = steps[targetIdx];
+            }
+          }
+        } else {
+          sec2.classList.remove('agenda-is-zoomed');
+          cards.forEach(function(c) {
+            c.classList.remove('cam-active-card');
+          });
+          grid.style.transform = 'translate3d(0px, 0px, 0px) scale(1)';
+          const bubble = sec2.querySelector('.char-bubble-text');
+          if (bubble) {
+            bubble.innerHTML = '<strong>CE講師：</strong>「本日はこの6つのパートで進めます！特に第3部の『モード・実機画面解読』と第4部の『アラーム対応』は明日からのケアに直結する重点パートです！」';
+          }
         }
       }
 
-      function updateAgendaSpotlight() {
+      // Slide 8（自然呼吸 vs 人工呼吸）：左カード拡大 ➔ 右カード拡大 ➔ 2枚並んだ全体像へズームアウト
+      function updateSlide8Camera() {
+        const sec8 = document.querySelector('.reveal .slides > section[data-slide-num="8"]');
+        if (!sec8) return;
+        const layer = sec8.querySelector('.slide-content-layer');
+        const grid = layer ? layer.firstElementChild : null;
+        if (!layer || !grid) return;
+
+        const visibleSteps = sec8.querySelectorAll('.slide8-cam-step.fragment.visible').length;
+        const cards = sec8.querySelectorAll('[data-s8-card]');
+
+        if (visibleSteps < 2) {
+          const targetIdx = visibleSteps + 1;
+          const targetCard = sec8.querySelector('[data-s8-card="' + targetIdx + '"]');
+          if (!targetCard) return;
+
+          sec8.classList.add('s8-is-zoomed');
+          cards.forEach(function(c) {
+            c.classList.toggle('s8-active-card', Number(c.getAttribute('data-s8-card')) === targetIdx);
+          });
+
+          const scale = 1.36;
+          const layerW = layer.clientWidth || 1208;
+          const layerH = layer.clientHeight || 540;
+          const gridLeft = grid.offsetLeft || 0;
+          const gridTop  = grid.offsetTop || 0;
+
+          let cardCenterX = targetCard.offsetLeft + targetCard.offsetWidth / 2;
+          let cardCenterY = targetCard.offsetTop  + targetCard.offsetHeight / 2;
+          if (!targetCard.offsetWidth) {
+            cardCenterX = (targetIdx === 1 ? 0.25 : 0.75) * layerW;
+            cardCenterY = layerH / 2;
+          }
+
+          const tx = (layerW / 2) - gridLeft - cardCenterX * scale;
+          const ty = (layerH / 2) - gridTop  - cardCenterY * scale;
+
+          grid.style.transform = 'translate3d(' + tx.toFixed(1) + 'px, ' + ty.toFixed(1) + 'px, 0px) scale(' + scale + ')';
+        } else {
+          sec8.classList.remove('s8-is-zoomed');
+          cards.forEach(function(c) {
+            c.classList.remove('s8-active-card');
+          });
+          grid.style.transform = 'translate3d(0px, 0px, 0px) scale(1)';
+        }
+      }
+
+      // 全6パートの入口(中扉)＆出口(まとめ)での全体ボード俯瞰トリガー監視
+      function checkPartOverviewSteps() {
         const cur = (typeof Reveal !== 'undefined' && Reveal.getCurrentSlide) ? Reveal.getCurrentSlide() : null;
         if (!cur) return;
-        const grid = cur.querySelector('.agenda-grid-6');
-        if (!grid) return;
-        const visibleFrags = grid.querySelectorAll('.agenda-spotlight-card.fragment.visible');
-        const hasCurrent = grid.querySelector('.agenda-spotlight-card.current-fragment');
-        if (hasCurrent && visibleFrags.length > 0 && visibleFrags.length < 5) {
-          grid.classList.add('has-active-spotlight');
+        const sNum = Number(cur.getAttribute('data-slide-num') || 0);
+        const vp = document.getElementById('part1WorldViewport');
+        const partId = getPartBySlideNum(sNum);
+        const cfg = PART_BOARDS[partId];
+        if (!cfg) {
+          if (vp && vp.classList.contains('interactive-overview')) {
+            vp.classList.remove('active', 'interactive-overview');
+          }
+          return;
+        }
+
+        if (sNum === cfg.start) {
+          const trigIntro = cur.querySelector('.part-intro-overview-step.fragment');
+          if (trigIntro && trigIntro.classList.contains('visible')) {
+            zoomOutToPartFullBoard(partId, cfg.start);
+          } else if (vp && vp.classList.contains('interactive-overview')) {
+            zoomFromOverviewToSlide(partId, cfg.start);
+          }
+          return;
+        }
+
+        if (sNum === cfg.end) {
+          const trigOutro = cur.querySelector('.part-outro-overview-step.fragment');
+          if (trigOutro && trigOutro.classList.contains('visible')) {
+            zoomOutToPartFullBoard(partId, cfg.end);
+          } else if (vp && vp.classList.contains('interactive-overview')) {
+            zoomFromOverviewToSlide(partId, cfg.end);
+          }
+          return;
+        }
+      }
+
+      function updateMiniCharNavigator() {
+        const nav = document.getElementById('miniCharNavigator');
+        const vid = document.getElementById('miniGuideCharVideo');
+        const lbl = document.getElementById('miniNavLabel');
+        if (!nav || !vid || !lbl) return;
+
+        const vp = document.getElementById('part1WorldViewport');
+        const inOverview = vp && (vp.classList.contains('active') || vp.classList.contains('interactive-overview'));
+        nav.classList.toggle('is-hidden-in-overview', !!inOverview);
+
+        const currIdx = (typeof Reveal !== 'undefined' && Reveal.getIndices) ? (Reveal.getIndices().h || 0) : 0;
+        const currNum = currIdx + 1;
+        const partId = getPartBySlideNum(currNum) || 1;
+        const pad = '0' + partId;
+        const targetSrc = 'assets/part' + pad + '_char.mp4';
+        const targetPoster = 'assets/part' + pad + '_char.png';
+
+        if (vid.getAttribute('data-current-part') !== String(partId)) {
+          vid.setAttribute('data-current-part', String(partId));
+          vid.poster = targetPoster;
+          vid.src = targetSrc;
+          vid.load();
+        }
+        lbl.textContent = 'PART ' + pad + ' 俯瞰ボードへ';
+
+        if (inOverview || nav.classList.contains('is-minimized')) {
+          try { vid.pause(); } catch(e) {}
         } else {
-          grid.classList.remove('has-active-spotlight');
+          try { vid.play().catch(function(){}); } catch(e) {}
         }
       }
 
-      function runDualSlideCameraTransition(prevSlide, currSlide, prevNum, currNum, isBack) {
-        const meta = SLIDE_DIRECTOR[currNum] || { part: 0, mode: 'pan-right', origin: '50% 50%' };
-        const prevMeta = SLIDE_DIRECTOR[prevNum] || { part: 0, mode: 'pan-right', origin: '50% 50%' };
-
-        if (leaveCleanupTimer) {
-          clearTimeout(leaveCleanupTimer);
-          leaveCleanupTimer = null;
-        }
-        document.querySelectorAll('.reveal .slides > section').forEach(clearCameraClasses);
-
-        if (!currSlide) return;
-
-        if (meta.mode === 'divider') {
-          currSlide.classList.add('tv-divider-opening');
-        } else if (meta.mode === 'part-enter' && !isBack) {
-          currSlide.classList.add('tv-part-opening');
-          const currLayer = currSlide.querySelector('.slide-content-layer');
-          if (currLayer) {
-            currLayer.style.setProperty('--tv-cam-origin', meta.origin || '50% 50%');
-            currLayer.classList.add('tv-enter-zoom-in');
-          }
-        } else if (prevSlide && prevSlide !== currSlide) {
-          const samePartStudio = (meta.part === prevMeta.part) && !DIVIDER_SLIDES.includes(currNum) && !DIVIDER_SLIDES.includes(prevNum);
-          const prevLayer = prevSlide.querySelector('.slide-content-layer');
-          const currLayer = currSlide.querySelector('.slide-content-layer');
-
-          if (samePartStudio && prevLayer && currLayer) {
-            prevSlide.removeAttribute('hidden');
-            prevSlide.removeAttribute('aria-hidden');
-            prevSlide.style.removeProperty('display');
-            prevSlide.classList.add('tv-cam-leaving', 'tv-keep-studio-frame');
-            currSlide.classList.add('tv-studio-swap');
-
-            const origin = isBack ? (prevMeta.origin || '50% 50%') : (meta.origin || '50% 50%');
-            prevLayer.style.setProperty('--tv-cam-origin', origin);
-            currLayer.style.setProperty('--tv-cam-origin', origin);
-
-            let leaveAnim = 'tv-leave-pan-right';
-            let enterAnim = 'tv-enter-pan-right';
-
-            if (isBack) {
-              if (prevMeta.mode === 'zoom-in') {
-                leaveAnim = 'tv-leave-zoom-out';
-                enterAnim = 'tv-enter-zoom-out';
-              } else if (prevMeta.mode === 'zoom-out') {
-                leaveAnim = 'tv-leave-zoom-in';
-                enterAnim = 'tv-enter-zoom-in';
-              } else {
-                leaveAnim = 'tv-leave-pan-left';
-                enterAnim = 'tv-enter-pan-left';
-              }
-            } else {
-              if (meta.mode === 'zoom-in') {
-                leaveAnim = 'tv-leave-zoom-in';
-                enterAnim = 'tv-enter-zoom-in';
-              } else if (meta.mode === 'zoom-out') {
-                leaveAnim = 'tv-leave-zoom-out';
-                enterAnim = 'tv-enter-zoom-out';
-              } else {
-                leaveAnim = 'tv-leave-pan-right';
-                enterAnim = 'tv-enter-pan-right';
-              }
-            }
-
-            void prevLayer.offsetWidth;
-            void currLayer.offsetWidth;
-            prevLayer.classList.add(leaveAnim);
-            currLayer.classList.add(enterAnim);
-
-            leaveCleanupTimer = setTimeout(() => {
-              clearCameraClasses(prevSlide);
-              clearCameraClasses(currSlide);
-              if (!prevSlide.classList.contains('present')) {
-                prevSlide.setAttribute('hidden', '');
-                prevSlide.setAttribute('aria-hidden', 'true');
-              }
-            }, 760);
-          } else {
-            const currLayer2 = currSlide.querySelector('.slide-content-layer');
-            if (currLayer2) {
-              currLayer2.style.setProperty('--tv-cam-origin', meta.origin || '50% 50%');
-              currLayer2.classList.add('tv-enter-zoom-in');
-            }
-          }
-        }
-      }
-
-      function bindDirectorEvents() {
+      function bindAllEvents() {
         if (typeof Reveal === 'undefined' || !Reveal.on) return;
+
+        const miniNav = document.getElementById('miniCharNavigator');
+        const miniToggle = document.getElementById('miniNavToggleBtn');
+        if (miniToggle && miniNav) {
+          miniToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isMin = miniNav.classList.toggle('is-minimized');
+            miniToggle.textContent = isMin ? '+' : '−';
+            updateMiniCharNavigator();
+          });
+        }
+        if (miniNav) {
+          miniNav.addEventListener('click', function() {
+            if (miniNav.classList.contains('is-minimized')) {
+              miniNav.classList.remove('is-minimized');
+              if (miniToggle) miniToggle.textContent = '−';
+              updateMiniCharNavigator();
+              return;
+            }
+            const currIdx = (typeof Reveal !== 'undefined' && Reveal.getIndices) ? (Reveal.getIndices().h || 0) : 0;
+            const currNum = currIdx + 1;
+            const partId = getPartBySlideNum(currNum) || 1;
+            const cfg = PART_BOARDS[partId];
+            const fromSlide = (getPartBySlideNum(currNum) === partId) ? currNum : (cfg ? cfg.start : 3);
+            zoomOutToPartFullBoard(partId, fromSlide);
+          });
+        }
+
+        window.addEventListener('resize', function() {
+          syncCameraFrameScale();
+          updateSlide2AgendaCamera();
+          updateSlide8Camera();
+        });
 
         const initIdx = Reveal.getIndices ? Reveal.getIndices().h : 0;
         prevSlideIdx = initIdx;
-        updateAgendaSpotlight();
+        setTimeout(function() {
+          updateSlide2AgendaCamera();
+          updateSlide8Camera();
+          updateMiniCharNavigator();
+        }, 60);
+
+        function playSketchbookTurnVideo(slideEl) {
+          if (!slideEl) return;
+          const v = slideEl.querySelector('video.sketchbook-turn-video');
+          if (v) {
+            try {
+              v.currentTime = 1.1;
+              v.playbackRate = 1.5;
+              v.play().catch(function(){});
+            } catch(e) {}
+          }
+        }
 
         Reveal.on('slidechanged', function(event) {
+          playSketchbookTurnVideo(event.currentSlide);
           const currIdx = event.indexh || 0;
-          const prevIdx = (typeof event.previousSlide !== 'undefined' && prevSlideIdx !== currIdx) ? prevSlideIdx : currIdx;
-          const isBack = currIdx < prevIdx;
+          const prevNum = prevSlideIdx + 1;
+          const currNum = currIdx + 1;
           prevSlideIdx = currIdx;
 
-          runDualSlideCameraTransition(
-            event.previousSlide,
-            event.currentSlide,
-            prevIdx + 1,
-            currIdx + 1,
-            isBack
-          );
+          const vp = document.getElementById('part1WorldViewport');
+          const wasOverview = vp ? vp.classList.contains('interactive-overview') : false;
+          if (vp) vp.classList.remove('active', 'interactive-overview');
+
+          const prevPart = getPartBySlideNum(prevNum);
+          const currPart = getPartBySlideNum(currNum);
+
+          // 同じパート（Part 1〜6 いずれか）内のスライド移動は巨大画用紙ボード上のズームアウト➔移動➔ズームインで遷移！
+          if (prevPart > 0 && prevPart === currPart && prevNum !== currNum) {
+            playPartCameraFlight(currPart, prevNum, currNum, wasOverview);
+          }
+
+          requestAnimationFrame(function() {
+            updateSlide2AgendaCamera();
+            updateSlide8Camera();
+          });
           syncSlideStepCallouts(false);
-          updateAgendaSpotlight();
+          updateMiniCharNavigator();
         });
 
         Reveal.on('fragmentshown', function() {
+          updateSlide2AgendaCamera();
+          updateSlide8Camera();
+          checkPartOverviewSteps();
           syncSlideStepCallouts(true);
-          updateAgendaSpotlight();
+          updateMiniCharNavigator();
         });
 
         Reveal.on('fragmenthidden', function() {
+          updateSlide2AgendaCamera();
+          updateSlide8Camera();
+          checkPartOverviewSteps();
           syncSlideStepCallouts(true);
-          updateAgendaSpotlight();
+          updateMiniCharNavigator();
         });
       }
 
       if (document.readyState === 'complete') {
-        bindDirectorEvents();
+        bindAllEvents();
       } else {
-        window.addEventListener('load', bindDirectorEvents);
+        window.addEventListener('load', bindAllEvents);
       }
     })();
     /* === SEAMLESS_STUDIO_JS_END === */
