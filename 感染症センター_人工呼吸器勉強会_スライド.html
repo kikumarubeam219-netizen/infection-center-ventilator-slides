@@ -1466,8 +1466,37 @@
       background: #FFFFFF;
       color: #0F172A;
     }
-    .print-pdf .cover-print-layout {
+    .print-pdf .cover-print-layout,
+    html.mobile-lite-mode .cover-print-layout {
       display: grid !important;
+    }
+    /* === スマホ自動軽量化モード（mobile-lite-mode） === */
+    html.mobile-lite-mode #mouseControlDock,
+    html.mobile-lite-mode #miniCharNavigator,
+    html.mobile-lite-mode #part1WorldViewport,
+    html.mobile-lite-mode #boardOverviewHint,
+    html.mobile-lite-mode .cover-marquee-stage,
+    html.mobile-lite-mode .cover-vignette-overlay,
+    html.mobile-lite-mode .cover-center-hero,
+    html.mobile-lite-mode .cover-theme-switcher,
+    html.mobile-lite-mode .cover-bottom-pill,
+    html.mobile-lite-mode video,
+    html.mobile-lite-mode video.sketchbook-turn-video {
+      display: none !important;
+    }
+    html.mobile-lite-mode section[data-slide-num="1"].cover-marquee-slide {
+      background: #FFFFFF !important;
+    }
+    html.mobile-lite-mode img.sketchbook-fallback-img {
+      display: block !important;
+      opacity: 1 !important;
+    }
+    html.mobile-lite-mode .scanning-wave,
+    html.mobile-lite-mode .flow-line,
+    html.mobile-lite-mode .flow-line-exp,
+    html.mobile-lite-mode .pulse-alert-card,
+    html.mobile-lite-mode .vent-alarm-banner {
+      animation: none !important;
     }
     .print-pdf .alarm-tab-panel {
       display: block !important;
@@ -8917,6 +8946,36 @@
   <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
   <script>
+    // === スマホ自動軽量化モード判定（モバイル端末・狭幅タッチ端末では動画・巨大ボードを自動オフ） ===
+    const IS_MOBILE_LITE = (function() {
+      try {
+        const uaMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || '');
+        const touchNarrow = window.matchMedia && window.matchMedia('(max-width: 960px) and (pointer: coarse)').matches;
+        return uaMobile || touchNarrow;
+      } catch (e) { return false; }
+    })();
+    if (IS_MOBILE_LITE) {
+      document.documentElement.classList.add('mobile-lite-mode');
+      document.addEventListener('DOMContentLoaded', function() {
+        // 動画の事前ダウンロードを停止し、静止画フォールバックを表示
+        document.querySelectorAll('video').forEach(function(v) {
+          try {
+            v.pause();
+            v.removeAttribute('src');
+            v.querySelectorAll('source').forEach(function(s) { s.remove(); });
+            v.load();
+          } catch (e) {}
+        });
+        // スライド画像を遅延読み込み＋非同期デコードに設定
+        document.querySelectorAll('.reveal .slides img').forEach(function(img, idx) {
+          if (idx > 2) {
+            img.setAttribute('loading', 'lazy');
+          }
+          img.setAttribute('decoding', 'async');
+        });
+      });
+    }
+
     Reveal.initialize({
       hash: true,
       slideNumber: 'c/t',
@@ -11017,6 +11076,7 @@
 
       // 指定パート（1〜6）の巨大画用紙ボードを動的に構築
       function buildPartGiantBoard(partId) {
+        if (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) return;
         const cfg = PART_BOARDS[partId];
         if (!cfg) return;
         if (currentBuiltPart === partId) return;
@@ -11314,6 +11374,7 @@
 
       // 同一パート内の移動：前のスライド(100%) ➔ 巨大画用紙の中間俯瞰へズームアウト移動 ➔ 次のスライド(100%)へズームイン！
       function playPartCameraFlight(partId, fromNum, toNum, wasOverview) {
+        if (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) return;
         buildPartGiantBoard(partId);
         syncCameraFrameScale();
 
@@ -11386,6 +11447,7 @@
       }
 
       function zoomOutToPartFullBoard(partId, fromNum) {
+        if (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) return;
         buildPartGiantBoard(partId);
         syncCameraFrameScale();
 
@@ -11565,6 +11627,7 @@
 
       // 全6パートの入口(中扉)＆出口(まとめ)での全体ボード俯瞰トリガー監視
       function checkPartOverviewSteps() {
+        if (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) return;
         const cur = (typeof Reveal !== 'undefined' && Reveal.getCurrentSlide) ? Reveal.getCurrentSlide() : null;
         if (!cur) return;
         const sNum = Number(cur.getAttribute('data-slide-num') || 0);
@@ -11617,7 +11680,7 @@
       };
 
       function initCoverMarqueeWall() {
-        if (window.location.search.indexOf('print-pdf') !== -1) return;
+        if ((typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) || window.location.search.indexOf('print-pdf') !== -1) return;
         const stage = document.getElementById('coverMarqueeStage');
         if (!stage || stage.getAttribute('data-built') === '1') return;
         stage.setAttribute('data-built', '1');
@@ -11745,6 +11808,7 @@
       }
 
       function updateMiniCharNavigator() {
+        if (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) return;
         const nav = document.getElementById('miniCharNavigator');
         const vid = document.getElementById('miniGuideCharVideo');
         const lbl = document.getElementById('miniNavLabel');
@@ -11823,7 +11887,7 @@
         }, 60);
 
         function playSketchbookTurnVideo(slideEl) {
-          if (!slideEl || window.location.search.indexOf('print-pdf') !== -1) return;
+          if (!slideEl || (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) || window.location.search.indexOf('print-pdf') !== -1) return;
           const v = slideEl.querySelector('video.sketchbook-turn-video');
           if (v) {
             try {
