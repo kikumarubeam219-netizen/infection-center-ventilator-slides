@@ -3050,10 +3050,12 @@
       overflow: hidden;
       background: #FFFFFF;
     }
-    .cover-marquee-tile .cover-mini-slide-wrap > section {
+    .cover-marquee-tile .cover-mini-slide-wrap > .cover-cloned-slide {
       display: block !important;
       width: 1280px !important;
       height: 720px !important;
+      padding: 18px 36px !important;
+      box-sizing: border-box !important;
       position: relative !important;
       top: 0 !important;
       left: 0 !important;
@@ -3187,11 +3189,11 @@
       color: #FFFFFF !important;
     }
 
-    /* === 表紙カラーテーマ切替UI === */
+    /* === 表紙カラーテーマ切替UI（左下操作バーと重ならない位置） === */
     .cover-theme-switcher {
       position: absolute;
       left: 34px;
-      bottom: 30px;
+      bottom: 72px;
       z-index: 6;
       display: inline-flex;
       align-items: center;
@@ -11545,8 +11547,11 @@
             if (origSec) {
               const wrap = document.createElement('div');
               wrap.className = 'cover-mini-slide-wrap';
-              const clone = origSec.cloneNode(true);
-              clone.classList.remove('present', 'past', 'future', 's8-is-zoomed', 'agenda-is-zoomed');
+              // Reveal.js にスライド枚数として数えられないよう <section> ではなく <div> として複製
+              const clone = document.createElement('div');
+              clone.className = (origSec.className || '').replace(/\b(present|past|future|s8-is-zoomed|agenda-is-zoomed)\b/g, '').trim() + ' cover-cloned-slide';
+              clone.style.cssText = origSec.style.cssText || '';
+              clone.innerHTML = origSec.innerHTML;
               clone.querySelectorAll('aside.notes, .notes, video, animate, animateMotion, animateTransform, .part-intro-overview-wrap, .part-outro-overview-wrap, .slide8-cam-triggers').forEach(function(n) {
                 n.remove();
               });
