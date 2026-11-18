@@ -4602,7 +4602,7 @@
             これらを十分に理解し、<strong>患者一人ひとりに合わせた「個別化」された設定</strong>を行うことが、単なる道具を「良きサポーター」へと進化させる鍵となります。
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 80px 1fr; gap: 10px; align-items: center;">
+          <div style="display: grid; grid-template-columns: 1fr 110px 1fr; gap: 10px; align-items: center;">
             <!-- 左：良い影響（メリット） -->
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <div style="font-size: 0.82em; font-weight: 900; color: var(--mute-green); text-align: center;">人工呼吸器の「良い影響」（メリット）</div>
@@ -4620,13 +4620,37 @@
               </div>
             </div>
 
-            <!-- 中央：リボン分岐SVG -->
-            <div style="display: flex; justify-content: center;">
-              <svg viewBox="0 0 80 240" width="80" height="220">
-                <path d="M 0 40 C 40 40, 40 120, 80 40" fill="none" stroke="#9AE6B4" stroke-width="6"/>
-                <path d="M 0 120 C 40 120, 40 120, 80 120" fill="none" stroke="#FBD38D" stroke-width="6"/>
-                <path d="M 0 200 C 40 200, 40 120, 80 200" fill="none" stroke="#90CDF4" stroke-width="6"/>
+            <!-- 中央：メリットとデメリットのバランスを表す天秤SVG -->
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+              <svg viewBox="0 0 100 180" width="96" height="172" aria-label="メリットとデメリットの天秤">
+                <!-- 台座・支柱 -->
+                <rect x="24" y="156" width="52" height="10" rx="5" fill="#1E3A8A"/>
+                <rect x="34" y="148" width="32" height="10" rx="3" fill="#3B82F6"/>
+                <rect x="46" y="42" width="8" height="108" rx="4" fill="#64748B"/>
+                <!-- 支点ダイヤ -->
+                <circle cx="50" cy="44" r="10" fill="#FFFFFF" stroke="#1E3A8A" stroke-width="3.5"/>
+                <circle cx="50" cy="44" r="4" fill="#F59E0B"/>
+                <!-- 横棒（天秤ビーム） -->
+                <line x1="12" y1="44" x2="88" y2="44" stroke="#1E3A8A" stroke-width="5" stroke-linecap="round"/>
+                <!-- 左皿（メリット・グリーン） -->
+                <line x1="16" y1="44" x2="8" y2="86" stroke="#94A3B8" stroke-width="2"/>
+                <line x1="16" y1="44" x2="24" y2="86" stroke="#94A3B8" stroke-width="2"/>
+                <path d="M 4 86 Q 16 102 28 86 Z" fill="#10B981" stroke="#047857" stroke-width="2"/>
+                <circle cx="16" cy="76" r="7" fill="#D1FAE5" stroke="#10B981" stroke-width="1.5"/>
+                <path d="M 13 76 L 19 76 M 16 73 L 16 79" stroke="#047857" stroke-width="2" stroke-linecap="round"/>
+                <!-- 右皿（デメリット・ネイビー/ブルー） -->
+                <line x1="84" y1="44" x2="76" y2="86" stroke="#94A3B8" stroke-width="2"/>
+                <line x1="84" y1="44" x2="92" y2="86" stroke="#94A3B8" stroke-width="2"/>
+                <path d="M 72 86 Q 84 102 96 86 Z" fill="#3B82F6" stroke="#1D4ED8" stroke-width="2"/>
+                <circle cx="84" cy="76" r="7" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+                <path d="M 81 76 L 87 76" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+                <!-- 左右へのバランス矢印 -->
+                <path d="M 10 122 L 38 122" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"/>
+                <path d="M 62 122 L 90 122" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"/>
               </svg>
+              <span style="font-size: 0.58em; font-weight: 800; color: #1E3A8A; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 3px 8px; border-radius: 999px; white-space: nowrap;">
+                表裏一体
+              </span>
             </div>
 
             <!-- 右：悪い影響（デメリット） -->
@@ -7126,19 +7150,20 @@
             </div>
 
             <!-- 右：上限 (High) -->
-            <div class="info-panel orange fragment fade-up" style="border: 2.5px solid #F97316; background: linear-gradient(180deg, #FFF7ED 0%, #FFFFFF 100%); padding: 16px 20px;">
+            <div class="info-panel orange fragment fade-up" style="position: relative; border: 2.5px solid #F97316; background: linear-gradient(180deg, #FFF7ED 0%, #FFFFFF 100%); padding: 16px 20px;">
               <div style="background: #FFFFFF; border-radius: 10px; padding: 10px; text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 12px;">
                 <div style="font-size: 1.25em; font-weight: 900; color: #C2410C;">上限 (High)</div>
                 <div style="font-size: 0.76em; font-weight: 800; color: var(--text-main); margin-top: 4px;">自発呼吸が増加し換気量が上昇した状態。</div>
               </div>
 
-              <div style="font-size: 0.76em; line-height: 1.65;">
+              <div style="font-size: 0.76em; line-height: 1.65; padding-right: 124px;">
                 <strong style="font-size: 1.05em; color: #9A3412; display: block; margin-bottom: 4px;">原因</strong>
-                <div style="margin-bottom: 28px; padding-bottom: 10px; border-bottom: 1px solid #FED7AA;"><strong>患者：</strong>・努力呼吸の増加，発熱，ストレス，興奮・覚醒</div>
+                <div style="margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #FED7AA;"><strong>患者：</strong>・努力呼吸の増加，発熱，ストレス，興奮・覚醒</div>
 
                 <strong style="font-size: 1.05em; color: #9A3412; display: block; margin-bottom: 4px;">対応アクション</strong>
                 <div>・血ガス・呼吸状態の評価，<strong>鎮痛・鎮静の評価と薬剤増量の検討</strong>。<br>・設定変更（吸気圧・PS調整）。</div>
               </div>
+              <img src="assets/slide28_mv.png" alt="発熱・モニター確認をする看護師" style="position: absolute; right: 12px; bottom: 8px; height: 185px; width: auto; object-fit: contain; mix-blend-mode: multiply; pointer-events: none;">
             </div>
           </div>
         </div>
@@ -7164,9 +7189,9 @@
         </div>
 
         <div class="slide-content-layer">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 220px 1fr; gap: 14px; align-items: center;">
             <!-- 左：圧低下 (Low Pressure) -->
-            <div data-id="tv-stage-1" class="info-panel blue " style="border: 2.5px solid #3B82F6; padding: 14px 18px;">
+            <div data-id="tv-stage-1" class="info-panel blue " style="border: 2.5px solid #3B82F6; padding: 14px 16px;">
               <div style="background: #93C5FD; color: #0F172A; font-weight: 900; font-size: 0.95em; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px;">
                 圧低下 (Low Pressure)
               </div>
@@ -7187,8 +7212,16 @@
               </div>
             </div>
 
+            <!-- 中央：気道内圧・回路屈曲ワンポイントイラスト -->
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+              <img src="assets/slide29_mv.png" alt="気道内圧上昇と回路の点検" style="width: 215px; height: auto; object-fit: contain; mix-blend-mode: multiply; pointer-events: none;">
+              <span style="margin-top: 6px; font-size: 0.62em; font-weight: 800; color: #C2410C; background: #FFF7ED; border: 1px solid #FDBA74; padding: 3px 10px; border-radius: 999px;">
+                圧上昇・屈曲・痰に注意！
+              </span>
+            </div>
+
             <!-- 右：圧上昇 (High Pressure) -->
-            <div class="info-panel orange fragment fade-up" style="border: 2.5px solid #F97316; padding: 14px 18px;">
+            <div class="info-panel orange fragment fade-up" style="border: 2.5px solid #F97316; padding: 14px 16px;">
               <div style="background: #FDBA74; color: #0F172A; font-weight: 900; font-size: 0.95em; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px;">
                 圧上昇 (High Pressure)
               </div>
@@ -7249,17 +7282,20 @@
               </div>
             </div>
 
-            <!-- 中央：モニター波形対比（無呼吸 vs 頻呼吸） -->
-            <div style="background: #F8FAFC; border: 2px solid #94A3B8; border-radius: 10px; padding: 10px; text-align: center;">
-              <div style="font-size: 0.65em; font-weight: 800; color: var(--text-muted); margin-bottom: 6px;">呼吸リズム波形モニター</div>
-              <svg viewBox="0 0 200 110" width="100%" height="105">
-                <rect x="10" y="10" width="80" height="90" fill="#DCFCE7" opacity="0.6"/>
-                <rect x="110" y="10" width="80" height="90" fill="#FEE2E2" opacity="0.7"/>
-                <path d="M 5 60 L 20 30 L 30 85 L 40 60 L 95 60 L 105 30 L 112 85 L 118 30 L 124 85 L 130 30 L 136 85 L 142 30 L 148 85 L 154 30 L 160 85 L 166 30 L 172 85 L 180 60 L 195 60"
-                      fill="none" stroke="#1E293B" stroke-width="2.2"/>
-                <text x="50" y="24" font-size="10" font-weight="900" fill="#15803D" text-anchor="middle">無呼吸</text>
-                <text x="150" y="24" font-size="10" font-weight="900" fill="#DC2626" text-anchor="middle">頻呼吸</text>
-              </svg>
+            <!-- 中央：モニター波形対比 ＋ 結露水チェックイラスト -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <div style="width: 100%; background: #F8FAFC; border: 2px solid #94A3B8; border-radius: 10px; padding: 8px; text-align: center; box-sizing: border-box;">
+                <div style="font-size: 0.65em; font-weight: 800; color: var(--text-muted); margin-bottom: 4px;">呼吸リズム波形モニター</div>
+                <svg viewBox="0 0 200 110" width="100%" height="92">
+                  <rect x="10" y="10" width="80" height="90" fill="#DCFCE7" opacity="0.6"/>
+                  <rect x="110" y="10" width="80" height="90" fill="#FEE2E2" opacity="0.7"/>
+                  <path d="M 5 60 L 20 30 L 30 85 L 40 60 L 95 60 L 105 30 L 112 85 L 118 30 L 124 85 L 130 30 L 136 85 L 142 30 L 148 85 L 154 30 L 160 85 L 166 30 L 172 85 L 180 60 L 195 60"
+                        fill="none" stroke="#1E293B" stroke-width="2.2"/>
+                  <text x="50" y="24" font-size="10" font-weight="900" fill="#15803D" text-anchor="middle">無呼吸</text>
+                  <text x="150" y="24" font-size="10" font-weight="900" fill="#DC2626" text-anchor="middle">頻呼吸</text>
+                </svg>
+              </div>
+              <img src="assets/slide30_mv.png" alt="回路内の結露水を確認する看護師" style="width: 196px; height: auto; object-fit: contain; mix-blend-mode: multiply; pointer-events: none;">
             </div>
 
             <!-- 右：呼吸数上昇 (Tachypnea) -->
@@ -10993,7 +11029,7 @@
             pCard.style.top = pv.y + 'px';
             pCard.style.width = pv.w + 'px';
             pCard.style.transform = 'rotate(' + pv.rot + 'deg)';
-            pCard.title = 'クリックしてこの部の中扉へズームイン';
+            pCard.title = 'クリックして目次ページ（すごろく）へ戻る';
 
             const vid = document.createElement('video');
             vid.src = pv.video;
@@ -11009,10 +11045,17 @@
             cap.textContent = pv.caption;
             pCard.appendChild(cap);
 
-            pCard.addEventListener('click', function() {
+            pCard.addEventListener('click', function(e) {
+              e.stopPropagation();
               const vp = document.getElementById('part1WorldViewport');
               if (!vp || !vp.classList.contains('interactive-overview')) return;
-              zoomFromOverviewToSlide(partId, cfg.start);
+              if (flightAnim) { flightAnim.cancel(); flightAnim = null; }
+              if (flightTimer) { clearTimeout(flightTimer); flightTimer = null; }
+              vp.classList.remove('active', 'interactive-overview');
+              if (typeof Reveal !== 'undefined' && Reveal.slide) {
+                Reveal.slide(1);
+              }
+              if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
             });
             stickersWrap.appendChild(pCard);
           }
