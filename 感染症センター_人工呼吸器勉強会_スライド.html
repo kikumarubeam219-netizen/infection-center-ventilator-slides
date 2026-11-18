@@ -2878,7 +2878,7 @@
     .print-pdf #miniCharNavigator,
     .print-pdf #mouseControlDock { display: none !important; }
 
-    /* === 常設マウス操作ドック（前へ・次へ・ポインタ・描画・消去・拡大） === */
+    /* === 常設マウス操作ドック（折りたたみ式：前へ・次へ・ポインタ・描画・消去・拡大） === */
     #mouseControlDock {
       position: fixed;
       left: 136px;
@@ -2894,6 +2894,32 @@
       box-shadow: 0 6px 20px rgba(15, 23, 42, 0.24);
       backdrop-filter: blur(8px);
       user-select: none;
+    }
+    .mouse-dock-items {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #mouseControlDock.is-collapsed .mouse-dock-items {
+      display: none;
+    }
+    .mouse-dock-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255, 255, 255, 0.12);
+      color: #F8FAFC;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.16s ease;
+    }
+    .mouse-dock-toggle:hover {
+      background: rgba(255, 255, 255, 0.22);
     }
     .mouse-dock-btn {
       display: inline-flex;
@@ -3548,6 +3574,20 @@
       cursor: pointer;
       border-radius: 12px;
     }
+    @media print { .sugoroku-guide-bar { display: none !important; } }
+    /* Reveal.js スライド一覧（.reveal.overview）表示時の3Dネスト干渉・負荷防止 */
+    .reveal.overview section[data-slide-num="2"].sugoroku-slide .sugoroku-board-wrap,
+    .reveal.overview .sugoroku-pawn-pair {
+      perspective: none !important;
+      transform-style: flat !important;
+    }
+    .reveal.overview .cover-marquee-track {
+      animation-play-state: paused !important;
+    }
+    .reveal.overview #miniCharNavigator {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
   </style>
   <!-- === SUGOROKU_AGENDA_CSS_END === -->
 </head>
@@ -3593,28 +3633,34 @@
       <i class="fa-solid fa-sliders"></i> <span>メニュー (T)</span>
     </button>
   </div>
-  <!-- 常設マウス操作ドック -->
-  <div id="mouseControlDock" aria-label="マウス操作バー">
-    <button type="button" class="mouse-dock-btn" onclick="if(typeof Reveal!=='undefined')Reveal.prev();" title="前のモーション／スライドへ戻る">
-      <i class="fa-solid fa-chevron-left"></i> <span>前へ</span>
+  <!-- 折りたたみ式マウス操作ドック -->
+  <div id="mouseControlDock" class="is-collapsed" aria-label="マウス操作バー">
+    <button type="button" class="mouse-dock-toggle" id="mouseDockToggleBtn" onclick="toggleMouseDock()" title="マウス操作バーを開閉">
+      <i class="fa-solid fa-computer-mouse"></i> <span>操作</span>
     </button>
-    <button type="button" class="mouse-dock-btn" onclick="if(typeof Reveal!=='undefined')Reveal.next();" title="次のモーション／スライドへ進む">
-      <span>次へ</span> <i class="fa-solid fa-chevron-right"></i>
-    </button>
-    <span class="mouse-dock-sep"></span>
-    <button type="button" class="mouse-dock-btn" id="dockLaserBtn" onclick="toggleLaserMode()" title="レーザーポインタ ON/OFF (Lキー)">
-      <i class="fa-solid fa-bullseye"></i> <span>ポインタ</span>
-    </button>
-    <button type="button" class="mouse-dock-btn" id="dockDrawBtn" onclick="toggleDrawMode()" title="ペン描画 ON/OFF (Dキー)">
-      <i class="fa-solid fa-highlighter"></i> <span>描画</span>
-    </button>
-    <button type="button" class="mouse-dock-btn" id="dockClearBtn" onclick="clearDrawCanvas()" title="描いた線を消去">
-      <i class="fa-solid fa-eraser"></i> <span>消去</span>
-    </button>
-    <span class="mouse-dock-sep"></span>
-    <button type="button" class="mouse-dock-btn" id="dockZoomBtn" onclick="toggleZoomMode()" title="クリック位置を拡大 / 解除 (Zキー)">
-      <i class="fa-solid fa-magnifying-glass-plus"></i> <span>拡大</span>
-    </button>
+    <div class="mouse-dock-items">
+      <span class="mouse-dock-sep"></span>
+      <button type="button" class="mouse-dock-btn" onclick="if(typeof Reveal!=='undefined')Reveal.prev();" title="前のモーション／スライドへ戻る">
+        <i class="fa-solid fa-chevron-left"></i> <span>前へ</span>
+      </button>
+      <button type="button" class="mouse-dock-btn" onclick="if(typeof Reveal!=='undefined')Reveal.next();" title="次のモーション／スライドへ進む">
+        <span>次へ</span> <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <span class="mouse-dock-sep"></span>
+      <button type="button" class="mouse-dock-btn" id="dockLaserBtn" onclick="toggleLaserMode()" title="レーザーポインタ ON/OFF (Lキー)">
+        <i class="fa-solid fa-bullseye"></i> <span>ポインタ</span>
+      </button>
+      <button type="button" class="mouse-dock-btn" id="dockDrawBtn" onclick="toggleDrawMode()" title="ペン描画 ON/OFF (Dキー)">
+        <i class="fa-solid fa-highlighter"></i> <span>描画</span>
+      </button>
+      <button type="button" class="mouse-dock-btn" id="dockClearBtn" onclick="clearDrawCanvas()" title="描いた線を消去">
+        <i class="fa-solid fa-eraser"></i> <span>消去</span>
+      </button>
+      <span class="mouse-dock-sep"></span>
+      <button type="button" class="mouse-dock-btn" id="dockZoomBtn" onclick="toggleZoomMode()" title="クリック位置を拡大 / 解除 (Zキー)">
+        <i class="fa-solid fa-magnifying-glass-plus"></i> <span>拡大</span>
+      </button>
+    </div>
   </div>
   <div id="chapterJumpBar" class="chapter-jump-bar" aria-label="章ジャンプナビゲーション">
     <button type="button" class="chapter-jump-btn home-btn" onclick="jumpToSlide(0)"><i class="fa-solid fa-house"></i> 先頭 (S1)</button>
@@ -9752,9 +9798,16 @@
     if (typeof Reveal !== 'undefined') {
       Reveal.on('overviewshown', function() {
         toggleChapterJumpBar(true);
+        const vp = document.getElementById('part1WorldViewport');
+        if (vp) vp.classList.remove('active', 'interactive-overview');
+        if (typeof resetSlideZoom === 'function') resetSlideZoom();
+        if (typeof syncCoverMarqueePlayback === 'function') syncCoverMarqueePlayback();
+        if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
       });
       Reveal.on('overviewhidden', function() {
         toggleChapterJumpBar(false);
+        if (typeof syncCoverMarqueePlayback === 'function') syncCoverMarqueePlayback();
+        if (typeof updateMiniCharNavigator === 'function') updateMiniCharNavigator();
       });
       Reveal.on('slidechanged', function() {
         clearDrawCanvas();
@@ -9848,6 +9901,18 @@
         rev.style.transform = '';
       }
     }
+    function toggleMouseDock() {
+      const dock = document.getElementById('mouseControlDock');
+      const btn = document.getElementById('mouseDockToggleBtn');
+      if (!dock) return;
+      const isCol = dock.classList.toggle('is-collapsed');
+      if (btn) {
+        btn.innerHTML = isCol
+          ? '<i class="fa-solid fa-computer-mouse"></i> <span>操作</span>'
+          : '<i class="fa-solid fa-chevron-left"></i> <span>閉じる</span>';
+      }
+    }
+
     function toggleZoomMode(forceState) {
       isZoomMode = (typeof forceState === 'boolean') ? forceState : !isZoomMode;
       if (isZoomMode && isDrawMode) toggleDrawMode(false);
@@ -9871,6 +9936,7 @@
 
       rev.addEventListener('click', function(e) {
         if (isEditing || isDrawMode) return;
+        if (typeof Reveal !== 'undefined' && Reveal.isOverview && Reveal.isOverview()) return;
         if (e.target.closest('#floatingToolbar, #mouseControlDock, #miniCharNavigator, #chapterJumpBar, #noteDrawer, .controls, .cover-theme-switcher, .cover-bottom-pill, .board-polaroid-video-card, .p1-slide-tile')) {
           return;
         }
@@ -11487,7 +11553,8 @@
         const sec1 = document.querySelector('.reveal .slides > section[data-slide-num="1"]');
         if (!sec1) return;
         const currIdx = (typeof Reveal !== 'undefined' && Reveal.getIndices) ? (Reveal.getIndices().h || 0) : 0;
-        const isCover = (currIdx === 0);
+        const inOverview = (typeof Reveal !== 'undefined' && Reveal.isOverview && Reveal.isOverview());
+        const isCover = (currIdx === 0) && !inOverview;
         sec1.classList.toggle('cover-paused', !isCover);
         sec1.querySelectorAll('.cover-marquee-stage video').forEach(function(v) {
           if (isCover) {
