@@ -1348,8 +1348,21 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      .floating-toolbar, .speaker-note-drawer, .zoom-hint-badge, .monitor-zoom-modal, .slot-badge, .part-asset-hint {
+      .floating-toolbar, .speaker-note-drawer, .zoom-hint-badge, .monitor-zoom-modal, .slot-badge, .part-asset-hint,
+      #mouseControlDock, #miniCharNavigator, #part1WorldViewport, #boardOverviewHint,
+      .cover-marquee-stage, .cover-vignette-overlay, .cover-center-hero, .cover-theme-switcher, .cover-bottom-pill,
+      video, video.sketchbook-turn-video {
         display: none !important;
+      }
+      img.sketchbook-fallback-img {
+        display: block !important;
+        opacity: 1 !important;
+      }
+      section[data-slide-num="1"].cover-marquee-slide {
+        background: #FFFFFF !important;
+      }
+      .cover-print-layout {
+        display: grid !important;
       }
       #coverGreetingVideo, .part-char-video, #coverGreetingImg,
       #part01Img, #part02Img, #part03Img, #part04Img, #part05Img, #part06Img {
@@ -1379,16 +1392,35 @@
       }
       .alarm-tab-panel {
         display: block !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
         transform: none !important;
         opacity: 1 !important;
       }
       .alarm-print-title {
         display: block !important;
+        font-size: 0.70em !important;
+        padding: 2px 8px !important;
+        margin-bottom: 3px !important;
       }
       .alarm-tab-panel .info-panel {
         padding: 6px 10px !important;
-        font-size: 0.78em !important;
+        gap: 4px !important;
+        font-size: 0.76em !important;
+      }
+      .alarm-tab-panel .info-panel > div:first-child {
+        font-size: 0.80em !important;
+        padding-bottom: 3px !important;
+      }
+      .alarm-tab-panel ul {
+        font-size: 0.72em !important;
+        line-height: 1.32 !important;
+      }
+      .alarm-tab-panel li {
+        margin-top: 2px !important;
+      }
+      section[data-slide-num="31"] .slide-content-layer {
+        padding-top: 2px !important;
+        gap: 4px !important;
       }
     }
     .print-pdf .fragment {
@@ -1401,16 +1433,72 @@
     .print-pdf .zoom-hint-badge,
     .print-pdf .monitor-zoom-modal,
     .print-pdf .slot-badge,
-    .print-pdf .alarm-tab-bar {
+    .print-pdf .alarm-tab-bar,
+    .print-pdf #mouseControlDock,
+    .print-pdf #miniCharNavigator,
+    .print-pdf #part1WorldViewport,
+    .print-pdf #boardOverviewHint,
+    .print-pdf .cover-marquee-stage,
+    .print-pdf .cover-vignette-overlay,
+    .print-pdf .cover-center-hero,
+    .print-pdf .cover-theme-switcher,
+    .print-pdf .cover-bottom-pill,
+    .print-pdf video,
+    .print-pdf video.sketchbook-turn-video {
       display: none !important;
+    }
+    .print-pdf img.sketchbook-fallback-img {
+      display: block !important;
+      opacity: 1 !important;
+    }
+    .print-pdf section[data-slide-num="1"].cover-marquee-slide {
+      background: #FFFFFF !important;
+    }
+    .cover-print-layout {
+      display: none;
+      width: 1280px;
+      height: 720px;
+      padding: 40px 56px;
+      box-sizing: border-box;
+      grid-template-columns: 50% 50%;
+      gap: 20px;
+      align-items: center;
+      background: #FFFFFF;
+      color: #0F172A;
+    }
+    .print-pdf .cover-print-layout {
+      display: grid !important;
     }
     .print-pdf .alarm-tab-panel {
       display: block !important;
-      margin-bottom: 8px !important;
+      margin-bottom: 6px !important;
       opacity: 1 !important;
     }
     .print-pdf .alarm-print-title {
       display: block !important;
+      font-size: 0.70em !important;
+      padding: 2px 8px !important;
+      margin-bottom: 3px !important;
+    }
+    .print-pdf .alarm-tab-panel .info-panel {
+      padding: 6px 10px !important;
+      gap: 4px !important;
+      font-size: 0.76em !important;
+    }
+    .print-pdf .alarm-tab-panel .info-panel > div:first-child {
+      font-size: 0.80em !important;
+      padding-bottom: 3px !important;
+    }
+    .print-pdf .alarm-tab-panel ul {
+      font-size: 0.72em !important;
+      line-height: 1.32 !important;
+    }
+    .print-pdf .alarm-tab-panel li {
+      margin-top: 2px !important;
+    }
+    .print-pdf section[data-slide-num="31"] .slide-content-layer {
+      padding-top: 2px !important;
+      gap: 4px !important;
     }
 
     /* ==========================================================================
@@ -1701,6 +1789,22 @@
     section[data-slide-num="8"].s8-is-zoomed [data-s8-card].s8-active-card {
       opacity: 1 !important;
       box-shadow: 0 20px 48px rgba(15, 23, 42, 0.16) !important;
+    }
+    @media print {
+      section[data-slide-num="8"] .slide-content-layer > div:first-child {
+        transform: none !important;
+      }
+      section[data-slide-num="8"].s8-is-zoomed [data-s8-card]:not(.s8-active-card) {
+        opacity: 1 !important;
+        filter: none !important;
+      }
+    }
+    .print-pdf section[data-slide-num="8"] .slide-content-layer > div:first-child {
+      transform: none !important;
+    }
+    .print-pdf section[data-slide-num="8"].s8-is-zoomed [data-s8-card]:not(.s8-active-card) {
+      opacity: 1 !important;
+      filter: none !important;
     }
 
     /* ==========================================================================
@@ -3793,6 +3897,37 @@
           <i class="fa-solid fa-play"></i>
           <span>スライドを始める</span>
         </button>
+
+        <!-- 配布PDF専用：動画なしのシンプルなPNGベース表紙レイアウト -->
+        <div class="cover-print-layout" aria-hidden="true">
+          <div style="display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-weight: 800; font-size: 16px; padding: 6px 16px; border-radius: 999px; margin-bottom: 18px; width: fit-content;">
+              <i class="fa-solid fa-lungs" style="color: #2563EB;"></i> 感染症センター院内勉強会
+            </div>
+            <h1 style="font-size: 48px; font-weight: 900; line-height: 1.22; color: #0F172A; margin: 0 0 16px;">
+              <span style="color: #2563EB; display: block;">感染症センター</span>
+              <span style="display: block;">人工呼吸器勉強会</span>
+            </h1>
+            <p style="font-size: 17px; color: #475569; line-height: 1.65; margin: 0 0 22px; font-weight: 500;">
+              生体への二面性（メリット・合併症）から、日常・使用中点検、<br>
+              換気モード・実機波形解読、アラーム対応、血液ガス調整まで
+            </p>
+            <div style="width: 96px; height: 5px; background: linear-gradient(90deg, #2563EB, #10B981); border-radius: 3px; margin-bottom: 22px;"></div>
+            <div style="background: #F8FAFC; color: #1E293B; padding: 14px 22px; border-radius: 12px; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; display: inline-flex; flex-direction: column; gap: 8px; width: fit-content;">
+              <div style="font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-user-doctor" style="color: #2563EB;"></i>
+                <span>演者：臨床工学・技術部門</span>
+                <span style="font-size: 21px; color: #0F172A; font-weight: 900; margin-left: 4px;">中平 大志</span>
+              </div>
+              <div style="background: #FFFFFF; padding: 4px 8px; border-radius: 6px; border: 1px solid #E2E8F0; width: fit-content;">
+                <img src="assets/rgmc_logo.png" alt="りんくう総合医療センター" style="height: 26px; display: block;">
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+            <img src="assets/char_cover.png" alt="CEと看護師" style="max-height: 560px; width: 100%; object-fit: contain;">
+          </div>
+        </div>
 
         <aside class="notes">
           <strong>【スライド1：表紙（想定1分）】</strong><br>
@@ -8451,7 +8586,7 @@
       <section data-slide-num="40" data-part-id="6" data-camera-mode="part-enter" data-camera-origin="50% 50%" data-camera-badge="🎥 ENDING STUDIO｜勉強会全体のまとめ ＆ 受講後アンケートQRコード" data-short-title="🎉 まとめ＆QR" data-background-color="#FFFDF9" class="sandwich-slide">
         <div class="slide-header-layer" data-id="tv-header" style="background: #4A5568;">
           <span class="category-pill green" data-id="tv-pill">SUMMARY &amp; SURVEY</span>
-          <h2 data-id="tv-title">お疲れ様でした！ICU呼吸器勉強会 まとめ＆アンケート</h2>
+          <h2 data-id="tv-title">お疲れ様でした！呼吸器勉強会 まとめ＆アンケート</h2>
         </div>
 
         <div class="slide-content-layer">
@@ -11388,10 +11523,11 @@
         const grid = layer ? layer.firstElementChild : null;
         if (!layer || !grid) return;
 
+        const isPrintPdf = (window.location.search.indexOf('print-pdf') !== -1) || document.documentElement.classList.contains('print-pdf');
         const visibleSteps = sec8.querySelectorAll('.slide8-cam-step.fragment.visible').length;
         const cards = sec8.querySelectorAll('[data-s8-card]');
 
-        if (visibleSteps < 2) {
+        if (!isPrintPdf && visibleSteps < 2) {
           const targetIdx = visibleSteps + 1;
           const targetCard = sec8.querySelector('[data-s8-card="' + targetIdx + '"]');
           if (!targetCard) return;
@@ -11481,6 +11617,7 @@
       };
 
       function initCoverMarqueeWall() {
+        if (window.location.search.indexOf('print-pdf') !== -1) return;
         const stage = document.getElementById('coverMarqueeStage');
         if (!stage || stage.getAttribute('data-built') === '1') return;
         stage.setAttribute('data-built', '1');
@@ -11686,7 +11823,7 @@
         }, 60);
 
         function playSketchbookTurnVideo(slideEl) {
-          if (!slideEl) return;
+          if (!slideEl || window.location.search.indexOf('print-pdf') !== -1) return;
           const v = slideEl.querySelector('video.sketchbook-turn-video');
           if (v) {
             try {
