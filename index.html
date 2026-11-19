@@ -3956,6 +3956,59 @@
       padding: 2px 10px;
       border-radius: 999px;
     }
+    /* 3色テーマ切替ピル（Slide 43右下・「もう一度再生」の左隣） */
+    .marvel-theme-switcher {
+      position: absolute;
+      right: 176px;
+      bottom: 24px;
+      z-index: 12;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #CBD5E1;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.10);
+      backdrop-filter: blur(6px);
+    }
+    .marvel-theme-switcher-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748B;
+      padding: 0 4px 0 3px;
+      letter-spacing: 0.04em;
+    }
+    .marvel-theme-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #475569;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .marvel-theme-btn:hover {
+      background: #F1F5F9;
+      color: #0F172A;
+    }
+    .marvel-theme-btn.is-active {
+      background: #0F172A;
+      color: #FFFFFF;
+      border-color: #0F172A;
+    }
+    .marvel-theme-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(15, 23, 42, 0.22);
+      display: inline-block;
+    }
     .marvel-replay-btn {
       position: absolute;
       right: 28px;
@@ -3982,13 +4035,15 @@
       color: #FFFFFF;
     }
     @media print {
-      .marvel-replay-btn, .marvel-bg-flash, .marvel-logo-cam, .marvel-white-transition { display: none !important; }
+      .marvel-replay-btn, .marvel-theme-switcher, .marvel-bg-flash, .marvel-logo-cam, .marvel-white-transition { display: none !important; }
       section[data-slide-num="43"] .marvel-finish-layer { animation: none !important; opacity: 1 !important; transform: none !important; }
     }
     .print-pdf .marvel-replay-btn,
+    .print-pdf .marvel-theme-switcher,
     .print-pdf .marvel-bg-flash,
     .print-pdf .marvel-logo-cam,
     .print-pdf .marvel-white-transition,
+    html.mobile-lite-mode .marvel-theme-switcher,
     html.mobile-lite-mode .marvel-bg-flash,
     html.mobile-lite-mode .marvel-logo-cam,
     html.mobile-lite-mode .marvel-white-transition { display: none !important; }
@@ -9215,46 +9270,46 @@
 
           <!-- 重厚な立体 Fin ロゴ（ズームアウト→光沢→finish.pngへ切替） -->
           <div class="marvel-logo-cam">
-            <div class="marvel-metal-bezel">
-              <div class="marvel-end-box">
+            <div class="marvel-metal-bezel" id="marvelMetalBezel">
+              <div class="marvel-end-box" id="marvelEndBox">
                 <svg class="marvel-svg-logo" viewBox="0 0 660 232" aria-label="Fin">
                   <defs>
                     <clipPath id="marvelEndTextClip">
                       <text x="330" y="182" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4">Fin</text>
                     </clipPath>
-                    <!-- シャンパンゴールド〜アイボリーの縦グラデーション -->
+                    <!-- Fin表面の縦グラデーション（テーマ切替で動的更新） -->
                     <linearGradient id="marvelHeavyMetalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stop-color="#FFFFFF"/>
-                      <stop offset="30%" stop-color="#FFF9EF"/>
-                      <stop offset="56%" stop-color="#F3E5CE"/>
-                      <stop offset="80%" stop-color="#FFFDF8"/>
-                      <stop offset="100%" stop-color="#DFC8A2"/>
+                      <stop id="finGradStop0" offset="0%" stop-color="#FFFFFF"/>
+                      <stop id="finGradStop1" offset="30%" stop-color="#F8FAFC"/>
+                      <stop id="finGradStop2" offset="56%" stop-color="#E2E8F0"/>
+                      <stop id="finGradStop3" offset="80%" stop-color="#FFFFFF"/>
+                      <stop id="finGradStop4" offset="100%" stop-color="#CBD5E1"/>
                     </linearGradient>
-                    <!-- 温かみのあるテラコッタ系ドロップシャドウフィルター -->
+                    <!-- ドロップシャドウフィルター -->
                     <filter id="marvelHeavyShadow" x="-10%" y="-10%" width="125%" height="130%">
-                      <feDropShadow dx="0" dy="9" stdDeviation="5.5" flood-color="#6B272B" flood-opacity="0.58"/>
+                      <feDropShadow id="finDropShadow" dx="0" dy="9" stdDeviation="5.5" flood-color="#0F2F40" flood-opacity="0.58"/>
                     </filter>
                   </defs>
 
-                  <!-- 6層オフセットによる3D押し出し立体厚み（コーラル〜テラコッタの優しい陰影） -->
-                  <g class="marvel-heavy-text-group" filter="url(#marvelHeavyShadow)">
-                    <text x="330" y="192" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#6E2B2F">Fin</text>
-                    <text x="330" y="190" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#823438">Fin</text>
-                    <text x="330" y="188" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#963F43">Fin</text>
-                    <text x="330" y="186" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#AA4B4E">Fin</text>
-                    <text x="330" y="184" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#BC5A59">Fin</text>
-                    <text x="330" y="183" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#C9766C">Fin</text>
+                  <!-- 6層オフセットによる3D押し出し立体厚み -->
+                  <g class="marvel-heavy-text-group" id="finDepthLayers" filter="url(#marvelHeavyShadow)">
+                    <text x="330" y="192" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#133C52">Fin</text>
+                    <text x="330" y="190" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#194B66">Fin</text>
+                    <text x="330" y="188" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#1F5B7A">Fin</text>
+                    <text x="330" y="186" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#266C90">Fin</text>
+                    <text x="330" y="184" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#2E7EA6">Fin</text>
+                    <text x="330" y="183" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="#4594BA">Fin</text>
                   </g>
 
                   <!-- 文字の切り抜きの中で勉強会のイラストが高速フリップ -->
                   <g class="marvel-flip-group" clip-path="url(#marvelEndTextClip)">
-                    <rect x="0" y="0" width="660" height="232" fill="#B85258"/>
+                    <rect id="finFlipBgRect" x="0" y="0" width="660" height="232" fill="#1D5A78"/>
                     <image id="marvelFlipImg" href="assets_lite/part01_char.jpg" x="-20" y="-30" width="700" height="292" preserveAspectRatio="xMidYMid slice"/>
                   </g>
 
-                  <!-- 確定するシャンパンゴールド立体文字 Fin -->
+                  <!-- 確定する立体文字 Fin -->
                   <g class="marvel-heavy-text-group">
-                    <text x="330" y="182" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="url(#marvelHeavyMetalGrad)" stroke="#9B4D50" stroke-width="3" paint-order="stroke fill">Fin</text>
+                    <text id="finMainStrokeText" x="330" y="182" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="url(#marvelHeavyMetalGrad)" stroke="#1D5A78" stroke-width="3" paint-order="stroke fill">Fin</text>
                     <text x="330" y="180.8" text-anchor="middle" font-family="'Lobster', 'Brush Script MT', 'Segoe Script', cursive" font-weight="400" font-size="204" letter-spacing="4" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.2">Fin</text>
                   </g>
                 </svg>
@@ -9270,9 +9325,23 @@
           <div class="marvel-finish-layer">
             <img src="assets/finish.png" alt="ご清聴ありがとうございました" class="marvel-finish-img" />
             <div class="marvel-finish-credit">
-              <span class="credit-tag">INFECTION CENTER VENTILATOR SEMINAR</span>
+              <span class="credit-tag" id="finCreditTag">INFECTION CENTER VENTILATOR SEMINAR</span>
               <span>演者：臨床工学・技術部門 中平大志</span>
             </div>
+          </div>
+
+          <!-- Fin 3色テーマ切替ピル -->
+          <div class="marvel-theme-switcher" id="endThemeSwitcher" aria-label="Finカラー切替" onclick="event.stopPropagation()">
+            <span class="marvel-theme-switcher-label"><i class="fa-solid fa-palette"></i> 色切替</span>
+            <button type="button" class="marvel-theme-btn is-active" data-end-theme="sky" onclick="event.stopPropagation(); setEndTheme('sky');">
+              <span class="marvel-theme-dot" style="background:#2B7A9E;"></span>スカイブルー
+            </button>
+            <button type="button" class="marvel-theme-btn" data-end-theme="coral" onclick="event.stopPropagation(); setEndTheme('coral');">
+              <span class="marvel-theme-dot" style="background:#D96B70;"></span>コーラル
+            </button>
+            <button type="button" class="marvel-theme-btn" data-end-theme="navy" onclick="event.stopPropagation(); setEndTheme('navy');">
+              <span class="marvel-theme-dot" style="background:#1E3A5F;"></span>ダークネイビー
+            </button>
           </div>
 
           <button type="button" class="marvel-replay-btn" onclick="event.stopPropagation(); replayMarvelEnding();" title="エンディング演出をもう一度再生">
@@ -10570,7 +10639,7 @@
       rev.addEventListener('click', function(e) {
         if (isEditing || isDrawMode) return;
         if (typeof Reveal !== 'undefined' && Reveal.isOverview && Reveal.isOverview()) return;
-        if (e.target.closest('#floatingToolbar, #mouseControlDock, #miniCharNavigator, #chapterJumpBar, #noteDrawer, .controls, .cover-theme-switcher, .cover-bottom-pill, .board-polaroid-video-card, .p1-slide-tile')) {
+        if (e.target.closest('#floatingToolbar, #mouseControlDock, #miniCharNavigator, #chapterJumpBar, #noteDrawer, .controls, .cover-theme-switcher, .cover-bottom-pill, #endThemeSwitcher, .marvel-theme-switcher, .marvel-replay-btn, .board-polaroid-video-card, .p1-slide-tile')) {
           return;
         }
         // 拡大モード中：クリックでその位置に拡大 / もう一度クリックで等倍に戻す
@@ -12085,6 +12154,103 @@
         });
         try { localStorage.setItem('vent_cover_theme', t); } catch(e) {}
       };
+
+      window.setEndTheme = function(theme) {
+        const themes = {
+          sky: {
+            bezelBg: "repeating-linear-gradient(90deg, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, rgba(100,116,139,0.06) 1px, rgba(100,116,139,0.06) 3px), linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 28%, #F8FAFC 52%, #CBD5E1 78%, #F1F5F9 100%)",
+            bezelShadow: "0 26px 60px rgba(43, 122, 158, 0.22), 0 10px 24px rgba(15, 23, 42, 0.14), inset 0 2px 3px rgba(255, 255, 255, 0.96), inset 0 -3px 5px rgba(100, 116, 139, 0.28)",
+            boxBg: "linear-gradient(180deg, #3B82F6 0%, #2B7A9E 52%, #1D5A78 100%)",
+            boxBorder: "rgba(248, 250, 252, 0.88)",
+            grad: ["#FFFFFF", "#F8FAFC", "#E2E8F0", "#FFFFFF", "#CBD5E1"],
+            depth: ["#133C52", "#194B66", "#1F5B7A", "#266C90", "#2E7EA6", "#4594BA"],
+            stroke: "#1D5A78",
+            shadow: "#0F2F40",
+            flipBg: "#1D5A78",
+            tagColor: "#1D5A78",
+            tagBg: "#F0F9FF",
+            tagBorder: "#BAE6FD"
+          },
+          coral: {
+            bezelBg: "repeating-linear-gradient(90deg, rgba(255,255,255,0.24) 0px, rgba(255,255,255,0.24) 1px, rgba(120,88,52,0.08) 1px, rgba(120,88,52,0.08) 3px), linear-gradient(135deg, #FFFDF7 0%, #E6D3B3 28%, #F7EFE0 50%, #C6AB82 76%, #EFE2CA 100%)",
+            bezelShadow: "0 26px 60px rgba(120, 72, 68, 0.24), 0 10px 24px rgba(120, 72, 68, 0.14), inset 0 2px 3px rgba(255, 255, 255, 0.94), inset 0 -3px 5px rgba(120, 88, 52, 0.35)",
+            boxBg: "linear-gradient(180deg, #E07A5F 0%, #D96B70 52%, #B85258 100%)",
+            boxBorder: "rgba(255, 248, 237, 0.86)",
+            grad: ["#FFFFFF", "#FFF9EF", "#F3E5CE", "#FFFDF8", "#DFC8A2"],
+            depth: ["#6E2B2F", "#823438", "#963F43", "#AA4B4E", "#BC5A59", "#C9766C"],
+            stroke: "#9B4D50",
+            shadow: "#6B272B",
+            flipBg: "#B85258",
+            tagColor: "#991B1B",
+            tagBg: "#FEF2F2",
+            tagBorder: "#FECACA"
+          },
+          navy: {
+            bezelBg: "repeating-linear-gradient(90deg, rgba(255,255,255,0.20) 0px, rgba(255,255,255,0.20) 1px, rgba(30,41,59,0.08) 1px, rgba(30,41,59,0.08) 3px), linear-gradient(135deg, #F8FAFC 0%, #CBD5E1 28%, #E2E8F0 52%, #94A3B8 78%, #CBD5E1 100%)",
+            bezelShadow: "0 28px 65px rgba(15, 23, 42, 0.30), 0 10px 24px rgba(15, 23, 42, 0.18), inset 0 2px 3px rgba(255, 255, 255, 0.94), inset 0 -3px 5px rgba(51, 65, 85, 0.38)",
+            boxBg: "linear-gradient(180deg, #2B4C7E 0%, #1E3A5F 52%, #0F233D 100%)",
+            boxBorder: "rgba(241, 245, 249, 0.85)",
+            grad: ["#FFFFFF", "#F1F5F9", "#CBD5E1", "#F8FAFC", "#94A3B8"],
+            depth: ["#06101F", "#0B1A30", "#112544", "#183157", "#213E6B", "#335382"],
+            stroke: "#1E293B",
+            shadow: "#020617",
+            flipBg: "#0F233D",
+            tagColor: "#1E3A5F",
+            tagBg: "#EFF6FF",
+            tagBorder: "#BFDBFE"
+          }
+        };
+        const t = themes[theme] ? theme : 'sky';
+        const cfg = themes[t];
+
+        const bezel = document.getElementById('marvelMetalBezel');
+        const box = document.getElementById('marvelEndBox');
+        if (bezel) {
+          bezel.style.background = cfg.bezelBg;
+          bezel.style.boxShadow = cfg.bezelShadow;
+        }
+        if (box) {
+          box.style.background = cfg.boxBg;
+          box.style.borderColor = cfg.boxBorder;
+        }
+        cfg.grad.forEach(function(col, idx) {
+          const stop = document.getElementById('finGradStop' + idx);
+          if (stop) stop.setAttribute('stop-color', col);
+        });
+        const depthGroup = document.getElementById('finDepthLayers');
+        if (depthGroup) {
+          const texts = depthGroup.querySelectorAll('text');
+          texts.forEach(function(txt, idx) {
+            if (cfg.depth[idx]) txt.setAttribute('fill', cfg.depth[idx]);
+          });
+        }
+        const dropShadow = document.getElementById('finDropShadow');
+        if (dropShadow) dropShadow.setAttribute('flood-color', cfg.shadow);
+        const mainText = document.getElementById('finMainStrokeText');
+        if (mainText) mainText.setAttribute('stroke', cfg.stroke);
+        const flipRect = document.getElementById('finFlipBgRect');
+        if (flipRect) flipRect.setAttribute('fill', cfg.flipBg);
+        const tag = document.getElementById('finCreditTag');
+        if (tag) {
+          tag.style.color = cfg.tagColor;
+          tag.style.background = cfg.tagBg;
+          tag.style.borderColor = cfg.tagBorder;
+        }
+
+        document.querySelectorAll('#endThemeSwitcher .marvel-theme-btn').forEach(function(btn) {
+          btn.classList.toggle('is-active', btn.getAttribute('data-end-theme') === t);
+        });
+        try { localStorage.setItem('vent_end_theme', t); } catch(e) {}
+      };
+
+      (function initEndTheme() {
+        let saved = 'sky';
+        try {
+          const s = localStorage.getItem('vent_end_theme');
+          if (s) saved = s;
+        } catch(e) {}
+        if (window.setEndTheme) window.setEndTheme(saved);
+      })();
 
       function initCoverMarqueeWall() {
         if ((typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) || window.location.search.indexOf('print-pdf') !== -1) return;
