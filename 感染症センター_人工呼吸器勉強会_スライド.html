@@ -3725,6 +3725,277 @@
     }
   </style>
   <!-- === SUGOROKU_AGENDA_CSS_END === -->
+  <!-- === MARVEL_END_CSS_START === -->
+  <style>
+    section[data-slide-num="43"].marvel-end-slide {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 1280px !important;
+      height: 720px !important;
+      background: #FFFFFF !important;
+      overflow: hidden !important;
+      position: relative !important;
+    }
+    .marvel-stage {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      background: radial-gradient(circle at 50% 45%, #FFFFFF 0%, #F8FAFC 64%, #E2E8F0 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      perspective: 1300px;
+    }
+    /* 白ベースに馴染む高速フリップ背景フラッシュ層 */
+    .marvel-bg-flash {
+      position: absolute;
+      inset: -40px;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      filter: saturate(0.45) contrast(1.08) brightness(1.18);
+      pointer-events: none;
+      z-index: 1;
+    }
+    section[data-slide-num="43"].is-marvel-playing .marvel-bg-flash {
+      animation: marvelWhiteBgFlash 4.7s ease forwards;
+    }
+    @keyframes marvelWhiteBgFlash {
+      0%   { opacity: 0.22; }
+      68%  { opacity: 0.16; }
+      88%  { opacity: 0.04; }
+      100% { opacity: 0; }
+    }
+    /* 3Dカメラコンテナ（重厚ENDロゴ→余韻→フェードアウト） */
+    .marvel-logo-cam {
+      position: relative;
+      z-index: 5;
+      transform-style: preserve-3d;
+      opacity: 0;
+      pointer-events: none;
+    }
+    section[data-slide-num="43"].is-marvel-playing .marvel-logo-cam {
+      animation: marvelCamZoomOutToFinish 5.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes marvelCamZoomOutToFinish {
+      0% {
+        transform: perspective(1300px) scale(4.8) rotateY(-24deg) rotateX(12deg) translateZ(90px);
+        opacity: 0.2;
+      }
+      14% {
+        opacity: 1;
+      }
+      62% {
+        transform: perspective(1300px) scale(1.06) rotateY(2deg) rotateX(-1deg) translateZ(0px);
+        opacity: 1;
+      }
+      74% {
+        transform: perspective(1300px) scale(1) rotateY(0deg) rotateX(0deg) translateZ(0px);
+        opacity: 1;
+      }
+      88% {
+        transform: perspective(1300px) scale(1) rotateY(0deg) rotateX(0deg) translateZ(0px);
+        opacity: 1;
+      }
+      100% {
+        transform: perspective(1300px) scale(0.92) translateY(-18px);
+        opacity: 0;
+      }
+    }
+    /* 淡いシャンパンゴールド・ヘアライン額縁 */
+    .marvel-metal-bezel {
+      padding: 10px;
+      border-radius: 6px;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.24) 0px,
+          rgba(255, 255, 255, 0.24) 1px,
+          rgba(120, 88, 52, 0.08) 1px,
+          rgba(120, 88, 52, 0.08) 3px
+        ),
+        linear-gradient(135deg, #FFFDF7 0%, #E6D3B3 28%, #F7EFE0 50%, #C6AB82 76%, #EFE2CA 100%);
+      box-shadow:
+        0 26px 60px rgba(120, 72, 68, 0.24),
+        0 10px 24px rgba(120, 72, 68, 0.14),
+        inset 0 2px 3px rgba(255, 255, 255, 0.94),
+        inset 0 -3px 5px rgba(120, 88, 52, 0.35);
+    }
+    /* 落ち着いたコーラルピンク〜テラコッタ・エンブレムプレート */
+    .marvel-end-box {
+      position: relative;
+      width: 680px;
+      height: 248px;
+      background: linear-gradient(180deg, #E07A5F 0%, #D96B70 52%, #B85258 100%);
+      border: 3px solid rgba(255, 248, 237, 0.86);
+      box-shadow:
+        inset 0 6px 20px rgba(92, 32, 34, 0.28),
+        inset 0 -6px 18px rgba(92, 32, 34, 0.36);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    /* SVGクリッピングで文字の中をイラストが高速フリップするレイヤー */
+    .marvel-svg-logo {
+      width: 660px;
+      height: 232px;
+      display: block;
+    }
+    .marvel-flip-group {
+      opacity: 0;
+    }
+    section[data-slide-num="43"].is-marvel-playing .marvel-flip-group {
+      animation: marvelFlipFadeOut 3.7s ease forwards;
+    }
+    @keyframes marvelFlipFadeOut {
+      0%   { opacity: 1; }
+      72%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .marvel-heavy-text-group {
+      opacity: 1;
+    }
+    section[data-slide-num="43"].is-marvel-playing .marvel-heavy-text-group {
+      animation: marvelSolidFadeIn 3.7s ease forwards;
+    }
+    @keyframes marvelSolidFadeIn {
+      0%   { opacity: 0.14; }
+      65%  { opacity: 0.30; }
+      100% { opacity: 1; }
+    }
+    /* ロゴ確定時の斜めメタリック光沢 */
+    .marvel-shimmer {
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 58%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.52) 50%, transparent 100%);
+      pointer-events: none;
+    }
+    section[data-slide-num="43"].is-marvel-playing .marvel-shimmer {
+      animation: marvelShimmerSweep 1.05s ease 3.35s forwards;
+    }
+    @keyframes marvelShimmerSweep {
+      0%   { left: -120%; }
+      100% { left: 165%; }
+    }
+    /* END→finish.png 切替時のやわらかなホワイトフラッシュ */
+    .marvel-white-transition {
+      position: absolute;
+      inset: 0;
+      background: #FFFFFF;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 7;
+    }
+    section[data-slide-num="43"].is-marvel-playing .marvel-white-transition {
+      animation: marvelWhiteFlashCut 1.15s ease 4.55s forwards;
+    }
+    @keyframes marvelWhiteFlashCut {
+      0%   { opacity: 0; }
+      38%  { opacity: 0.92; }
+      100% { opacity: 0; }
+    }
+    /* 最終フィニッシュ画面（finish.png＋演者クレジット） */
+    .marvel-finish-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 40px 26px;
+      opacity: 1;
+      transform: scale(1);
+    }
+    section[data-slide-num="43"].is-marvel-playing .marvel-finish-layer {
+      opacity: 0;
+      transform: scale(1.03);
+      animation: marvelFinishReveal 1.15s cubic-bezier(0.16, 1, 0.3, 1) 4.85s forwards;
+    }
+    @keyframes marvelFinishReveal {
+      0%   { opacity: 0; transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .marvel-finish-img {
+      max-width: 1040px;
+      max-height: 590px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .marvel-finish-credit {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 24px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #F8FAFC 0%, #FFFFFF 50%, #F8FAFC 100%);
+      border: 1px solid #CBD5E1;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      color: #334155;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .marvel-finish-credit .credit-tag {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: #991B1B;
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .marvel-replay-btn {
+      position: absolute;
+      right: 28px;
+      bottom: 24px;
+      z-index: 12;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #CBD5E1;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.10);
+      backdrop-filter: blur(6px);
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+    .marvel-replay-btn:hover {
+      background: #0F172A;
+      border-color: #0F172A;
+      color: #FFFFFF;
+    }
+    @media print {
+      .marvel-replay-btn, .marvel-bg-flash, .marvel-logo-cam, .marvel-white-transition { display: none !important; }
+      section[data-slide-num="43"] .marvel-finish-layer { animation: none !important; opacity: 1 !important; transform: none !important; }
+    }
+    .print-pdf .marvel-replay-btn,
+    .print-pdf .marvel-bg-flash,
+    .print-pdf .marvel-logo-cam,
+    .print-pdf .marvel-white-transition,
+    html.mobile-lite-mode .marvel-bg-flash,
+    html.mobile-lite-mode .marvel-logo-cam,
+    html.mobile-lite-mode .marvel-white-transition { display: none !important; }
+    .print-pdf section[data-slide-num="43"] .marvel-finish-layer,
+    html.mobile-lite-mode section[data-slide-num="43"] .marvel-finish-layer { animation: none !important; opacity: 1 !important; transform: none !important; }
+  </style>
+  <!-- === MARVEL_END_CSS_END === -->
 </head>
 <body>
   <div id="floatingToolbar" class="floating-toolbar">
@@ -3809,6 +4080,7 @@
     <button type="button" class="chapter-jump-btn" onclick="jumpToSlide(25)">第4部 アラーム (S26)</button>
     <button type="button" class="chapter-jump-btn" onclick="jumpToSlide(31)">第5部 血ガス (S32)</button>
     <button type="button" class="chapter-jump-btn" onclick="jumpToSlide(38)">第6部 総括 (S39)</button>
+    <button type="button" class="chapter-jump-btn home-btn" onclick="jumpToSlide(42)"><i class="fa-solid fa-flag-checkered"></i> 終了 (S43)</button>
   </div>
   <div id="noteDrawer" class="speaker-note-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px;">
@@ -8934,6 +9206,86 @@
         </aside>
       </section>
 
+      <!-- ====================================================================
+           【Slide 43】エンディング（白ベース・重厚Marvel風 END → finish.png 演出）
+           ==================================================================== -->
+      <section data-slide-num="43" data-part-id="0" data-camera-mode="divider" data-camera-origin="50% 50%" data-camera-badge="🎬 ENDING｜ご清聴ありがとうございました" data-short-title="🎬 END" data-background-color="#FFFFFF" class="marvel-end-slide">
+        <div class="marvel-stage">
+          <div class="marvel-bg-flash" id="marvelBgFlash"></div>
+
+          <!-- 重厚な立体 END ロゴ（ズームアウト→光沢→finish.pngへ切替） -->
+          <div class="marvel-logo-cam">
+            <div class="marvel-metal-bezel">
+              <div class="marvel-end-box">
+                <svg class="marvel-svg-logo" viewBox="0 0 660 232" aria-label="END">
+                  <defs>
+                    <clipPath id="marvelEndTextClip">
+                      <text x="330" y="184" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20">END</text>
+                    </clipPath>
+                    <!-- シャンパンゴールド〜アイボリーの縦グラデーション -->
+                    <linearGradient id="marvelHeavyMetalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#FFFFFF"/>
+                      <stop offset="30%" stop-color="#FFF9EF"/>
+                      <stop offset="56%" stop-color="#F3E5CE"/>
+                      <stop offset="80%" stop-color="#FFFDF8"/>
+                      <stop offset="100%" stop-color="#DFC8A2"/>
+                    </linearGradient>
+                    <!-- 温かみのあるテラコッタ系ドロップシャドウフィルター -->
+                    <filter id="marvelHeavyShadow" x="-10%" y="-10%" width="125%" height="130%">
+                      <feDropShadow dx="0" dy="9" stdDeviation="5.5" flood-color="#6B272B" flood-opacity="0.58"/>
+                    </filter>
+                  </defs>
+
+                  <!-- 6層オフセットによる3D押し出し立体厚み（コーラル〜テラコッタの優しい陰影） -->
+                  <g class="marvel-heavy-text-group" filter="url(#marvelHeavyShadow)">
+                    <text x="330" y="196" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="#6E2B2F">END</text>
+                    <text x="330" y="194" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="#823438">END</text>
+                    <text x="330" y="192" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="#963F43">END</text>
+                    <text x="330" y="190" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="#AA4B4E">END</text>
+                    <text x="330" y="188" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="#BC5A59">END</text>
+                    <text x="330" y="186" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="#C9766C">END</text>
+                  </g>
+
+                  <!-- 文字の切り抜きの中で勉強会のイラストが高速フリップ -->
+                  <g class="marvel-flip-group" clip-path="url(#marvelEndTextClip)">
+                    <rect x="0" y="0" width="660" height="232" fill="#B85258"/>
+                    <image id="marvelFlipImg" href="assets_lite/part01_char.jpg" x="-20" y="-30" width="700" height="292" preserveAspectRatio="xMidYMid slice"/>
+                  </g>
+
+                  <!-- 確定するシャンパンゴールド立体文字 END -->
+                  <g class="marvel-heavy-text-group">
+                    <text x="330" y="184" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="url(#marvelHeavyMetalGrad)" stroke="#9B4D50" stroke-width="3" paint-order="stroke fill">END</text>
+                    <text x="330" y="182.5" text-anchor="middle" font-family="'Arial Black', 'Impact', 'Noto Sans JP', sans-serif" font-weight="900" font-size="194" letter-spacing="20" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.2">END</text>
+                  </g>
+                </svg>
+                <div class="marvel-shimmer"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- やわらかなホワイトフラッシュ切替幕 -->
+          <div class="marvel-white-transition"></div>
+
+          <!-- 最終フィニッシュ画面：finish.png ＋ 演者クレジット -->
+          <div class="marvel-finish-layer">
+            <img src="assets/finish.png" alt="ご清聴ありがとうございました" class="marvel-finish-img" />
+            <div class="marvel-finish-credit">
+              <span class="credit-tag">INFECTION CENTER VENTILATOR SEMINAR</span>
+              <span>演者：臨床工学・技術部門 中平大志</span>
+            </div>
+          </div>
+
+          <button type="button" class="marvel-replay-btn" onclick="event.stopPropagation(); replayMarvelEnding();" title="エンディング演出をもう一度再生">
+            <i class="fa-solid fa-rotate-right"></i> <span>もう一度再生</span>
+          </button>
+        </div>
+
+        <aside class="notes">
+          <strong>【スライド43：エンディング】</strong><br>
+          「本日は『感染症センター 人工呼吸器勉強会』にご参加いただき、誠にありがとうございました。明日からのベッドサイドケアにぜひお役立てください。」
+        </aside>
+      </section>
+
     </div>
   </div>
 
@@ -11972,8 +12324,55 @@
           }
         }
 
+        let marvelFlipTimer = null;
+        window.replayMarvelEnding = function() {
+          const sec43 = document.querySelector('.reveal .slides > section[data-slide-num="43"]');
+          if (!sec43) return;
+          if ((typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) || window.location.search.indexOf('print-pdf') !== -1) return;
+          if (marvelFlipTimer) { clearInterval(marvelFlipTimer); marvelFlipTimer = null; }
+
+          sec43.classList.remove('is-marvel-playing');
+          void sec43.offsetWidth;
+          sec43.classList.add('is-marvel-playing');
+
+          const flipImg = document.getElementById('marvelFlipImg');
+          const bgFlash = document.getElementById('marvelBgFlash');
+          const flipAssets = [
+            'assets_lite/char_cover.jpg', 'assets_lite/part01_char.jpg', 'assets_lite/fig_gas_exchange.jpg',
+            'assets_lite/part02_char.jpg', 'assets_lite/fig_cuff_high.jpg', 'assets_lite/part03_char.jpg',
+            'assets_lite/fig_vcv.jpg', 'assets_lite/fig_pcv.jpg', 'assets_lite/part04_char.jpg',
+            'assets_lite/slide28_mv.jpg', 'assets_lite/slide29_mv.jpg', 'assets_lite/part05_char.jpg',
+            'assets_lite/fig_alveoli_o2.jpg', 'assets_lite/part06_char.jpg', 'assets_lite/char_closing.jpg'
+          ];
+          let fIdx = 0;
+          const startAt = Date.now();
+          marvelFlipTimer = setInterval(function() {
+            const elapsed = Date.now() - startAt;
+            if (elapsed > 3400) {
+              clearInterval(marvelFlipTimer);
+              marvelFlipTimer = null;
+              return;
+            }
+            const src = flipAssets[fIdx % flipAssets.length];
+            fIdx++;
+            if (flipImg) {
+              flipImg.setAttribute('href', src);
+              flipImg.setAttribute('y', String(-45 + ((fIdx % 4) * 18)));
+            }
+            if (bgFlash) {
+              bgFlash.style.backgroundImage = "url('" + src + "')";
+            }
+          }, 95);
+        };
+
         Reveal.on('slidechanged', function(event) {
           playSketchbookTurnVideo(event.currentSlide);
+          if (event.currentSlide && event.currentSlide.getAttribute('data-slide-num') === '43') {
+            window.replayMarvelEnding();
+          } else if (marvelFlipTimer) {
+            clearInterval(marvelFlipTimer);
+            marvelFlipTimer = null;
+          }
           const currIdx = event.indexh || 0;
           const prevNum = prevSlideIdx + 1;
           const currNum = currIdx + 1;

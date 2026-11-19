@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>END — Marvel Studios Style Intro (Study Session Edition)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000000;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Arial Black", Impact, sans-serif;
+      user-select: none;
+    }
+    #webgl-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    /* ローカル file:// 環境でも実画像が高速フリップするためのDOMハイブリッド層 */
+    #dom-comic-fallback {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      overflow: hidden;
+      perspective: 1100px;
+      mix-blend-mode: screen;
+      filter: sepia(0.55) saturate(2.1) contrast(1.22) hue-rotate(-18deg);
+    }
+    .dom-comic-stage {
+      position: absolute;
+      inset: -12%;
+      transform: rotateZ(-13deg) rotateX(12deg) rotateY(-14deg);
+      transform-style: preserve-3d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dom-comic-sheet {
+      position: absolute;
+      width: min(62vw, 720px);
+      height: min(78vh, 560px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+      padding: 10px;
+      background: #140505;
+      border: 6px solid #090909;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      transform-origin: left center;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .dom-comic-sheet img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: 3px solid #111;
+      display: block;
+    }
+
+    /* シーン1用：アメコミ印刷物の網点（ハーフトーン）＋赤・オレンジ・セピアのカラーフィルター */
+    #comic-filter-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0;
+      background:
+        radial-gradient(circle, rgba(20, 4, 4, 0.36) 1.2px, transparent 1.5px),
+        linear-gradient(125deg, rgba(177, 19, 19, 0.42), rgba(234, 88, 12, 0.28) 50%, rgba(120, 53, 15, 0.48));
+      background-size: 6px 6px, 100% 100%;
+      mix-blend-mode: multiply;
+      transition: opacity 0.25s ease;
+    }
+
+    /* シーン1用：強い逆光（レンズフレア） */
+    #lens-flare {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      opacity: 0;
+      background:
+        radial-gradient(ellipse 68% 36% at 52% 46%, rgba(255, 245, 220, 0.52) 0%, rgba(255, 138, 60, 0.26) 36%, transparent 72%),
+        linear-gradient(180deg, transparent 46%, rgba(255, 232, 190, 0.44) 50%, transparent 54%);
+      mix-blend-mode: screen;
+    }
+
+    /* 7秒時点のホワイトアウトフラッシュ */
+    #flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    /* シーン2後半：ヘアライン加工シルバー枠のロゴ確定＋クレジットレイヤー */
+    #final-lockup-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(24px, 4.4vh, 44px);
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(205, 28, 28, 0.35), rgba(177, 19, 19, 0.96) 72%, #8c0c0c 100%);
+      padding: 24px;
+    }
+    .final-lockup-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(16px, 2.8vw, 34px);
+      transform: scale(1.18);
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #final-lockup-layer.is-locked .final-lockup-inner {
+      transform: scale(1);
+    }
+
+    /* ヘアライン加工風シルバー金属枠 */
+    .silver-frame {
+      position: relative;
+      padding: 8px;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,0.12) 0px,
+          rgba(255,255,255,0.12) 1px,
+          rgba(0,0,0,0.06) 1px,
+          rgba(0,0,0,0.06) 3px
+        ),
+        linear-gradient(135deg, #f8fafc 0%, #94a3b8 28%, #e2e8f0 50%, #64748b 78%, #f1f5f9 100%);
+      box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.55),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+    }
+    .red-logo-box {
+      position: relative;
+      background: linear-gradient(180deg, #cf1818 0%, #b11313 55%, #8a0c0c 100%);
+      padding: 14px 44px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .red-logo-box::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.28) 48%, transparent 64%);
+      transform: translateX(-140%);
+      transition: transform 1.3s ease;
+      z-index: 4;
+      pointer-events: none;
+    }
+    #final-lockup-layer.is-locked .red-logo-box::after {
+      transform: translateX(150%);
+    }
+    #finalLogoCanvas {
+      display: block;
+      height: clamp(74px, 13.5vw, 150px);
+      width: auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ローカル file:// 用：END文字くり抜き奥で実動画を再生するフォールバック層 */
+    #finalVideoCutoutWrap {
+      display: none;
+      position: relative;
+      width: clamp(230px, 34vw, 430px);
+      height: clamp(74px, 13.5vw, 150px);
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #finalVideoCutoutWrap.active {
+      display: flex;
+    }
+    #finalCutoutVideo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.42;
+      filter: contrast(1.25) saturate(1.3);
+    }
+    .cutout-svg-mask {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .studios-side {
+      font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+      font-weight: 800;
+      font-size: clamp(26px, 5vw, 60px);
+      letter-spacing: 0.24em;
+      color: #f8fafc;
+      padding: 8px 4px;
+      border-top: 3px solid rgba(241, 245, 249, 0.85);
+      border-bottom: 3px solid rgba(241, 245, 249, 0.85);
+      text-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      transform: translateX(-18px);
+      transition: opacity 0.9s ease 0.35s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.35s;
+    }
+    #final-lockup-layer.is-locked .studios-side {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* 最終クレジット：ご清聴ありがとうございました｜演者：臨床工学・技術部門 中平大志 */
+    #ending-credit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(18px) scale(0.97);
+      transition: opacity 1.35s ease, transform 1.35s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 92vw;
+    }
+    #ending-credit.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .credit-divider {
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.92) 25%, #fde68a 50%, rgba(255, 255, 255, 0.92) 75%, transparent 100%);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.55);
+      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #ending-credit.is-visible .credit-divider {
+      width: min(74vw, 680px);
+    }
+    .credit-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px 16px;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: clamp(16px, 2.35vw, 28px);
+      letter-spacing: 0.12em;
+      text-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(255, 255, 255, 0.18);
+      line-height: 1.5;
+    }
+    .credit-sep {
+      color: rgba(253, 230, 138, 0.88);
+      font-weight: 400;
+    }
+    .credit-presenter {
+      color: #fef3c7;
+      font-weight: 700;
+    }
+
+    /* 画面右下の控えめな Replay ボタン */
+    #replayBtn {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.48);
+      color: rgba(248, 250, 252, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      padding: 7px 15px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    }
+    #replayBtn:hover {
+      background: rgba(177, 19, 19, 0.85);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    #replayBtn:active {
+      transform: translateY(0);
+    }
+
+    /* 裏で再生する動画素材の格納コンテナ */
+    #hidden-media-pool {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0.001;
+      pointer-events: none;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+  <div id="webgl-container"></div>
+  <div id="dom-comic-fallback">
+    <div class="dom-comic-stage" id="domComicStage"></div>
+  </div>
+  <div id="comic-filter-overlay"></div>
+  <div id="lens-flare"></div>
+
+  <div id="final-lockup-layer">
+    <div class="final-lockup-inner">
+      <div class="silver-frame">
+        <div class="red-logo-box">
+          <canvas id="finalLogoCanvas"></canvas>
+          <!-- file:// 環境での動画くり抜きフォールバック -->
+          <div id="finalVideoCutoutWrap">
+            <video id="finalCutoutVideo" muted loop playsinline autoplay></video>
+            <svg class="cutout-svg-mask" viewBox="0 0 460 170" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <mask id="endTextCutoutMask">
+                  <rect width="460" height="170" fill="white" />
+                  <text id="svgCutoutText" x="230" y="132" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="146" fill="black">END</text>
+                </mask>
+              </defs>
+              <rect width="460" height="170" fill="#b11313" mask="url(#endTextCutoutMask)" />
+              <text id="svgOutlineText" x="230" y="132" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="146" fill="rgba(255,255,255,0.68)">END</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="studios-side" id="studiosLabel">STUDIOS</div>
+    </div>
+
+    <!-- 最終クレジット -->
+    <div id="ending-credit">
+      <div class="credit-divider"></div>
+      <div class="credit-line">
+        <span>ご清聴ありがとうございました</span>
+        <span class="credit-sep">｜</span>
+        <span class="credit-presenter">演者：臨床工学・技術部門 中平大志</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="flash-overlay"></div>
+  <button id="replayBtn" type="button">↺ Replay</button>
+  <div id="hidden-media-pool"></div>
+
+  <!-- Three.js (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function() {
+      // =========================================================================
+      // 設定：ここを変更すると任意のロゴ文字に変更可能（デフォルト: END）
+      // =========================================================================
+      const LOGO_TEXT = 'END';
+      const SUB_TEXT = 'STUDIOS';
+      const SCENE1_DURATION = 7.0;   // 0秒〜7秒：勉強会イラスト＆図解のコミック高速めくり
+      const CREDIT_SHOW_TIME = 15.6; // 15.6秒〜：ご清聴ありがとうございましたクレジット浮上
+      const TOTAL_DURATION  = 19.5;  // 全体尺
+
+      document.getElementById('studiosLabel').textContent = SUB_TEXT;
+      document.getElementById('svgCutoutText').textContent = LOGO_TEXT;
+      document.getElementById('svgOutlineText').textContent = LOGO_TEXT;
+
+      // =========================================================================
+      // 0. 今回の勉強会で使用した画像＆動画素材のプリロード
+      // =========================================================================
+      const STUDY_IMAGE_PATHS = [
+        'assets_lite/char_cover.jpg',
+        'assets_lite/part01_char.jpg',
+        'assets_lite/fig_alveoli_o2.jpg',
+        'assets_lite/fig_gas_exchange.jpg',
+        'assets_lite/part02_char.jpg',
+        'assets_lite/fig_lung_mechanics.jpg',
+        'assets_lite/fig_vcv.jpg',
+        'assets_lite/fig_pcv.jpg',
+        'assets_lite/part03_char.jpg',
+        'assets_lite/char_modes_step.jpg',
+        'assets_lite/fig_peep_effect.jpg',
+        'assets_lite/fig_ph_seesaw.jpg',
+        'assets_lite/part04_char.jpg',
+        'assets_lite/fig_gas_check.jpg',
+        'assets_lite/fig_cuff_high.jpg',
+        'assets_lite/slide28_mv.jpg',
+        'assets_lite/part05_char.jpg',
+        'assets_lite/slide29_mv.jpg',
+        'assets_lite/slide30_mv.jpg',
+        'assets_lite/part06_char.jpg',
+        'assets_lite/fig_integrated_assess.jpg',
+        'assets_lite/char_thinking.jpg',
+        'assets_lite/char_closing.jpg'
+      ];
+
+      const STUDY_VIDEO_PATHS = [
+        'assets/part01_char.mp4',
+        'assets/part02_char.mp4',
+        'assets/part03_char.mp4',
+        'assets/part04_char.mp4',
+        'assets/part05_char.mp4',
+        'assets/part06_char.mp4',
+        'assets/char_greeting.mp4'
+      ];
+
+      const loadedImages = [];
+      const loadedVideos = [];
+      let canUseMediaInWebGL = (window.location.protocol !== 'file:');
+      let comicTexturesNeedRebuild = false;
+
+      // 画像がCanvasを汚染しないか1pxテストで安全判定
+      function testDrawableSafe(el) {
+        try {
+          const tc = document.createElement('canvas');
+          tc.width = 2;
+          tc.height = 2;
+          const tctx = tc.getContext('2d');
+          tctx.drawImage(el, 0, 0, 2, 2);
+          tctx.getImageData(0, 0, 1, 1);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // 画像ロード
+      STUDY_IMAGE_PATHS.forEach((src) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => {
+          if (canUseMediaInWebGL && !testDrawableSafe(img)) {
+            canUseMediaInWebGL = false;
+          }
+          loadedImages.push(img);
+          comicTexturesNeedRebuild = true;
+        };
+        img.src = src;
+      });
+
+      // 動画ロード（ミュート・ループ自動再生）
+      const mediaPool = document.getElementById('hidden-media-pool');
+      STUDY_VIDEO_PATHS.forEach((src) => {
+        const v = document.createElement('video');
+        v.src = src;
+        v.muted = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.autoplay = true;
+        v.preload = 'auto';
+        v.setAttribute('muted', '');
+        v.setAttribute('playsinline', '');
+        v.addEventListener('loadeddata', () => {
+          v.play().catch(() => {});
+          if (canUseMediaInWebGL && !testDrawableSafe(v)) {
+            canUseMediaInWebGL = false;
+          }
+          loadedVideos.push(v);
+        });
+        mediaPool.appendChild(v);
+      });
+
+      // file:// フォールバック用DOMコミックシートを構築（4コマ×8シート）
+      const domComicFallback = document.getElementById('dom-comic-fallback');
+      const domComicStage = document.getElementById('domComicStage');
+      const domComicSheets = [];
+      for (let s = 0; s < 8; s++) {
+        const sheet = document.createElement('div');
+        sheet.className = 'dom-comic-sheet';
+        for (let k = 0; k < 4; k++) {
+          const img = document.createElement('img');
+          img.src = STUDY_IMAGE_PATHS[(s * 4 + k) % STUDY_IMAGE_PATHS.length];
+          img.alt = '';
+          sheet.appendChild(img);
+        }
+        domComicStage.appendChild(sheet);
+        domComicSheets.push({ el: sheet, baseOffset: s / 8 });
+      }
+
+      // file:// フォールバック用：ロゴ奥の動画を順番に切替再生
+      const finalVideoCutoutWrap = document.getElementById('finalVideoCutoutWrap');
+      const finalCutoutVideo = document.getElementById('finalCutoutVideo');
+      let cutoutVideoIdx = 0;
+      finalCutoutVideo.src = STUDY_VIDEO_PATHS[0];
+      finalCutoutVideo.play().catch(() => {});
+
+      // アスペクト比を保って中央カバー描画するヘルパー
+      function drawCover(ctx, media, x, y, w, h, zoom) {
+        const mw = media.videoWidth || media.naturalWidth || media.width;
+        const mh = media.videoHeight || media.naturalHeight || media.height;
+        if (!mw || !mh) return false;
+        const scale = Math.max(w / mw, h / mh) * (zoom || 1);
+        const dw = mw * scale;
+        const dh = mh * scale;
+        const dx = x + (w - dw) / 2;
+        const dy = y + (h - dh) / 2;
+        ctx.drawImage(media, dx, dy, dw, dh);
+        return true;
+      }
+
+      // =========================================================================
+      // 1. Canvas動的テクスチャ生成（勉強会実画像入りアメコミページ＆動画プロジェクション）
+      // =========================================================================
+      const comicCanvases = [];
+      const comicTextures = [];
+
+      function drawComicPageCanvas(c, seed) {
+        const ctx = c.getContext('2d');
+        const palettes = [
+          ['#fef3c7', '#ef4444', '#1d4ed8', '#f59e0b'],
+          ['#fee2e2', '#b91c1c', '#0f172a', '#fb923c'],
+          ['#ffedd5', '#dc2626', '#0369a1', '#facc15'],
+          ['#f8fafc', '#991b1b', '#1e293b', '#38bdf8']
+        ];
+        const pal = palettes[seed % palettes.length];
+        ctx.fillStyle = pal[0];
+        ctx.fillRect(0, 0, c.width, c.height);
+
+        const panels = [
+          { x: 18, y: 18, w: 476, h: 210, bg: pal[1] },
+          { x: 18, y: 244, w: 228, h: 230, bg: pal[2] },
+          { x: 262, y: 244, w: 232, h: 230, bg: pal[3] },
+          { x: 18, y: 490, w: 476, h: 212, bg: pal[(seed + 1) % 4] }
+        ];
+
+        const useRealImg = canUseMediaInWebGL && loadedImages.length > 0;
+
+        panels.forEach((p, idx) => {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(p.x, p.y, p.w, p.h);
+          ctx.clip();
+
+          ctx.fillStyle = p.bg;
+          ctx.fillRect(p.x, p.y, p.w, p.h);
+
+          // 勉強会の実画像をコマ内に大きくレイアウト
+          if (useRealImg) {
+            const img = loadedImages[(seed * 4 + idx) % loadedImages.length];
+            try {
+              drawCover(ctx, img, p.x, p.y, p.w, p.h, 1.06);
+              // アメコミ風の赤・セピア・コントラスト調色オーバーレイ
+              ctx.fillStyle = idx % 2 === 0 ? 'rgba(177, 19, 19, 0.24)' : 'rgba(217, 119, 6, 0.22)';
+              ctx.fillRect(p.x, p.y, p.w, p.h);
+            } catch (e) {
+              canUseMediaInWebGL = false;
+            }
+          }
+
+          // 集中線（スピードライン）
+          const cx = p.x + p.w * (0.35 + ((seed + idx) % 3) * 0.15);
+          const cy = p.y + p.h * 0.5;
+          ctx.strokeStyle = 'rgba(255,255,255,0.34)';
+          ctx.lineWidth = 2.2;
+          for (let a = 0; a < 32; a++) {
+            const ang = (a / 32) * Math.PI * 2 + seed * 0.3;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(ang) * 42, cy + Math.sin(ang) * 42);
+            ctx.lineTo(cx + Math.cos(ang) * 320, cy + Math.sin(ang) * 320);
+            ctx.stroke();
+          }
+
+          // ハーフトーンの網点
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.20)';
+          for (let gx = p.x + 8; gx < p.x + p.w; gx += 13) {
+            for (let gy = p.y + 8; gy < p.y + p.h; gy += 13) {
+              const r = 1.4 + ((gx + gy) % 3) * 0.5;
+              ctx.beginPath();
+              ctx.arc(gx, gy, r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          // 実画像がまだ読み込めていない時用のシルエット
+          if (!useRealImg) {
+            ctx.fillStyle = '#09090b';
+            ctx.beginPath();
+            ctx.moveTo(p.x + p.w * 0.18, p.y + p.h);
+            ctx.lineTo(p.x + p.w * 0.36, p.y + p.h * 0.36);
+            ctx.lineTo(p.x + p.w * 0.52, p.y + p.h * 0.22);
+            ctx.lineTo(p.x + p.w * 0.68, p.y + p.h * 0.38);
+            ctx.lineTo(p.x + p.w * 0.82, p.y + p.h);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // コマの太い黒枠
+          ctx.strokeStyle = '#09090b';
+          ctx.lineWidth = 7;
+          ctx.strokeRect(p.x, p.y, p.w, p.h);
+          ctx.restore();
+        });
+
+        // ページ外枠
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(5, 5, c.width - 10, c.height - 10);
+      }
+
+      function createComicPageTexture(seed) {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 720;
+        drawComicPageCanvas(c, seed);
+        const tex = new THREE.CanvasTexture(c);
+        tex.anisotropy = 4;
+        comicCanvases.push({ canvas: c, seed: seed });
+        comicTextures.push(tex);
+        return tex;
+      }
+
+      // シーン2用：立体文字の壁面にプロジェクションマッピングするリアルタイム映像Canvas
+      // 勉強会のキャラクター動画（mp4）＋図解イラストを次々カットチェンジして映し出す！
+      const projCanvas = document.createElement('canvas');
+      projCanvas.width = 640;
+      projCanvas.height = 360;
+      const projCtx = projCanvas.getContext('2d');
+      const projTexture = new THREE.CanvasTexture(projCanvas);
+      projTexture.wrapS = THREE.RepeatWrapping;
+      projTexture.wrapT = THREE.RepeatWrapping;
+
+      function updateProjectionTexture(t) {
+        const w = projCanvas.width;
+        const h = projCanvas.height;
+
+        // ベース背景
+        const grad = projCtx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, '#5a0707');
+        grad.addColorStop(0.5, '#b11313');
+        grad.addColorStop(1, '#1e0814');
+        projCtx.fillStyle = grad;
+        projCtx.fillRect(0, 0, w, h);
+
+        let drewRealMedia = false;
+        if (canUseMediaInWebGL) {
+          // 動画と画像を交互にモンタージュ切替（約1.15秒ごとにカットチェンジ）
+          const readyVideos = loadedVideos.filter((v) => v.readyState >= 2);
+          const slot = Math.floor(t / 1.15);
+          const localP = (t % 1.15) / 1.15;
+          const zoom = 1.04 + localP * 0.14;
+
+          try {
+            if (readyVideos.length > 0 && (slot % 2 === 0 || loadedImages.length === 0)) {
+              const vid = readyVideos[slot % readyVideos.length];
+              drewRealMedia = drawCover(projCtx, vid, 0, 0, w, h, zoom);
+            } else if (loadedImages.length > 0) {
+              const img = loadedImages[slot % loadedImages.length];
+              drewRealMedia = drawCover(projCtx, img, 0, 0, w, h, zoom);
+            }
+          } catch (e) {
+            canUseMediaInWebGL = false;
+            drewRealMedia = false;
+          }
+        }
+
+        if (drewRealMedia) {
+          // 映画的プロジェクション調色（クリムゾン＆ハイライト）
+          projCtx.fillStyle = 'rgba(177, 19, 19, 0.34)';
+          projCtx.fillRect(0, 0, w, h);
+
+          // カット切替時のシネマティック・フラッシュ
+          const cutP = (t % 1.15) / 1.15;
+          if (cutP < 0.12) {
+            projCtx.fillStyle = `rgba(255, 240, 220, ${(1 - cutP / 0.12) * 0.45})`;
+            projCtx.fillRect(0, 0, w, h);
+          }
+        } else {
+          // フォールバック：ダイナミックなエネルギー＆シルエット映像
+          const cx = w * 0.5 + Math.sin(t * 1.4) * 90;
+          const cy = h * 0.5 + Math.cos(t * 1.1) * 45;
+          projCtx.save();
+          projCtx.strokeStyle = 'rgba(255, 225, 160, 0.32)';
+          projCtx.lineWidth = 3;
+          for (let i = 0; i < 24; i++) {
+            const a = (i / 24) * Math.PI * 2 + t * 0.9;
+            projCtx.beginPath();
+            projCtx.moveTo(cx + Math.cos(a) * 28, cy + Math.sin(a) * 28);
+            projCtx.lineTo(cx + Math.cos(a) * 440, cy + Math.sin(a) * 440);
+            projCtx.stroke();
+          }
+          projCtx.restore();
+        }
+
+        // 走査線＆光沢スイープ（プロジェクションマッピング質感）
+        projCtx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+        for (let y = 0; y < h; y += 6) {
+          projCtx.fillRect(0, y, w, 2);
+        }
+        const scanX = ((t * 280) % (w + 260)) - 130;
+        const flare = projCtx.createLinearGradient(scanX - 90, 0, scanX + 90, 0);
+        flare.addColorStop(0, 'rgba(255,255,255,0)');
+        flare.addColorStop(0.5, 'rgba(255,255,255,0.28)');
+        flare.addColorStop(1, 'rgba(255,255,255,0)');
+        projCtx.fillStyle = flare;
+        projCtx.fillRect(0, 0, w, h);
+
+        projTexture.needsUpdate = true;
+      }
+
+      // ヘアライン加工風のシルバー金属テクスチャ
+      function createBrushedMetalTexture() {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 128;
+        const ctx = c.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, 512, 128);
+        g.addColorStop(0, '#f1f5f9');
+        g.addColorStop(0.3, '#94a3b8');
+        g.addColorStop(0.55, '#e2e8f0');
+        g.addColorStop(0.8, '#64748b');
+        g.addColorStop(1, '#f8fafc');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 512, 128);
+        for (let y = 0; y < 128; y++) {
+          ctx.fillStyle = y % 2 === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(15,23,42,0.08)';
+          ctx.fillRect(0, y, 512, 1);
+        }
+        return new THREE.CanvasTexture(c);
+      }
+
+      // =========================================================================
+      // 2. 3D押し出し文字ジオメトリ生成（外部フォントJSON不要）
+      // =========================================================================
+      function createLetterShape(ch) {
+        const s = new THREE.Shape();
+        const H = 4.2;
+        const W = 2.75;
+        const T = 0.72;
+
+        switch (ch.toUpperCase()) {
+          case 'E':
+            s.moveTo(0, 0);
+            s.lineTo(W, 0);
+            s.lineTo(W, T);
+            s.lineTo(T, T);
+            s.lineTo(T, H * 0.5 - T * 0.45);
+            s.lineTo(W * 0.84, H * 0.5 - T * 0.45);
+            s.lineTo(W * 0.84, H * 0.5 + T * 0.45);
+            s.lineTo(T, H * 0.5 + T * 0.45);
+            s.lineTo(T, H - T);
+            s.lineTo(W, H - T);
+            s.lineTo(W, H);
+            s.lineTo(0, H);
+            s.closePath();
+            return { shapes: [s], width: W };
+
+          case 'N':
+            s.moveTo(0, 0);
+            s.lineTo(T, 0);
+            s.lineTo(T, H * 0.62);
+            s.lineTo(W - T, 0);
+            s.lineTo(W, 0);
+            s.lineTo(W, H);
+            s.lineTo(W - T, H);
+            s.lineTo(W - T, H * 0.38);
+            s.lineTo(T, H);
+            s.lineTo(0, H);
+            s.closePath();
+            return { shapes: [s], width: W };
+
+          case 'D': {
+            s.moveTo(0, 0);
+            s.lineTo(W * 0.58, 0);
+            s.quadraticCurveTo(W, 0, W, H * 0.5);
+            s.quadraticCurveTo(W, H, W * 0.58, H);
+            s.lineTo(0, H);
+            s.closePath();
+
+            const hole = new THREE.Path();
+            hole.moveTo(T, T);
+            hole.lineTo(W * 0.52, T);
+            hole.quadraticCurveTo(W - T, T, W - T, H * 0.5);
+            hole.quadraticCurveTo(W - T, H - T, W * 0.52, H - T);
+            hole.lineTo(T, H - T);
+            hole.closePath();
+            s.holes.push(hole);
+            return { shapes: [s], width: W };
+          }
+
+          case 'M':
+            s.moveTo(0, 0);
+            s.lineTo(T, 0);
+            s.lineTo(T, H * 0.64);
+            s.lineTo(W * 0.56, H * 0.25);
+            s.lineTo(W * 1.12 - T, H * 0.64);
+            s.lineTo(W * 1.12 - T, 0);
+            s.lineTo(W * 1.12, 0);
+            s.lineTo(W * 1.12, H);
+            s.lineTo(W * 1.12 - T, H);
+            s.lineTo(W * 0.56, H * 0.48);
+            s.lineTo(T, H);
+            s.lineTo(0, H);
+            s.closePath();
+            return { shapes: [s], width: W * 1.12 };
+
+          case 'A': {
+            s.moveTo(0, 0);
+            s.lineTo(T, 0);
+            s.lineTo(T * 1.35, H * 0.30);
+            s.lineTo(W - T * 1.35, H * 0.30);
+            s.lineTo(W - T, 0);
+            s.lineTo(W, 0);
+            s.lineTo(W * 0.5 + T * 0.45, H);
+            s.lineTo(W * 0.5 - T * 0.45, H);
+            s.closePath();
+            const hole = new THREE.Path();
+            hole.moveTo(W * 0.5, H * 0.78);
+            hole.lineTo(W * 0.34, H * 0.44);
+            hole.lineTo(W * 0.66, H * 0.44);
+            hole.closePath();
+            s.holes.push(hole);
+            return { shapes: [s], width: W };
+          }
+
+          case 'R': {
+            s.moveTo(0, 0);
+            s.lineTo(T, 0);
+            s.lineTo(T, H * 0.45);
+            s.lineTo(W * 0.48, H * 0.45);
+            s.lineTo(W - T * 0.85, 0);
+            s.lineTo(W, 0);
+            s.lineTo(W * 0.72, H * 0.47);
+            s.quadraticCurveTo(W, H * 0.56, W, H * 0.74);
+            s.quadraticCurveTo(W, H, W * 0.56, H);
+            s.lineTo(0, H);
+            s.closePath();
+            const hole = new THREE.Path();
+            hole.moveTo(T, H * 0.58);
+            hole.lineTo(W * 0.54, H * 0.58);
+            hole.quadraticCurveTo(W - T * 0.85, H * 0.58, W - T * 0.85, H * 0.74);
+            hole.quadraticCurveTo(W - T * 0.85, H - T * 0.8, W * 0.54, H - T * 0.8);
+            hole.lineTo(T, H - T * 0.8);
+            hole.closePath();
+            s.holes.push(hole);
+            return { shapes: [s], width: W };
+          }
+
+          case 'V':
+            s.moveTo(W * 0.5 - T * 0.42, 0);
+            s.lineTo(W * 0.5 + T * 0.42, 0);
+            s.lineTo(W, H);
+            s.lineTo(W - T, H);
+            s.lineTo(W * 0.5, H * 0.24);
+            s.lineTo(T, H);
+            s.lineTo(0, H);
+            s.closePath();
+            return { shapes: [s], width: W };
+
+          case 'L':
+            s.moveTo(0, 0);
+            s.lineTo(W * 0.92, 0);
+            s.lineTo(W * 0.92, T);
+            s.lineTo(T, T);
+            s.lineTo(T, H);
+            s.lineTo(0, H);
+            s.closePath();
+            return { shapes: [s], width: W * 0.92 };
+
+          default: {
+            const c = document.createElement('canvas');
+            c.width = 256;
+            c.height = 384;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 300px "Arial Black", Impact, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ch, 128, 200);
+            const tex = new THREE.CanvasTexture(c);
+            return { fallbackCanvasTex: tex, width: W };
+          }
+        }
+      }
+
+      function createExtrudedLetterMesh(ch, wallMat, frontMat) {
+        const def = createLetterShape(ch);
+        const group = new THREE.Group();
+        if (def.shapes) {
+          const extrudeGeo = new THREE.ExtrudeGeometry(def.shapes, {
+            depth: 3.4,
+            bevelEnabled: true,
+            bevelThickness: 0.08,
+            bevelSize: 0.06,
+            bevelSegments: 2
+          });
+          const mesh = new THREE.Mesh(extrudeGeo, [frontMat, wallMat]);
+          group.add(mesh);
+        } else {
+          const box = new THREE.Mesh(
+            new THREE.BoxGeometry(def.width, 4.2, 3.4),
+            new THREE.MeshStandardMaterial({ map: def.fallbackCanvasTex, roughness: 0.25, metalness: 0.4 })
+          );
+          box.position.set(def.width * 0.5, 2.1, 1.7);
+          group.add(box);
+        }
+        return { group, width: def.width };
+      }
+
+      // =========================================================================
+      // 3. Three.js シーン初期化
+      // =========================================================================
+      const container = document.getElementById('webgl-container');
+      const scene = new THREE.Scene();
+
+      const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 200);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 1);
+      container.appendChild(renderer.domElement);
+
+      // ライティング
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.72);
+      scene.add(ambientLight);
+      const keyLight = new THREE.DirectionalLight(0xfff1e0, 1.45);
+      keyLight.position.set(8, 12, 14);
+      scene.add(keyLight);
+      const redRimLight = new THREE.PointLight(0xff2a2a, 2.5, 45);
+      redRimLight.position.set(-6, 5, 6);
+      scene.add(redRimLight);
+      const silverLight = new THREE.PointLight(0xdbeafe, 1.6, 40);
+      silverLight.position.set(8, 4, 10);
+      scene.add(silverLight);
+
+      // --- シーン1グループ：斜め3Dパースペクティブの高速コミックページめくり ---
+      const comicGroup = new THREE.Group();
+      comicGroup.rotation.set(0.22, -0.26, -0.24);
+      scene.add(comicGroup);
+
+      const PAGE_COUNT = 12;
+      const comicPages = [];
+      const pageGeo = new THREE.PlaneGeometry(7.2, 10.2, 8, 1);
+      pageGeo.translate(3.6, 0, 0);
+
+      for (let i = 0; i < PAGE_COUNT; i++) {
+        const tex = createComicPageTexture(i);
+        const mat = new THREE.MeshStandardMaterial({
+          map: tex,
+          side: THREE.DoubleSide,
+          roughness: 0.55,
+          metalness: 0.08,
+          transparent: true,
+          opacity: 1
+        });
+        const page = new THREE.Mesh(pageGeo, mat);
+        page.userData = { baseOffset: i / PAGE_COUNT };
+        comicGroup.add(page);
+        comicPages.push(page);
+      }
+
+      // --- シーン2グループ：巨大立体文字（END）＋反射床＋シルバー金属枠 ---
+      const logoGroup = new THREE.Group();
+      logoGroup.visible = false;
+      scene.add(logoGroup);
+
+      const wallMat = new THREE.MeshStandardMaterial({
+        map: projTexture,
+        emissive: new THREE.Color(0xffffff),
+        emissiveMap: projTexture,
+        emissiveIntensity: 0.98,
+        roughness: 0.25,
+        metalness: 0.32
+      });
+      const frontMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        map: projTexture,
+        emissive: new THREE.Color(0xb11313),
+        emissiveMap: projTexture,
+        emissiveIntensity: 0.55,
+        roughness: 0.22,
+        metalness: 0.25
+      });
+
+      const lettersContainer = new THREE.Group();
+      const letterSpacing = 0.55;
+      let totalWidth = 0;
+      const builtLetters = [];
+      for (let i = 0; i < LOGO_TEXT.length; i++) {
+        const res = createExtrudedLetterMesh(LOGO_TEXT[i], wallMat, frontMat);
+        builtLetters.push(res);
+        totalWidth += res.width + (i < LOGO_TEXT.length - 1 ? letterSpacing : 0);
+      }
+      let cursorX = -totalWidth / 2;
+      builtLetters.forEach((item) => {
+        item.group.position.set(cursorX, 0, -1.7);
+        lettersContainer.add(item.group);
+        cursorX += item.width + letterSpacing;
+      });
+      logoGroup.add(lettersContainer);
+
+      // 床面のぼんやり反射
+      const reflectContainer = lettersContainer.clone();
+      reflectContainer.scale.y = -0.82;
+      reflectContainer.position.y = -0.05;
+      reflectContainer.traverse((child) => {
+        if (child.isMesh) {
+          child.material = new THREE.MeshBasicMaterial({
+            map: projTexture,
+            color: 0xaa2222,
+            transparent: true,
+            opacity: 0.22
+          });
+        }
+      });
+      logoGroup.add(reflectContainer);
+
+      const floorGeo = new THREE.PlaneGeometry(70, 70);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x160304,
+        roughness: 0.16,
+        metalness: 0.65,
+        transparent: true,
+        opacity: 0.78
+      });
+      const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.position.y = -0.02;
+      logoGroup.add(floorMesh);
+
+      // ヘアラインシルバーの立体外枠
+      const metalTex = createBrushedMetalTexture();
+      const frameMat = new THREE.MeshStandardMaterial({
+        map: metalTex,
+        color: 0xe2e8f0,
+        metalness: 0.85,
+        roughness: 0.25
+      });
+      const frameGroup = new THREE.Group();
+      const fw = totalWidth + 1.8;
+      const fh = 5.4;
+      const barT = 0.22;
+      const topBar = new THREE.Mesh(new THREE.BoxGeometry(fw, barT, 0.45), frameMat);
+      topBar.position.set(0, fh - 0.55, 1.72);
+      const botBar = new THREE.Mesh(new THREE.BoxGeometry(fw, barT, 0.45), frameMat);
+      botBar.position.set(0, -0.55, 1.72);
+      const leftBar = new THREE.Mesh(new THREE.BoxGeometry(barT, fh + barT, 0.45), frameMat);
+      leftBar.position.set(-fw / 2, fh / 2 - 0.55, 1.72);
+      const rightBar = new THREE.Mesh(new THREE.BoxGeometry(barT, fh + barT, 0.45), frameMat);
+      rightBar.position.set(fw / 2, fh / 2 - 0.55, 1.72);
+      frameGroup.add(topBar, botBar, leftBar, rightBar);
+      logoGroup.add(frameGroup);
+
+      // =========================================================================
+      // 4. 最終確定ロゴCanvas（ENDのくり抜き奥に勉強会動画＆イラストが透けて動く）
+      // =========================================================================
+      const finalCanvas = document.getElementById('finalLogoCanvas');
+      const finalCtx = finalCanvas.getContext('2d');
+      finalCanvas.width = Math.max(420, LOGO_TEXT.length * 165);
+      finalCanvas.height = 190;
+
+      function renderFinalCutoutLogo(t, residualAlpha) {
+        if (!canUseMediaInWebGL) {
+          // file:// 環境ではDOM動画くり抜きレイヤーを自動表示
+          finalCanvas.style.display = 'none';
+          finalVideoCutoutWrap.classList.add('active');
+          const nextIdx = Math.floor(t / 2.2) % STUDY_VIDEO_PATHS.length;
+          if (nextIdx !== cutoutVideoIdx) {
+            cutoutVideoIdx = nextIdx;
+            finalCutoutVideo.src = STUDY_VIDEO_PATHS[cutoutVideoIdx];
+            finalCutoutVideo.play().catch(() => {});
+          }
+          return;
+        }
+
+        finalCanvas.style.display = 'block';
+        finalVideoCutoutWrap.classList.remove('active');
+        const cw = finalCanvas.width, ch = finalCanvas.height;
+        finalCtx.clearRect(0, 0, cw, ch);
+
+        finalCtx.save();
+        finalCtx.font = '900 164px "Arial Black", Impact, sans-serif';
+        finalCtx.textAlign = 'center';
+        finalCtx.textBaseline = 'middle';
+        finalCtx.fillStyle = '#ffffff';
+        finalCtx.fillText(LOGO_TEXT, cw / 2, ch / 2 + 6);
+
+        if (residualAlpha > 0.01) {
+          finalCtx.globalCompositeOperation = 'source-atop';
+          finalCtx.globalAlpha = residualAlpha;
+          finalCtx.drawImage(projCanvas, 0, 0, cw, ch);
+        }
+        finalCtx.restore();
+      }
+
+      // =========================================================================
+      // 5. メインタイムライン制御（0秒〜19.5秒）＆ Replay
+      // =========================================================================
+      const comicOverlay = document.getElementById('comic-filter-overlay');
+      const lensFlare = document.getElementById('lens-flare');
+      const flashOverlay = document.getElementById('flash-overlay');
+      const finalLockup = document.getElementById('final-lockup-layer');
+      const endingCredit = document.getElementById('ending-credit');
+
+      let startTime = performance.now();
+      const tmpBgColor = new THREE.Color();
+      const colBlack = new THREE.Color(0x000000);
+      const colDeepRed = new THREE.Color(0xb11313);
+
+      function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+      function easeInOutQuart(x) { return x < 0.5 ? 8*x*x*x*x : 1 - Math.pow(-2*x + 2, 4)/2; }
+
+      function resetAnimation() {
+        startTime = performance.now();
+        finalLockup.style.opacity = '0';
+        finalLockup.classList.remove('is-locked');
+        endingCredit.classList.remove('is-visible');
+        flashOverlay.style.opacity = '0';
+        // 動画の再生を確実にする（ユーザー操作きっかけ）
+        loadedVideos.forEach((v) => v.play().catch(() => {}));
+        finalCutoutVideo.play().catch(() => {});
+      }
+
+      document.getElementById('replayBtn').addEventListener('click', resetAnimation);
+      window.addEventListener('pointerdown', () => {
+        loadedVideos.forEach((v) => v.play().catch(() => {}));
+        finalCutoutVideo.play().catch(() => {});
+      }, { once: true });
+
+      function animate(now) {
+        requestAnimationFrame(animate);
+        const elapsed = Math.min((now - startTime) / 1000, TOTAL_DURATION + 10);
+
+        // 実画像がロード完了したらコミックページテクスチャを自動再描画
+        if (comicTexturesNeedRebuild && canUseMediaInWebGL) {
+          comicTexturesNeedRebuild = false;
+          comicCanvases.forEach((item, idx) => {
+            drawComicPageCanvas(item.canvas, item.seed);
+            comicTextures[idx].needsUpdate = true;
+          });
+        }
+
+        updateProjectionTexture(elapsed);
+
+        if (elapsed < SCENE1_DURATION) {
+          // ===================================================================
+          // シーン1：0秒〜7秒（勉強会イラストのコミック高速ページめくり）
+          // ===================================================================
+          comicGroup.visible = true;
+          logoGroup.visible = false;
+          finalLockup.style.opacity = '0';
+          finalLockup.classList.remove('is-locked');
+          endingCredit.classList.remove('is-visible');
+
+          const fadeIn = Math.min(1, elapsed / 0.6);
+          renderer.setClearColor(0x000000, 1);
+          comicOverlay.style.opacity = String(0.86 * fadeIn);
+          lensFlare.style.opacity = String((0.55 + Math.sin(elapsed * 9) * 0.25) * fadeIn);
+
+          camera.position.set(Math.sin(elapsed * 2.2) * 0.45, Math.cos(elapsed * 1.8) * 0.25, 8.8 - elapsed * 0.18);
+          camera.lookAt(0, 0, 0);
+
+          const speed = 1.65 + elapsed * 0.22;
+          comicPages.forEach((p) => {
+            const prog = (p.userData.baseOffset + elapsed * speed) % 1.0;
+            p.position.z = -14 + prog * 23.5;
+            p.position.x = (prog - 0.5) * 1.4;
+            p.position.y = Math.sin(prog * Math.PI) * 0.65;
+            const flipAngle = prog > 0.62 ? -((prog - 0.62) / 0.38) * Math.PI * 0.85 : 0;
+            p.rotation.y = flipAngle;
+            p.rotation.x = Math.sin(prog * Math.PI) * 0.14;
+            p.material.opacity = fadeIn;
+          });
+
+          // file:// 環境ではDOM実画像コミックシートを同期フリップ
+          if (!canUseMediaInWebGL) {
+            domComicFallback.style.opacity = String(0.82 * fadeIn);
+            domComicSheets.forEach((s) => {
+              const prog = (s.baseOffset + elapsed * speed) % 1.0;
+              const z = -900 + prog * 1450;
+              const flipDeg = prog > 0.6 ? -((prog - 0.6) / 0.4) * 140 : 0;
+              const op = prog < 0.12 ? prog / 0.12 : (prog > 0.88 ? (1 - prog) / 0.12 : 1);
+              s.el.style.opacity = String(op * fadeIn);
+              s.el.style.transform = `translate3d(${(prog - 0.5) * 120}px, ${Math.sin(prog * Math.PI) * -35}px, ${z}px) rotateY(${flipDeg}deg)`;
+            });
+          } else {
+            domComicFallback.style.opacity = '0';
+          }
+
+          // 6.35秒〜7.0秒：強いホワイトアウトフラッシュ
+          if (elapsed > 6.35) {
+            const fProg = (elapsed - 6.35) / 0.65;
+            flashOverlay.style.opacity = String(Math.min(1, fProg * fProg * 1.15));
+          } else {
+            flashOverlay.style.opacity = '0';
+          }
+        } else {
+          // ===================================================================
+          // シーン2：7秒〜19.5秒（3Dロゴ内部の隙間から全体へのズームアウト＆クレジット）
+          // ===================================================================
+          comicGroup.visible = false;
+          logoGroup.visible = true;
+          domComicFallback.style.opacity = '0';
+          comicOverlay.style.opacity = '0';
+          lensFlare.style.opacity = '0';
+
+          const s2 = elapsed - SCENE1_DURATION;
+          const p = Math.min(1, s2 / 8.8);
+          const ep = easeInOutQuart(p);
+
+          if (s2 < 0.75) {
+            flashOverlay.style.opacity = String(Math.max(0, 1 - s2 / 0.75));
+          } else {
+            flashOverlay.style.opacity = '0';
+          }
+
+          const startPos = new THREE.Vector3(-1.15, 2.05, 0.35);
+          const midPos   = new THREE.Vector3(3.6, 3.1, 6.2);
+          const endPos   = new THREE.Vector3(0.0, 2.1, 15.8);
+
+          const cPos = new THREE.Vector3();
+          if (ep < 0.5) {
+            cPos.lerpVectors(startPos, midPos, ep * 2);
+          } else {
+            cPos.lerpVectors(midPos, endPos, (ep - 0.5) * 2);
+          }
+          camera.position.copy(cPos);
+
+          const lookStart = new THREE.Vector3(1.2, 2.1, -2.5);
+          const lookEnd   = new THREE.Vector3(0.0, 2.1, 0.0);
+          const lookTarget = new THREE.Vector3().lerpVectors(lookStart, lookEnd, easeOutCubic(p));
+          camera.lookAt(lookTarget);
+
+          const redBlend = Math.max(0, Math.min(1, (s2 - 5.2) / 3.8));
+          tmpBgColor.copy(colBlack).lerp(colDeepRed, easeOutCubic(redBlend));
+          renderer.setClearColor(tmpBgColor, 1);
+
+          frontMat.emissiveIntensity = 0.55 + (1 - redBlend) * 0.4;
+          wallMat.emissiveIntensity = 0.98 - redBlend * 0.24;
+
+          // 14.4秒〜：ヘアラインシルバー枠＋END＋STUDIOS確定＆深い赤静止
+          if (s2 > 7.4) {
+            const lockAlpha = Math.min(1, (s2 - 7.4) / 1.4);
+            finalLockup.style.opacity = String(easeOutCubic(lockAlpha));
+            // 文字のくり抜き奥に動画＆画像の残像がうっすら動き続ける
+            const residual = Math.max(0.22, 0.58 - Math.max(0, (s2 - 8.0) / 3.0) * 0.36);
+            renderFinalCutoutLogo(elapsed, residual);
+            if (lockAlpha > 0.72) {
+              finalLockup.classList.add('is-locked');
+            }
+          } else {
+            finalLockup.style.opacity = '0';
+          }
+
+          // 15.6秒〜：ご清聴ありがとうございました｜演者：臨床工学・技術部門 中平大志 が浮かび上がる
+          if (elapsed >= CREDIT_SHOW_TIME) {
+            endingCredit.classList.add('is-visible');
+          } else {
+            endingCredit.classList.remove('is-visible');
+          }
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener('resize', function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
