@@ -3757,6 +3757,9 @@
       <button class="floating-btn" id="exportPdfBtn" onclick="openPrintPdfMode()" title="全42スライドを配布用PDFとして保存する画面を開く">
         <i class="fa-solid fa-file-pdf"></i> 配布PDF
       </button>
+      <button class="floating-btn" id="exportPdfLiteBtn" onclick="openPrintPdfLiteMode()" style="background:#047857; border-color:#34D399;" title="メール送信用に画像を最適化した10MB以下の軽量PDF保存画面を開く">
+        <i class="fa-solid fa-file-zipper"></i> 配布PDF(軽量)
+      </button>
       <button class="floating-btn" onclick="toggleChapterJumpBar()" title="先頭や各章の先頭スライドへ移動（ショートカット: Mキー）">
         <i class="fa-solid fa-compass"></i> 章ジャンプ (M)
       </button>
@@ -9991,22 +9994,74 @@
     }
 
     function openPrintPdfMode() {
-      if (window.location.search.indexOf('print-pdf') !== -1) {
+      if (window.location.search.indexOf('print-pdf') !== -1 && window.location.search.indexOf('lite=1') === -1) {
         window.print();
         return;
       }
       const url = new URL(window.location.href);
       url.searchParams.set('print-pdf', '');
+      url.searchParams.delete('lite');
+      window.open(url.toString(), '_blank');
+    }
+
+    function openPrintPdfLiteMode() {
+      if (window.location.search.indexOf('print-pdf') !== -1 && window.location.search.indexOf('lite=1') !== -1) {
+        window.print();
+        return;
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.set('print-pdf', '');
+      url.searchParams.set('lite', '1');
       window.open(url.toString(), '_blank');
     }
 
     if (window.location.search.indexOf('print-pdf') !== -1) {
+      const isLitePdf = (window.location.search.indexOf('lite=1') !== -1);
+      if (isLitePdf) {
+        document.addEventListener('DOMContentLoaded', function() {
+          const liteJpgTargets = new Set([
+            'assets/char_cover.png','assets/frame_sketchbook_chars.png','assets/char_thinking.png',
+            'assets/char_supporter.png','assets/icon ce.png','assets/icon ns.png',
+            'assets/fig_gas_exchange.png','assets/fig_complications.png','assets/fig_power_check.png',
+            'assets/fig_gas_check.png','assets/fig_cuff_low.png','assets/fig_cuff_high.png',
+            'assets/fig_vcv.png','assets/fig_pcv.png','assets/fig_peep_effect.png',
+            'assets/fig_integrated_assess.png','assets/fig_alveoli_o2.png','assets/fig_ph_seesaw.png',
+            'assets/fig_lung_mechanics.png','assets/slide28_mv.png','assets/slide29_mv.png',
+            'assets/slide30_mv.png','assets/char_modes_step.png','assets/char_closing.png',
+            'assets/part01_char.png','assets/part02_char.png','assets/part03_char.png',
+            'assets/part04_char.png','assets/part05_char.png','assets/part06_char.png',
+            'assets/目次/stege.png'
+          ]);
+          const litePngTargets = new Set([
+            'assets/目次/CE_start.png','assets/目次/Ns_start.png'
+          ]);
+          document.querySelectorAll('img').forEach(function(img) {
+            const rawSrc = img.getAttribute('src') || '';
+            const cleanSrc = decodeURIComponent(rawSrc.split('?')[0]);
+            if (liteJpgTargets.has(cleanSrc)) {
+              img.setAttribute('src', cleanSrc.replace(/^assets\//, 'assets_lite/').replace(/\.png$/i, '.jpg'));
+            } else if (litePngTargets.has(cleanSrc)) {
+              img.setAttribute('src', cleanSrc.replace(/^assets\//, 'assets_lite/'));
+            }
+          });
+          const boardWrap = document.querySelector('.sugoroku-board-wrap');
+          if (boardWrap) {
+            boardWrap.style.backgroundImage = "url('assets_lite/目次/stege.jpg')";
+          }
+        });
+      }
       window.addEventListener('load', function() {
         const guide = document.getElementById('printPdfGuideBar');
-        if (guide) guide.style.display = 'flex';
+        if (guide) {
+          guide.style.display = 'flex';
+          if (isLitePdf) {
+            const span = guide.querySelector('span');
+            if (span) span.innerHTML = '<i class="fa-solid fa-file-zipper" style="color:#34D399;"></i> 配布用PDF（軽量・10MB以下モード）：「余白：なし」「背景のグラフィック：ON」でPDF保存してください';
+          }
+        }
         setTimeout(function() {
           window.print();
-        }, 900);
+        }, 1000);
       });
     }
 
@@ -11884,17 +11939,36 @@
           updateSlide2AgendaCamera();
           updateSlide8Camera();
           updateMiniCharNavigator();
+          if (typeof Reveal !== 'undefined' && Reveal.getCurrentSlide) {
+            playSketchbookTurnVideo(Reveal.getCurrentSlide());
+          }
         }, 60);
 
         function playSketchbookTurnVideo(slideEl) {
           if (!slideEl || (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) || window.location.search.indexOf('print-pdf') !== -1) return;
+          // 他スライドのページめくり動画を一時停止し、デプロイ環境での同時デコーダ上限を回避
+          document.querySelectorAll('.reveal .slides video.sketchbook-turn-video').forEach(function(otherV) {
+            if (!slideEl.contains(otherV)) {
+              try { otherV.pause(); } catch(e) {}
+            }
+          });
           const v = slideEl.querySelector('video.sketchbook-turn-video');
           if (v) {
-            try {
-              v.currentTime = 1.1;
-              v.playbackRate = 1.5;
-              v.play().catch(function(){});
-            } catch(e) {}
+            const startTurn = function() {
+              try {
+                v.style.display = 'block';
+                if (v.nextElementSibling) v.nextElementSibling.style.display = 'none';
+                v.currentTime = 1.1;
+                v.playbackRate = 1.5;
+                v.play().catch(function(){});
+              } catch(e) {}
+            };
+            if (v.readyState >= 2) {
+              startTurn();
+            } else {
+              v.addEventListener('canplay', startTurn, { once: true });
+              try { v.load(); } catch(e) {}
+            }
           }
         }
 
