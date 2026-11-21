@@ -1751,7 +1751,7 @@
     /* ==========================================================================
        1. Slide 2（目次）：添付画像1（カード1枚ずつ画面いっぱい）➔ 添付画像2（全体像へズームアウト）
        ========================================================================== */
-    .reveal .slides > section:not(.present):not(.tv-cam-leaving) {
+    html:not(.print-pdf) .reveal:not(.overview) .slides > section:not(.present):not(.tv-cam-leaving) {
       display: none !important;
     }
     .reveal .slides > section.present {
@@ -3710,7 +3710,14 @@
       border-radius: 12px;
     }
     @media print { .sugoroku-guide-bar { display: none !important; } }
-    /* Reveal.js スライド一覧（.reveal.overview）表示時の3Dネスト干渉・負荷防止 */
+    /* Reveal.js スライド一覧（.reveal.overview）表示時の3Dネスト干渉・負荷・位置ズレ防止 */
+    .reveal.overview .slides > section[data-slide-num="1"].cover-marquee-slide,
+    .reveal.overview .slides > section[data-slide-num="2"].sugoroku-slide,
+    .reveal.overview .slides > section[data-slide-num="43"].marvel-end-slide {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
     .reveal.overview section[data-slide-num="2"].sugoroku-slide .sugoroku-board-wrap,
     .reveal.overview .sugoroku-pawn-pair {
       perspective: none !important;
@@ -4051,6 +4058,193 @@
     html.mobile-lite-mode section[data-slide-num="43"] .marvel-finish-layer { animation: none !important; opacity: 1 !important; transform: none !important; }
   </style>
   <!-- === MARVEL_END_CSS_END === -->
+  <!-- === CHAPTER_GRID_OVERVIEW_CSS_START === -->
+  <style>
+    #chapterGridOverview {
+      position: fixed;
+      inset: 0;
+      z-index: 9800;
+      background: #F1F5F9;
+      color: #0F172A;
+      overflow-y: auto;
+      display: none;
+      font-family: var(--font-sans, "Noto Sans JP", sans-serif);
+    }
+    #chapterGridOverview.is-open {
+      display: block;
+    }
+    .cgo-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #CBD5E1;
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    }
+    .cgo-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    .cgo-title-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0369A1;
+      background: #E0F2FE;
+      border: 1px solid #BAE6FD;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .cgo-close-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .cgo-close-btn:hover {
+      background: #0F172A;
+      border-color: #0F172A;
+      color: #FFFFFF;
+    }
+    .cgo-body {
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 24px 28px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .cgo-chapter-section {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 18px 20px 22px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    }
+    .cgo-chapter-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #E2E8F0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1E293B;
+    }
+    .cgo-chapter-count {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748B;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .cgo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .cgo-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border-radius: 10px;
+      border: 2px solid #E2E8F0;
+      background: #FFFFFF;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+      text-align: left;
+      padding: 0;
+    }
+    .cgo-card:hover {
+      transform: translateY(-3px);
+      border-color: #38BDF8;
+      box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16);
+    }
+    .cgo-card.is-current {
+      border-color: #0284C7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.22);
+    }
+    .cgo-thumb-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #FFFFFF;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .cgo-thumb-frame > section {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 1280px !important;
+      height: 720px !important;
+      margin: 0 !important;
+      transform-origin: top left !important;
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: none !important;
+    }
+    .cgo-thumb-frame .cover-marquee-track,
+    .cgo-thumb-frame .marvel-logo-cam,
+    .cgo-thumb-frame .marvel-finish-layer {
+      animation: none !important;
+      opacity: 1 !important;
+    }
+    .cgo-thumb-frame .marvel-logo-cam {
+      display: none !important;
+    }
+    .cgo-card-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #F8FAFC;
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .cgo-slide-num {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: #475569;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .cgo-card.is-current .cgo-slide-num {
+      background: #0284C7;
+    }
+    .cgo-slide-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media print { #chapterGridOverview { display: none !important; } }
+    .print-pdf #chapterGridOverview { display: none !important; }
+  </style>
+  <!-- === CHAPTER_GRID_OVERVIEW_CSS_END === -->
 </head>
 <body>
   <div id="floatingToolbar" class="floating-toolbar">
@@ -4089,8 +4283,8 @@
       <button class="floating-btn" onclick="toggleChapterJumpBar()" title="先頭や各章の先頭スライドへ移動（ショートカット: Mキー）">
         <i class="fa-solid fa-compass"></i> 章ジャンプ (M)
       </button>
-      <button class="floating-btn" onclick="Reveal.toggleOverview()" title="ショートカット: ESC / Oキー">
-        <i class="fa-solid fa-table-cells"></i> スライド一覧 (ESC)
+      <button class="floating-btn" onclick="toggleChapterSlideOverview()" title="ショートカット: ESC / Oキー">
+        <i class="fa-solid fa-table-cells"></i> スライド一覧 (O / ESC)
       </button>
     </div>
     <button type="button" id="toolbarToggleBtn" class="floating-toolbar-toggle" onclick="toggleFloatingToolbar()" title="操作メニューを開閉（ショートカット: Tキー）">
@@ -4136,6 +4330,19 @@
     <button type="button" class="chapter-jump-btn" onclick="jumpToSlide(31)">第5部 血ガス (S32)</button>
     <button type="button" class="chapter-jump-btn" onclick="jumpToSlide(38)">第6部 総括 (S39)</button>
     <button type="button" class="chapter-jump-btn home-btn" onclick="jumpToSlide(42)"><i class="fa-solid fa-flag-checkered"></i> 終了 (S43)</button>
+  </div>
+  <div id="chapterGridOverview" aria-label="章別スライド一覧">
+    <div class="cgo-header">
+      <div class="cgo-title">
+        <i class="fa-solid fa-table-cells" style="color:#0284C7;"></i>
+        <span>スライド一覧（章別ビュー）</span>
+        <span class="cgo-title-badge">クリックで移動</span>
+      </div>
+      <button type="button" class="cgo-close-btn" onclick="toggleChapterSlideOverview(false)">
+        <i class="fa-solid fa-xmark"></i> 閉じる (O / ESC)
+      </button>
+    </div>
+    <div class="cgo-body" id="chapterGridOverviewBody"></div>
   </div>
   <div id="noteDrawer" class="speaker-note-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px;">
@@ -9413,10 +9620,13 @@
       height: 720,
       margin: 0.03,
       pdfSeparateFragments: false,
+      overview: false,
       keyboard: {
         76: null, // Lキーはレーザーポインタ専用（Reveal標準の右移動を無効化）
         68: null, // Dキーはペン描画専用
-        90: null  // Zキーは拡大機能専用
+        90: null, // Zキーは拡大機能専用
+        79: function() { toggleChapterSlideOverview(); }, // Oキー：章別スライド一覧
+        27: function() { toggleChapterSlideOverview(); }  // ESCキー：章別スライド一覧
       },
       plugins: (typeof RevealNotes !== 'undefined' ? [ RevealNotes ] : [])
     });
@@ -10488,6 +10698,7 @@
 
     function jumpToSlide(idx) {
       if (document.body.classList.contains('is-editing')) return;
+      toggleChapterSlideOverview(false);
       if (typeof Reveal !== 'undefined') {
         if (Reveal.isOverview()) {
           Reveal.toggleOverview(false);
@@ -10497,9 +10708,124 @@
       toggleChapterJumpBar(false);
     }
 
+    function buildChapterGridOverview() {
+      const body = document.getElementById('chapterGridOverviewBody');
+      if (!body || body.getAttribute('data-built') === '1') return;
+      body.setAttribute('data-built', '1');
+
+      const groups = [
+        { title: '🏠 オープニング・目次', match: (n) => n <= 2 },
+        { title: '📘 第1部：二面性と呼吸生理', match: (n) => n >= 3 && n <= 9 },
+        { title: '🔧 第2部：使用前点検・設定・加温加湿', match: (n) => n >= 10 && n <= 15 },
+        { title: '🫁 第3部：換気モードの基礎と特徴', match: (n) => n >= 16 && n <= 25 },
+        { title: '🚨 第4部：アラーム対応の原則', match: (n) => n >= 26 && n <= 31 },
+        { title: '🩸 第5部：血液ガス分析と酸塩基平衡', match: (n) => n >= 32 && n <= 38 },
+        { title: '🎯 第6部：総括・離脱指標・臨床統合', match: (n) => n >= 39 && n <= 42 },
+        { title: '🎬 エンディング', match: (n) => n >= 43 }
+      ];
+
+      const sections = Array.from(document.querySelectorAll('.reveal .slides > section'));
+      groups.forEach(function(g) {
+        const matched = [];
+        sections.forEach(function(sec, idx) {
+          const sNum = Number(sec.getAttribute('data-slide-num') || (idx + 1));
+          if (g.match(sNum)) matched.push({ sec: sec, idx: idx, sNum: sNum });
+        });
+        if (matched.length === 0) return;
+
+        const block = document.createElement('div');
+        block.className = 'cgo-chapter-section';
+
+        const heading = document.createElement('div');
+        heading.className = 'cgo-chapter-heading';
+        heading.innerHTML = '<span>' + g.title + '</span><span class="cgo-chapter-count">' + matched.length + ' 枚</span>';
+        block.appendChild(heading);
+
+        const grid = document.createElement('div');
+        grid.className = 'cgo-grid';
+
+        matched.forEach(function(item) {
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.className = 'cgo-card';
+          card.setAttribute('data-cgo-idx', String(item.idx));
+          card.onclick = function() {
+            jumpToSlide(item.idx);
+          };
+
+          const thumb = document.createElement('div');
+          thumb.className = 'cgo-thumb-frame';
+          const clone = item.sec.cloneNode(true);
+          clone.className = (clone.className || '').replace(/\b(present|past|future|s8-is-zoomed|agenda-is-zoomed)\b/g, '').trim();
+          clone.querySelectorAll('aside.notes, .notes, video, animate, animateMotion, animateTransform, .part-intro-overview-wrap, .part-outro-overview-wrap, .slide8-cam-triggers, .cover-theme-switcher, .marvel-theme-switcher, .marvel-replay-btn').forEach(function(n) {
+            n.remove();
+          });
+          clone.querySelectorAll('[id]').forEach(function(el) {
+            el.removeAttribute('id');
+          });
+          const fb = clone.querySelector('.sketchbook-fallback-img, img[src*="part0"]');
+          if (fb) fb.style.display = 'block';
+          thumb.appendChild(clone);
+
+          const shortTitle = item.sec.getAttribute('data-short-title') || item.sec.getAttribute('data-camera-badge') || ('Slide ' + item.sNum);
+          const footer = document.createElement('div');
+          footer.className = 'cgo-card-footer';
+          footer.innerHTML = '<span class="cgo-slide-num">S' + item.sNum + '</span><span class="cgo-slide-label"></span>';
+          footer.querySelector('.cgo-slide-label').textContent = shortTitle;
+
+          card.appendChild(thumb);
+          card.appendChild(footer);
+          grid.appendChild(card);
+        });
+
+        block.appendChild(grid);
+        body.appendChild(block);
+      });
+    }
+
+    function updateChapterGridOverviewScale() {
+      const ov = document.getElementById('chapterGridOverview');
+      if (!ov || !ov.classList.contains('is-open')) return;
+      ov.querySelectorAll('.cgo-thumb-frame').forEach(function(frame) {
+        const sec = frame.querySelector(':scope > section');
+        if (!sec) return;
+        const sc = frame.clientWidth / 1280;
+        if (sc > 0) sec.style.transform = 'scale(' + sc.toFixed(4) + ')';
+      });
+    }
+
+    function toggleChapterSlideOverview(forceState) {
+      const ov = document.getElementById('chapterGridOverview');
+      if (!ov) return;
+      const nextState = (typeof forceState === 'boolean') ? forceState : !ov.classList.contains('is-open');
+      if (nextState) {
+        toggleChapterJumpBar(false);
+        const vp = document.getElementById('part1WorldViewport');
+        if (vp) vp.classList.remove('active', 'interactive-overview');
+        if (typeof resetSlideZoom === 'function') resetSlideZoom();
+        buildChapterGridOverview();
+        ov.classList.add('is-open');
+
+        const currIdx = (typeof Reveal !== 'undefined' && Reveal.getIndices) ? (Reveal.getIndices().h || 0) : 0;
+        ov.querySelectorAll('.cgo-card').forEach(function(c) {
+          c.classList.toggle('is-current', Number(c.getAttribute('data-cgo-idx')) === currIdx);
+        });
+        requestAnimationFrame(function() {
+          updateChapterGridOverviewScale();
+          const curCard = ov.querySelector('.cgo-card.is-current');
+          if (curCard) curCard.scrollIntoView({ block: 'center', behavior: 'auto' });
+        });
+      } else {
+        ov.classList.remove('is-open');
+      }
+    }
+
+    window.addEventListener('resize', updateChapterGridOverviewScale);
+
     if (typeof Reveal !== 'undefined') {
+      Reveal.toggleOverview = toggleChapterSlideOverview;
       Reveal.on('overviewshown', function() {
-        toggleChapterJumpBar(true);
+        toggleChapterJumpBar(false);
         const vp = document.getElementById('part1WorldViewport');
         if (vp) vp.classList.remove('active', 'interactive-overview');
         if (typeof resetSlideZoom === 'function') resetSlideZoom();
@@ -11852,6 +12178,7 @@
       // 同一パート内の移動：前のスライド(100%) ➔ 巨大画用紙の中間俯瞰へズームアウト移動 ➔ 次のスライド(100%)へズームイン！
       function playPartCameraFlight(partId, fromNum, toNum, wasOverview) {
         if (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) return;
+        if (typeof Reveal !== 'undefined' && Reveal.isOverview && Reveal.isOverview()) return;
         buildPartGiantBoard(partId);
         syncCameraFrameScale();
 
@@ -11925,6 +12252,7 @@
 
       function zoomOutToPartFullBoard(partId, fromNum) {
         if (typeof IS_MOBILE_LITE !== 'undefined' && IS_MOBILE_LITE) return;
+        if (typeof Reveal !== 'undefined' && Reveal.isOverview && Reveal.isOverview()) return;
         buildPartGiantBoard(partId);
         syncCameraFrameScale();
 
@@ -12553,8 +12881,11 @@
         };
 
         Reveal.on('slidechanged', function(event) {
-          playSketchbookTurnVideo(event.currentSlide);
-          if (event.currentSlide && event.currentSlide.getAttribute('data-slide-num') === '43') {
+          const inRevealOverview = (typeof Reveal !== 'undefined' && Reveal.isOverview && Reveal.isOverview());
+          if (!inRevealOverview) {
+            playSketchbookTurnVideo(event.currentSlide);
+          }
+          if (!inRevealOverview && event.currentSlide && event.currentSlide.getAttribute('data-slide-num') === '43') {
             window.replayMarvelEnding();
           } else if (marvelFlipTimer) {
             clearInterval(marvelFlipTimer);
@@ -12572,8 +12903,8 @@
           const prevPart = getPartBySlideNum(prevNum);
           const currPart = getPartBySlideNum(currNum);
 
-          // 同じパート（Part 1〜6 いずれか）内のスライド移動は巨大画用紙ボード上のズームアウト➔移動➔ズームインで遷移！
-          if (prevPart > 0 && prevPart === currPart && prevNum !== currNum) {
+          // 同じパート（Part 1〜6 いずれか）内のスライド移動は巨大画用紙ボード上のズームアウト➔移動➔ズームインで遷移！（Reveal一覧表示中はスキップ）
+          if (!inRevealOverview && prevPart > 0 && prevPart === currPart && prevNum !== currNum) {
             playPartCameraFlight(currPart, prevNum, currNum, wasOverview);
           }
 
