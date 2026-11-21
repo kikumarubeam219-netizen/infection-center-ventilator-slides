@@ -11809,7 +11809,8 @@
 
           tile.appendChild(clonedSec);
 
-          tile.addEventListener('click', function() {
+          tile.addEventListener('click', function(e) {
+            e.stopPropagation();
             const vp = document.getElementById('part1WorldViewport');
             if (!vp || !vp.classList.contains('interactive-overview')) return;
             zoomFromOverviewToSlide(partId, sNum);
@@ -11952,6 +11953,26 @@
           fill: 'forwards'
         });
       }
+
+      // 俯瞰ボード表示中：タイルやボタン以外の余白・ボード上をクリックしたら次のスライドへ進む
+      (function initOverviewClickNext() {
+        const vp = document.getElementById('part1WorldViewport');
+        if (!vp || vp.getAttribute('data-overview-click-bound') === '1') return;
+        vp.setAttribute('data-overview-click-bound', '1');
+        vp.addEventListener('click', function(e) {
+          if (!vp.classList.contains('interactive-overview')) return;
+          if (typeof isEditing !== 'undefined' && isEditing) return;
+          if (typeof isDrawMode !== 'undefined' && isDrawMode) return;
+          if (e.target.closest('.p1-slide-tile, .board-polaroid-video-card, button, a, input, select, textarea, label, [onclick], video')) {
+            return;
+          }
+          const sel = window.getSelection ? window.getSelection().toString() : '';
+          if (sel && sel.trim().length > 0) return;
+          if (typeof Reveal !== 'undefined' && Reveal.next) {
+            Reveal.next();
+          }
+        });
+      })();
 
       function zoomFromOverviewToSlide(partId, targetSlideNum) {
         const vp = document.getElementById('part1WorldViewport');
